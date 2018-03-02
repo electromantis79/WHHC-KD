@@ -1,0 +1,43 @@
+
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=false
+strip_trailing_spaces=false
+replace_tabs=false
+
+[indentation]
+indent_width=4
+indent_type=1
+indent_hard_tab_width=8
+detect_indent=false
+detect_indent_width=false
+indent_mode=2
+
+[project]
+name=ETBoneHome
+base_path=C:\\Users\\The Face of Boe\\Google Drive\\Bone\\
+description=
+file_patterns=
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=72
+
+[files]
+current_page=10
+FILE_NAME_0=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CUI_Simulator.py;0;4
+FILE_NAME_1=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CScoreboard.py;0;4
+FILE_NAME_2=2290;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CConsole.py;0;4
+FILE_NAME_3=45227;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CMenu_Class.py;0;4
+FILE_NAME_4=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CGame.py;0;4
+FILE_NAME_5=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CTeam.py;0;4
+FILE_NAME_6=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5Cclock.py;0;4
+FILE_NAME_7=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CAddress_Mapping.py;0;4
+FILE_NAME_8=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CGameDefaultSettings.py;0;4
+FILE_NAME_9=0;Python;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5CConfig.py;0;4
+FILE_NAME_10=504;HTML;0;EUTF-8;1;1;0;C%3A%5CUsers%5CThe%20Face%20of%20Boe%5CGoogle%20Drive%5CBone%5Chello.html;0;4
+
+[build-menu]
+EX_00_LB=_Execute
+EX_00_CM=C:\\Python27\\python "%f"
+EX_00_WD=C:\\Users\\The Face of Boe\\Google Drive\\Bone\\

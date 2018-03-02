@@ -1,0 +1,16 @@
+Version = 999
+sport = MPLINESCORE5
+model = LX1750
+boardColor = COMPANY_LOGO
+captionColor = WHITE
+stripeColor = WHITE
+LEDcolor = RED
+keypadType = MP
+optionJumpers = 0000
+MPLX3450Flag = False
+BOUNCETIME = 100
+splashTime = 3
+SERVER = True
+HOST = 192.168.1.1
+port = 60032
+Baud = 115200

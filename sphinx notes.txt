@@ -1,0 +1,3 @@
+completion percentages for basic files and spreadsheets have to be updated in the 
+
+C:\Users\cgunter\Google Drive\Sphinx\source\modulesCustom.txt file

@@ -1,0 +1,17 @@
+programID = 1
+overwriteFlag = False
+numberOfDigits = 4
+playClockEnable = False
+totalSegments = 1
+segmentTimerCountUp = False
+segmentTimerTenthsFlag = True
+intervalDisplayFlag = False
+endOfSegmentHorn = True
+segmentCountUp = True
+continuousPlayFlag = False
+continuousLoopFlag = False
+segmentTimerMaxSeconds = 0
+flashTimerMaxSeconds = 0
+intervalTimerMaxSeconds = 5
+segmentNumber = 1
+restoreProgramFlag = 1

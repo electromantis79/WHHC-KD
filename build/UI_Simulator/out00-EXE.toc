@@ -1,0 +1,9 @@
+('C:\\Users\\cgunter\\Google Drive\\Sphinx\\Bone\\dist\\UI_Simulator.exe',
+ True,
+ False,
+ None,
+ None,
+ [],
+ None,
+ False,
+ 1454094519L)
