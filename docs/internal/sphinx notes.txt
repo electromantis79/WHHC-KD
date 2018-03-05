@@ -1,0 +1,3 @@
+completion percentages for basic files and spreadsheets have to be updated in the 
+
+..\source\modulesCustom.txt file
