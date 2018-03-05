@@ -12,4 +12,9 @@ make html
 
 Next commit the change to GitHub and wait a couple minutes for RTD to update
 
+All changes in .py files docstrings will be on RTD because it runs its own make html
+.gitignore blocks the build folder from showing these changes
+
+So to find an error if the docs badge fails the local make html must be run to have a local build that matches the one that failed
+
 
