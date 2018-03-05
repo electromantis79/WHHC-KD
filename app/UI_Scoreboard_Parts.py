@@ -221,7 +221,7 @@ class PCB(QGraphicsItemGroup):
 
 	def addToMask(self, maskType='18inTo9', position=1, parent=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Adds the PCB to a mask in the desired position.
 		'''
@@ -232,7 +232,7 @@ class PCB(QGraphicsItemGroup):
 
 	def updateSegment(self, segment='A', SEG_On=1):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Sets the visibility of all LEDs in the segment to the value of SEG_On.
 		'''
@@ -313,7 +313,7 @@ class ETN_Panel(QGraphicsItemGroup):
 
 	def addToMask(self, maskType='18inTo9', position=1, parent=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Adds the ETN panel to a mask in the desired position.
 		'''
@@ -324,7 +324,7 @@ class ETN_Panel(QGraphicsItemGroup):
 
 	def updatePanel(self, matrix=[], blank=None, lamp=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Sets the visibility of all LEDs in the segment to the values of matrix.
 		'''
@@ -391,7 +391,7 @@ class Mask(QGraphicsItem):
 
 	def addToBoard(self, model='LX1030', maskID='scorelink', parent=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Adds the mask to a board in the desired position.
 		'''
@@ -588,7 +588,7 @@ class LX(QGraphicsWidget):
 
 	def addToChassis(self, maskType='11inTo99', position=1, parent=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Adds the LX driver to a chassis in the desired position.
 		'''
@@ -704,7 +704,7 @@ class PS(QGraphicsWidget):
 
 	def addToChassis(self, maskType='11inTo99', position=1, parent=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Adds the power supply to a chassis in the desired position.
 		'''
@@ -789,7 +789,7 @@ class Chassis(QGraphicsItem):
 
 	def addToBoard(self, model='LX1030', maskID='scorelink', parent=None):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Adds the chassis to a board in the desired position.
 		'''
@@ -1124,7 +1124,7 @@ class Board(QGraphicsItem):
 
 	def showDefaultJumpers(self):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Resets the default jumpers of LX driver graphics of the scoreboard.
 		'''

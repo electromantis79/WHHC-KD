@@ -130,7 +130,7 @@ class Keypad_Layout(object):
 
 	def updateNames(self, keyMap):
 		'''
-		|PUBLIC METHOD|
+		PUBLIC METHOD
 
 		Changes the text on all buttons to another keymap.
 		'''
