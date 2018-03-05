@@ -1,4 +1,4 @@
-C:\Python27\python "clock.py"
+python "Console.py"
 
 pause
 del "%0"
