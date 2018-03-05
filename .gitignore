@@ -1,5 +1,7 @@
 # sphinx build folder
 docs/build
+docs/source/_static
+docs/source/_templates
 
 # Compiled source #
 ###################
