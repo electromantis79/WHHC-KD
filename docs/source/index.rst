@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Welcome to Console Data Converter's documentation!
-================================
+==================================================
 
 Contents:
 

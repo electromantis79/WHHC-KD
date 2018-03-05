@@ -1,0 +1,15 @@
+Change the project name in conf.py
+
+
+This will auto build the docs but copy over the old ones.
+
+	sphinx-apidoc -f -o source/ ../
+
+[SHIFT] + Right Click (Then click open command here)
+	This if in the folder with MakeFile
+
+make html
+
+Next commit the change to GitHub and wait a couple minutes for RTD to update
+
+
