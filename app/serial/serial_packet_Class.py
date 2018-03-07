@@ -14,7 +14,7 @@
 
 """
 
-from functions import *
+from app.functions import *
 
 class Serial_Packet (object):
 	'''Creates serial packet object.'''
@@ -1616,4 +1616,7 @@ def test():
 
 if __name__ == '__main__':
 	import time
+	os.chdir('..') 
+	'''Added this for csvOneRowRead to work with this structure, 
+	add this line for each level below project root'''
 	test()
