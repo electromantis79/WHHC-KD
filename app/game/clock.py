@@ -15,10 +15,11 @@
 '''
 
 import time, threading, os
+
 from threading import Thread
-#from collections import defaultdict
 from sys import platform as _platform
-from functions import *
+
+from app.functions import *
 
 class clock(object):
 	"""
@@ -384,7 +385,6 @@ def test():
 	#os.nice(1)
 	print 'OK'
 	#print time.localtime().tm_min
-	from Game import printDict
 	toc=time.time()
 	elapse=toc-tic
 	#print toc, tic, elapse, type(elapse)
@@ -427,7 +427,6 @@ def test():
 	toc=time.time()
 	elapse=toc-tic
 	print 'elapse', elapse*1000, 'ms'
-
 
 if __name__ == '__main__':
 	test()

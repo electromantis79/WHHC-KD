@@ -17,8 +17,7 @@
 import threading
 
 from app.functions import *
-
-from app.clock import clock
+from app.game.clock import clock
 from app.option_jumpers import OptionJumpers
 from app.game.Team import Team
 

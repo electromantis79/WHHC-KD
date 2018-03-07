@@ -162,7 +162,6 @@ def createConfigFiles():
 	Next press enter to copy it to the userConfig file.
 	'''
 	print "ON"
-	from Game import printDict
 	writeConfigFlag=True
 	#writeConfigFlag=False
 	if writeConfigFlag:

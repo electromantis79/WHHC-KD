@@ -17,8 +17,8 @@
 import time, csv
 #import pkg_resources
 
-from functions import *
-from configobj import ConfigObj
+from app.functions import *
+from app.configobj import ConfigObj
 
 class GameDefaultSettings:
 	'''Writes the chosen file or reads it and builds a dictionary of it named gameDefaultSettings.'''
