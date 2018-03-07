@@ -193,13 +193,13 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 	#'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
 	#'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
 	if (choice>=1 and choice<=8) or choice==20:
-		from Game import Baseball
+		from game.Game import Baseball
 		game=Baseball(numberOfTeams)
 
 	#'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
 	#'MPSOCCER_LX1-football'#'MPLX3450-football'
 	elif choice==9 or choice==10 or choice==11 or choice==14 or choice==21:
-		from Game import Football
+		from game.Game import Football
 		game=Football(numberOfTeams)
 
 	elif choice==12:#'MPBASKETBALL1'
@@ -207,25 +207,25 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 		game=Basketball(numberOfTeams)
 
 	elif choice==13 or choice==15:#'MPSOCCER_LX1-soccer'#'MPSOCCER1'
-		from Game import Soccer
+		from game.Game import Soccer
 		game=Soccer(numberOfTeams)
 
 	elif choice==16 or choice==17:#'MPHOCKEY_LX1'#'MPHOCKEY1'
-		from Game import Hockey
+		from game.Game import Hockey
 		game=Hockey(numberOfTeams)
 
 	elif choice==18:#'MPCRICKET1'
-		from Game import Cricket
+		from game.Game import Cricket
 		game=Cricket(numberOfTeams)
 
 	elif choice==19:#'MPRACETRACK1'
-		from Game import Racetrack
+		from game.Game import Racetrack
 		game=Racetrack(numberOfTeams)
 	elif choice==23:#'STAT'
-		from Game import Stat
+		from game.Game import Stat
 		game=Stat(numberOfTeams)
 	elif choice==22:#'GENERIC'
-		from Game import Game
+		from game.Game import Game
 		game=Game(numberOfTeams)
 	return game
 
