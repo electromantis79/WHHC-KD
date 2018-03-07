@@ -11,6 +11,6 @@ optionJumpers = 0000
 MPLX3450Flag = False
 boardColor = COMPANY_LOGO
 model = LX1750
-sport = MPFOOTBALL1
+sport = MPBASKETBALL1
 port = 60032
 stripeColor = WHITE

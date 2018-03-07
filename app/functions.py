@@ -17,7 +17,6 @@
 #All Functions
 
 import csv, time, os, threading, timeit
-from Platform import *
 from sys import platform as _platform
 
 if _platform == "linux" or _platform == "linux2":
