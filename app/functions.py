@@ -17,7 +17,6 @@
 #All Functions
 
 import csv, time, os, threading, timeit
-from Platform import *
 from sys import platform as _platform
 
 if _platform == "linux" or _platform == "linux2":
@@ -193,39 +192,39 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 	#'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
 	#'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
 	if (choice>=1 and choice<=8) or choice==20:
-		from Game import Baseball
+		from game.Game import Baseball
 		game=Baseball(numberOfTeams)
 
 	#'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
 	#'MPSOCCER_LX1-football'#'MPLX3450-football'
 	elif choice==9 or choice==10 or choice==11 or choice==14 or choice==21:
-		from Game import Football
+		from game.Game import Football
 		game=Football(numberOfTeams)
 
 	elif choice==12:#'MPBASKETBALL1'
-		from Game import Basketball
+		from game.Game import Basketball
 		game=Basketball(numberOfTeams)
 
 	elif choice==13 or choice==15:#'MPSOCCER_LX1-soccer'#'MPSOCCER1'
-		from Game import Soccer
+		from game.Game import Soccer
 		game=Soccer(numberOfTeams)
 
 	elif choice==16 or choice==17:#'MPHOCKEY_LX1'#'MPHOCKEY1'
-		from Game import Hockey
+		from game.Game import Hockey
 		game=Hockey(numberOfTeams)
 
 	elif choice==18:#'MPCRICKET1'
-		from Game import Cricket
+		from game.Game import Cricket
 		game=Cricket(numberOfTeams)
 
 	elif choice==19:#'MPRACETRACK1'
-		from Game import Racetrack
+		from game.Game import Racetrack
 		game=Racetrack(numberOfTeams)
 	elif choice==23:#'STAT'
-		from Game import Stat
+		from game.Game import Stat
 		game=Stat(numberOfTeams)
 	elif choice==22:#'GENERIC'
-		from Game import Game
+		from game.Game import Game
 		game=Game(numberOfTeams)
 	return game
 
@@ -243,8 +242,8 @@ def readGameDefaultSettings():
 	'''
 	Returns a dictionary of the gameUserSettings file.
 	'''
-	from GameDefaultSettings import GameDefaultSettings
-	g = GameDefaultSettings()# All values and keys are in string format
+	from app.game.GameDefaultSettings import GameDefaultSettings
+	g = GameDefaultSettings(write=False, fileType='user')# All values and keys are in string format
 	gameSettings = g.getDict()
 	return gameSettings
 
@@ -252,8 +251,8 @@ def readSegmentTimerSettings():
 	'''
 	Returns a dictionary of the segmentTimerUserSettings file.
 	'''
-	from SegmentTimerDefaultSettings import SegmentTimerSettings
-	g = SegmentTimerSettings()# All values and keys are in string format
+	from app.game.SegmentTimerDefaultSettings import SegmentTimerSettings
+	g = SegmentTimerSettings(write=False, fileType='user')# All values and keys are in string format
 	gameSettings = g.getDict()
 	return gameSettings
 
@@ -660,7 +659,13 @@ def csvOneRowRead(fileName):
 	'''
 	Creates a dictionary from the csv data with only 1 row of keys and 1 row of values.
 	'''
-	csvReader=csv.DictReader(open(fileName, 'rb'), delimiter=',', quotechar="'")
+	fileMode='r' #read
+	binaryFile='b'
+	fileMode+=binaryFile
+	#print os.getcwd()
+	f=open(fileName, fileMode)
+	
+	csvReader=csv.DictReader(f, delimiter=',', quotechar="'")
 	for row in csvReader:
 		try:
 			#print 'row', row
@@ -687,6 +692,7 @@ def csvOneRowRead(fileName):
 				#raw_input('\nPress Enter to continue through loop\n')
 		except ValueError:
 			pass
+	f.close()
 	return row
 
 def silentremove(filename):

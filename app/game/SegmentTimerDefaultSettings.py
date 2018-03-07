@@ -9,7 +9,7 @@
     This module reads, writes, or modifies the segmentTimerDefaultSettings and segmentTimerUserSettings files.
 
     :Created Date: 3/12/2015
-    :Modified Date: 8/31/2016
+    :Modified Date: 3/7/2018
     :Author: **Craig Gunter**
 
 """
@@ -17,8 +17,8 @@
 import time, csv
 #import pkg_resources
 
-from functions import *
-from configobj import ConfigObj
+from app.functions import *
+from app.configobj import ConfigObj
 
 class SegmentTimerSettings:
 	'''Writes the chosen file or reads it and builds a dictionary of it named segmentTimerDefaultSettings.'''
@@ -30,18 +30,18 @@ class SegmentTimerSettings:
 	def Start(self):
 		'''Choose read or write and default or user'''
 		if self.fileType=='default':
-			self.segmentTimerSettings = ConfigObj('segmentTimerDefaultSettings')
 			if self.write:
+				self.segmentTimerSettings = ConfigObj('game/segmentTimerDefaultSettings')
 				self.writeAll()
 			else:
-				self.segmentTimerSettingsFile = ConfigObj('segmentTimerDefaultSettings')
+				self.segmentTimerSettingsFile = ConfigObj('game/segmentTimerDefaultSettings', file_error=True)
 				self.readAll()
 		elif self.fileType=='user':
-			self.segmentTimerSettings = ConfigObj('segmentTimerUserSettings')
 			if self.write:
+				self.segmentTimerSettings = ConfigObj('game/segmentTimerUserSettings')
 				self.writeAll()
 			else:
-				self.segmentTimerSettingsFile = ConfigObj('segmentTimerUserSettings')
+				self.segmentTimerSettingsFile = ConfigObj('game/segmentTimerUserSettings', file_error=True)
 				self.readAll()
 
 	def writeAll(self):
@@ -99,9 +99,9 @@ class SegmentTimerSettings:
 		'''Return **segmentTimerSettings** dictionary.'''
 		return self.segmentTimerSettings
 
-	def user2default(self):
+	def userEqualsDefault(self):
 		'''Update segmentTimerUserSettings file with segmentTimerDefaultSettings file values.'''
-		self.segmentTimerUserSettings = ConfigObj('segmentTimerUserSettings')
+		self.segmentTimerUserSettings = ConfigObj('game/segmentTimerUserSettings')
 		self.fileType='default'
 		self.write=False
 		self.Start()
@@ -119,18 +119,21 @@ def createSettingsFiles():
 	writeSegmentTimerSettingsFlag=True
 	#writeSegmentTimerSettingsFlag=False
 	if writeSegmentTimerSettingsFlag:
-		silentremove('segmentTimerDefaultSettings')
+		silentremove('game/segmentTimerDefaultSettings')
 	g=SegmentTimerSettings(writeSegmentTimerSettingsFlag, 'default')
 	#print g.__dict__
 	printDict(g.__dict__)
 	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tick-g.tock)
 	raw_input()
-	silentremove('segmentTimerUserSettings')
-	g.user2default()
+	silentremove('game/segmentTimerUserSettings')
+	g.userEqualsDefault()
 	#print g.__dict__
 	printDict(g.__dict__)
 
 	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tick-g.tock)
 
 if __name__ == '__main__':
+	os.chdir('..') 
+	'''Added this for csvOneRowRead to work with this structure, 
+	add this line for each level below project root'''
 	createSettingsFiles()

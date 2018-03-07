@@ -147,7 +147,7 @@ class Config:
 		'''Return **configDict**.'''
 		return self.configDict
 
-	def user2default(self):
+	def userEqualsDefault(self):
 		'''Update userConfig file with defaultConfig file values.'''
 		self.userConfigDict = ConfigObj('userConfig')
 		self.fileType='default'
@@ -162,7 +162,6 @@ def createConfigFiles():
 	Next press enter to copy it to the userConfig file.
 	'''
 	print "ON"
-	from Game import printDict
 	writeConfigFlag=True
 	#writeConfigFlag=False
 	if writeConfigFlag:
@@ -173,7 +172,7 @@ def createConfigFiles():
 	print "%f seconds to run config file setup." % (c.tick-c.tock)
 	raw_input()
 	silentremove('userConfig')
-	c.user2default()
+	c.userEqualsDefault()
 	#c.writeSport('djdjdjdjd')
 	#print c.__dict__
 	printDict(c.__dict__)

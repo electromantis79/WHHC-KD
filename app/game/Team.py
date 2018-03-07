@@ -14,7 +14,7 @@
 
 """
 
-from functions import *
+from app.functions import *
 from Player import Player
 
 class Team(object):
@@ -122,12 +122,15 @@ class Team(object):
 			print 'Failed to set %s value of %d.' % (dataName, value)
 
 def test():
-	'''Test function if module ran independently.'''
+	'''Test function if module ran independently.
+	Prints object data with printDictsExpanded function.'''
 	while 1:
 		print "ON"
 		sport='baseball'
 		printDictsExpanded(Team(sport))
 
-
 if __name__ == '__main__':
+	os.chdir('..') 
+	'''Added this for csvOneRowRead to work with this structure, 
+	add this line for each level below project root'''
 	test()

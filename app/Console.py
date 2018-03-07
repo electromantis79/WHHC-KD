@@ -22,7 +22,7 @@ from functions import *
 from Menu_Class import Menu_Event_Handler
 from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
-from serial_packet_Class import Serial_Packet
+from serial.serial_packet_Class import Serial_Packet
 
 class Console(object):
 	'''

@@ -16,11 +16,10 @@
 
 import threading
 
-from functions import *
-
-from clock import clock
-from option_jumpers import OptionJumpers
-from Team import Team
+from app.functions import *
+from app.game.clock import clock
+from app.game.option_jumpers_class import OptionJumpers
+from app.game.Team import Team
 
 class Game(object):
 	'''Generic base class for all sports.'''
@@ -68,7 +67,7 @@ class Game(object):
 			self.gameSettings['multisportChoiceFlag'] = False
 
 		#This is problematic when switching sports alot while coding
-		#saveObject2File(dictionary=self.gameSettings, dictionaryName='gameUserSettings')
+		#saveObject2File(dictionary=self.gameSettings, dictionaryName='game/gameUserSettings')
 		#print "Saved current user settings to file."
 
 	def _createClockDict(self):
@@ -1501,13 +1500,15 @@ class Stat(Game):
 		self.activeHomePlayerList=[]
 
 def test():
-	'''Test function if module ran independently.'''
+	'''Test function if module ran independently.
+	Prints object data with printDictsExpanded function.'''
 	print "ON"
 	sport='MPLINESCORE5'
 	game = selectSportInstance(sport)
 	time.sleep(4)
 	game.KillClockThreads()
-	printDictsExpanded(game)
+	while 1:
+		printDictsExpanded(game)
 
 	'''
 	print game.getPlayerData('TEAM_1', 'playerNumber', playerID='PLAYER_1', playerNumber='kk')
@@ -1534,4 +1535,7 @@ def test():
 	'''
 
 if __name__ == '__main__':
+	os.chdir('..') 
+	'''Added this for csvOneRowRead to work with this structure, 
+	add this line for each level below project root'''
 	test()

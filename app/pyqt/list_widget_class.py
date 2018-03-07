@@ -50,5 +50,3 @@ class ListWidget(QListWidget):
 			if str(item.text())==currentItem:
 				defaultItem=item
 		self.setCurrentItem(defaultItem)
-
-

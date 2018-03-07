@@ -13,9 +13,10 @@
     :Author: **Craig Gunter**
 
 """
-from functions import *
 from time import sleep
-from serial_packet_Class import Serial_Packet
+
+from app.functions import *
+from app.serial.serial_packet_Class import Serial_Packet
 
 class MP_Serial_Handler(object):
 	'''Creates a serial port object.'''
@@ -145,7 +146,8 @@ if __name__ == '__main__':
 	import thread, threading, time, timeit, os, sys
 	from sys import platform as _platform
 	from threading import Thread
-	from MP_Data_Handler import MP_Data_Handler
+	
+	from app.MP_Data_Handler import MP_Data_Handler
 	s = MP_Serial_Handler(verbose=False)
 	mp=MP_Data_Handler()
 	serialInputRefreshFrequency=.001
