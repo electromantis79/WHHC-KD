@@ -1,0 +1,12 @@
+open cmd
+
+python
+
+import sys
+for p in sys.path:
+    print (p)
+
+sys.path.append("G:\My Drive\RPi Bone Repo\GitHub\Bone")
+
+for p in sys.path:
+    print (p)

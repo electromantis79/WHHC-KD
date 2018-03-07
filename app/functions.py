@@ -203,7 +203,7 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 		game=Football(numberOfTeams)
 
 	elif choice==12:#'MPBASKETBALL1'
-		from Game import Basketball
+		from game.Game import Basketball
 		game=Basketball(numberOfTeams)
 
 	elif choice==13 or choice==15:#'MPSOCCER_LX1-soccer'#'MPSOCCER1'
@@ -660,7 +660,13 @@ def csvOneRowRead(fileName):
 	'''
 	Creates a dictionary from the csv data with only 1 row of keys and 1 row of values.
 	'''
-	csvReader=csv.DictReader(open(fileName, 'rb'), delimiter=',', quotechar="'")
+	fileMode='r' #read
+	binaryFile='b'
+	fileMode+=binaryFile
+	#print os.getcwd()
+	f=open(fileName, fileMode)
+	
+	csvReader=csv.DictReader(f, delimiter=',', quotechar="'")
 	for row in csvReader:
 		try:
 			#print 'row', row
@@ -687,6 +693,7 @@ def csvOneRowRead(fileName):
 				#raw_input('\nPress Enter to continue through loop\n')
 		except ValueError:
 			pass
+	f.close()
 	return row
 
 def silentremove(filename):
