@@ -14,10 +14,10 @@
 
 """
 
-import time
+import time, sys
 
-from functions import *
-from pyqt_subclasses import * #Holds PyQt4 imports
+from app.functions import *
+from app.pyqt.pyqt_subclasses import * #Holds PyQt4 imports
 import xml.etree.ElementTree as ET
 
 class LED(QGraphicsItem):
@@ -1269,9 +1269,8 @@ def test():
 	sys.exit(app.exec_())
 
 if __name__ == '__main__':
-	import sys
-	from MP_Data_Handler import MP_Data_Handler
-	from Config import Config
-	from Driver import LX_Driver, ETN_Driver
-	from Scoreboard import Scoreboard
+	from app.MP_Data_Handler import MP_Data_Handler
+	from app.Config import Config
+	from app.Driver import LX_Driver, ETN_Driver
+	from app.Scoreboard import Scoreboard
 	test()

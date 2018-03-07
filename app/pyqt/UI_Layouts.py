@@ -14,8 +14,8 @@
 
 """
 
-from functions import *
-from pyqt_subclasses import * #Holds PyQt4 imports
+from app.functions import *
+from app.pyqt.pyqt_subclasses import * #Holds PyQt4 imports
 
 class Keypad_Layout(object):
 	'''This class creates the layout of the keypad.'''

@@ -243,8 +243,8 @@ def readGameDefaultSettings():
 	'''
 	Returns a dictionary of the gameUserSettings file.
 	'''
-	from GameDefaultSettings import GameDefaultSettings
-	g = GameDefaultSettings()# All values and keys are in string format
+	from app.game.GameDefaultSettings import GameDefaultSettings
+	g = GameDefaultSettings(write=False, fileType='user')# All values and keys are in string format
 	gameSettings = g.getDict()
 	return gameSettings
 
@@ -252,8 +252,8 @@ def readSegmentTimerSettings():
 	'''
 	Returns a dictionary of the segmentTimerUserSettings file.
 	'''
-	from SegmentTimerDefaultSettings import SegmentTimerSettings
-	g = SegmentTimerSettings()# All values and keys are in string format
+	from app.game.SegmentTimerDefaultSettings import SegmentTimerSettings
+	g = SegmentTimerSettings(write=False, fileType='user')# All values and keys are in string format
 	gameSettings = g.getDict()
 	return gameSettings
 

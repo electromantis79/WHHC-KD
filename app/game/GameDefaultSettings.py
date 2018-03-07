@@ -9,12 +9,12 @@
     This module reads, writes, or modifies the gameDefaultSettings and gameUserSettings files.
 
     :Created Date: 3/12/2015
-    :Modified Date: 8/31/2016
+    :Modified Date: 3/7/2018
     :Author: **Craig Gunter**
 
 """
 
-import time, csv
+import time, csv, os
 #import pkg_resources
 
 from app.functions import *
@@ -29,20 +29,28 @@ class GameDefaultSettings:
 
 	def Start(self):
 		'''Choose read or write and default or user'''
+		
 		if self.fileType=='default':
-			self.gameDefaultSettings = ConfigObj('gameDefaultSettings')
 			if self.write:
+				self.gameDefaultSettings = ConfigObj('game/gameDefaultSettings')
 				self.writeAll()
 			else:
-				self.gameDefaultSettingsFile = ConfigObj('gameDefaultSettings')
-				self.readAll()
+				self.gameDefaultSettingsFile = ConfigObj('game/gameDefaultSettings', file_error=True)
+				if self.gameDefaultSettingsFile:
+					self.readAll()
+				else:
+					print os.getcwd()
 		elif self.fileType=='user':
-			self.gameDefaultSettings = ConfigObj('gameUserSettings')
 			if self.write:
+				self.gameDefaultSettings = ConfigObj('game/gameUserSettings')
 				self.writeAll()
 			else:
-				self.gameDefaultSettingsFile = ConfigObj('gameUserSettings')
-				self.readAll()
+				fileName='game/gameUserSettings'
+				self.gameDefaultSettingsFile = ConfigObj(fileName, file_error=True)
+				if self.gameDefaultSettingsFile:
+					self.readAll()
+				else:
+					print os.getcwd()+'+/'+fileName
 
 	def writeAll(self):
 		'''Write all configurations to object and file.'''
@@ -225,9 +233,9 @@ class GameDefaultSettings:
 		'''Return **gameDefaultSettings** dictionary.'''
 		return self.gameDefaultSettings
 
-	def user2default(self):
+	def userEqualsDefault(self):
 		'''Update gameUserSettings file with gameDefaultSettings file values.'''
-		self.gameUserSettings = ConfigObj('gameUserSettings')
+		self.gameUserSettings = ConfigObj('game/gameUserSettings')
 		self.fileType='default'
 		self.write=False
 		self.Start()
@@ -241,22 +249,24 @@ def createSettingsFiles():
 	Next press enter to copy it to the gameUserSettings file.
 	'''
 	print "ON"
-	from Team import printDict
 	writegameDefaultSettingsFlag=True
 	#writegameDefaultSettingsFlag=False
 	if writegameDefaultSettingsFlag:
-		silentremove('gameDefaultSettings')
+		silentremove('game/gameDefaultSettings')
 	g=GameDefaultSettings(writegameDefaultSettingsFlag, 'default')
 	#print g.__dict__
 	printDict(g.__dict__)
 	print "%f seconds to run 'gameSettings' file setup." % (g.tick-g.tock)
 	raw_input()
-	silentremove('gameUserSettings')
-	g.user2default()
+	silentremove('game/gameUserSettings')
+	g.userEqualsDefault()
 	#print g.__dict__
 	printDict(g.__dict__)
 
 	print "%f seconds to run 'gameSettings' file setup." % (g.tick-g.tock)
 
 if __name__ == '__main__':
+	os.chdir('..') 
+	'''Added this for csvOneRowRead to work with this structure, 
+	add this line for each level below project root'''
 	createSettingsFiles()

@@ -18,7 +18,7 @@ import threading
 
 from app.functions import *
 from app.game.clock import clock
-from app.option_jumpers import OptionJumpers
+from app.game.option_jumpers_class import OptionJumpers
 from app.game.Team import Team
 
 class Game(object):
@@ -67,7 +67,7 @@ class Game(object):
 			self.gameSettings['multisportChoiceFlag'] = False
 
 		#This is problematic when switching sports alot while coding
-		#saveObject2File(dictionary=self.gameSettings, dictionaryName='gameUserSettings')
+		#saveObject2File(dictionary=self.gameSettings, dictionaryName='game/gameUserSettings')
 		#print "Saved current user settings to file."
 
 	def _createClockDict(self):
