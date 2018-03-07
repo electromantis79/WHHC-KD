@@ -17,13 +17,13 @@
 import sys, csv, time, threading
 
 from functions import *
-from pyqt_subclasses import * #Holds PyQt4 imports
+from app.pyqt.pyqt_subclasses import * #Holds PyQt4 imports
 from Config import Config
-from radio_button_widget_class import RadioButtonWidget
-from list_widget_class import ListWidget, ListLayoutWidget
-from UI_Layouts import Keypad_Layout
+from app.pyqt.radio_button_widget_class import RadioButtonWidget
+from app.pyqt.list_widget_class import ListWidget, ListLayoutWidget
+from app.pyqt.UI_Layouts import Keypad_Layout
 from Scoreboard import Scoreboard
-from UI_Scoreboard_Parts import *
+from app.pyqt.UI_Scoreboard_Parts import *
 
 class Simulation_Window(QMainWindow):
 	'''This class creates a main window to simulate a scoreboard and controller.'''
