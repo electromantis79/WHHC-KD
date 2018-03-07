@@ -12,7 +12,7 @@ Contents:
    :maxdepth: 2
 
    about
-   app
+   Bone
 
 
 Indices and tables
