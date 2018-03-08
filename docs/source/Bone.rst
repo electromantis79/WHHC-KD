@@ -1,4 +1,4 @@
-Bone package
+package
 ============
 
 Subpackages

@@ -1,61 +1,61 @@
-Bone.app.game package
+app.game package
 =====================
 
 Submodules
 ----------
 
-Bone.app.game.Game module
+app.game.Game module
 -------------------------
 
-.. automodule:: Bone.app.game.Game
+.. automodule:: app.game.Game
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.game.GameDefaultSettings module
+app.game.GameDefaultSettings module
 ----------------------------------------
 
-.. automodule:: Bone.app.game.GameDefaultSettings
+.. automodule:: app.game.GameDefaultSettings
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.game.Player module
+app.game.Player module
 ---------------------------
 
-.. automodule:: Bone.app.game.Player
+.. automodule:: app.game.Player
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.game.SegmentTimerDefaultSettings module
+app.game.SegmentTimerDefaultSettings module
 ------------------------------------------------
 
-.. automodule:: Bone.app.game.SegmentTimerDefaultSettings
+.. automodule:: app.game.SegmentTimerDefaultSettings
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.game.Team module
+app.game.Team module
 -------------------------
 
-.. automodule:: Bone.app.game.Team
+.. automodule:: app.game.Team
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.game.clock module
+app.game.clock module
 --------------------------
 
-.. automodule:: Bone.app.game.clock
+.. automodule:: app.game.clock
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.game.option_jumpers_class module
+app.game.option_jumpers_class module
 -----------------------------------------
 
-.. automodule:: Bone.app.game.option_jumpers_class
+.. automodule:: app.game.option_jumpers_class
     :members:
     :undoc-members:
     :show-inheritance:
@@ -64,7 +64,7 @@ Bone.app.game.option_jumpers_class module
 Module contents
 ---------------
 
-.. automodule:: Bone.app.game
+.. automodule:: app.game
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,10 +1,10 @@
-Bone.app.pyqt package
+app.pyqt package
 =====================
 
 Submodules
 ----------
 
-Bone.app.pyqt.UI_Layouts module
+app.pyqt.UI_Layouts module
 -------------------------------
 
 .. automodule:: app.pyqt.UI_Layouts
@@ -12,34 +12,34 @@ Bone.app.pyqt.UI_Layouts module
     :undoc-members:
     :show-inheritance:
 
-Bone.app.pyqt.UI_Scoreboard_Parts module
+app.pyqt.UI_Scoreboard_Parts module
 ----------------------------------------
 
-.. automodule:: Bone.app.pyqt.UI_Scoreboard_Parts
+.. automodule:: app.pyqt.UI_Scoreboard_Parts
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.pyqt.list_widget_class module
+app.pyqt.list_widget_class module
 --------------------------------------
 
-.. automodule:: Bone.app.pyqt.list_widget_class
+.. automodule:: app.pyqt.list_widget_class
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.pyqt.pyqt_subclasses module
+app.pyqt.pyqt_subclasses module
 ------------------------------------
 
-.. automodule:: Bone.app.pyqt.pyqt_subclasses
+.. automodule:: app.pyqt.pyqt_subclasses
     :members:
     :undoc-members:
     :show-inheritance:
 
-Bone.app.pyqt.radio_button_widget_class module
+app.pyqt.radio_button_widget_class module
 ----------------------------------------------
 
-.. automodule:: Bone.app.pyqt.radio_button_widget_class
+.. automodule:: app.pyqt.radio_button_widget_class
     :members:
     :undoc-members:
     :show-inheritance:
@@ -48,7 +48,7 @@ Bone.app.pyqt.radio_button_widget_class module
 Module contents
 ---------------
 
-.. automodule:: Bone.app.pyqt
+.. automodule:: app.pyqt
     :members:
     :undoc-members:
     :show-inheritance:
