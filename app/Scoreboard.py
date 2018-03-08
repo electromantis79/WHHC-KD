@@ -22,8 +22,8 @@ from Console import Console
 from Driver import LX_Driver
 from Driver import ETN_Driver
 
-from pyqt_subclasses import * #Holds PyQt4 imports
-from UI_Scoreboard_Parts import *
+from app.pyqt.pyqt_subclasses import * #Holds PyQt4 imports
+from app.pyqt.UI_Scoreboard_Parts import *
 
 class Scoreboard(Console):
 	'''
