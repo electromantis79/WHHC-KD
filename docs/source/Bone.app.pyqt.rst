@@ -7,7 +7,7 @@ Submodules
 Bone.app.pyqt.UI_Layouts module
 -------------------------------
 
-.. automodule:: Bone.app.pyqt.UI_Layouts
+.. automodule:: app.pyqt.UI_Layouts
     :members:
     :undoc-members:
     :show-inheritance:

@@ -16,7 +16,7 @@ Submodules
 Bone.app.Address_Mapping module
 -------------------------------
 
-.. automodule:: Bone.app.Address_Mapping
+.. automodule:: app.Address_Mapping
     :members:
     :undoc-members:
     :show-inheritance:
@@ -24,7 +24,7 @@ Bone.app.Address_Mapping module
 Bone.app.Config module
 ----------------------
 
-.. automodule:: Bone.app.Config
+.. automodule:: app.Config
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,7 +32,7 @@ Bone.app.Config module
 Bone.app.Console module
 -----------------------
 
-.. automodule:: Bone.app.Console
+.. automodule:: app.Console
     :members:
     :undoc-members:
     :show-inheritance:
@@ -40,7 +40,7 @@ Bone.app.Console module
 Bone.app.Driver module
 ----------------------
 
-.. automodule:: Bone.app.Driver
+.. automodule:: app.Driver
     :members:
     :undoc-members:
     :show-inheritance:
