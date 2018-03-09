@@ -526,29 +526,6 @@ def readChassisParts(maskType):
 			pass
 	return partsDict, positionDict
 
-def readModelDefaults():
-	'''
-	Uses Spreadsheets/Models_CX_Jumper_Defaults.csv to build a dictionary of default CX jumpers.
-	'''
-	modelDefaults='Spreadsheets/Models_CX_Jumper_Defaults.csv'
-	csvReader=csv.DictReader(open(modelDefaults, 'rb'), delimiter=',', quotechar="'")
-	modelDefaults={}
-	for count, row in enumerate(csvReader):
-		try:
-			model=row['model']
-			if model=='':
-				pass
-			else:
-				del row['model']
-				modelDefaults[model]=(\
-				row['sport'], row['B'], row['C'], row['D'], row['E'],\
-				row['F'], row['G'], row['H'], row['I'])
-				if row['']=='':
-					del row['']#This requires spreadsheet to have a note in a column with no row 1 value
-		except ValueError:
-			pass
-	return modelDefaults
-
 def readLCDButtonMenus():
 	'''Builds self.Menu_LCD_Text[func+menuNum]=row from the Spreadsheets/MenuMap.csv file.'''
 	MenuMap='Spreadsheets/MenuMap.csv'
