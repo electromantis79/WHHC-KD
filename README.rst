@@ -1,9 +1,7 @@
-**Base for all Bone code**
+**MP - to - ASCII Converter**
 
 
-.. image:: https://readthedocs.org/projects/bone/badge/?version=latest
+.. image:: https://readthedocs.org/projects/mp2ascii/badge/?version=latest
     :target: https://bone.readthedocs.io/
 
-Here I want to prepare the old pre-version control app for GitHub
-
-Next I want to fork it into the different code bases for bone projects
+BBB project
