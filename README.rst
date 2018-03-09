@@ -2,6 +2,6 @@
 
 
 .. image:: https://readthedocs.org/projects/mp2ascii/badge/?version=latest
-    :target: https://bone.readthedocs.io/
+    :target: https://mp2ascii.readthedocs.io/
 
 BBB project
