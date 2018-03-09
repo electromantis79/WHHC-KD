@@ -6,9 +6,8 @@ Subpackages
 
 .. toctree::
 
-    Bone.app.game
-    Bone.app.pyqt
-    Bone.app.serial
+    app.game
+    app.serial
 
 Submodules
 ----------
@@ -37,14 +36,6 @@ app.Console module
     :undoc-members:
     :show-inheritance:
 
-app.Driver module
-----------------------
-
-.. automodule:: app.Driver
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 app.Keypad_Mapping module
 ------------------------------
 
@@ -65,22 +56,6 @@ app.Menu_Class module
 --------------------------
 
 .. automodule:: app.Menu_Class
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.Scoreboard module
---------------------------
-
-.. automodule:: app.Scoreboard
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.UI_Simulator module
-----------------------------
-
-.. automodule:: app.UI_Simulator
     :members:
     :undoc-members:
     :show-inheritance:
