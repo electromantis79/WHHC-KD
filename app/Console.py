@@ -22,7 +22,7 @@ from functions import *
 from Menu_Class import Menu_Event_Handler
 from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
-from serial.serial_packet_Class import Serial_Packet
+from serial_IO.serial_packet_Class import Serial_Packet
 
 class Console(object):
 	'''
@@ -122,7 +122,7 @@ class Console(object):
 			print 'Platform is', _platform
 			if self.serialInputFlag and not internalReset:
 				verbose(['\nSerial Input On'], self.verbose)
-				from MP_Serial import MP_Serial_Handler
+				from serial_IO.MP_Serial import MP_Serial_Handler
 				self.s = MP_Serial_Handler(serialInputType=self.serialInputType, game=self.game)
 				if self.serialInputType=='ASCII':
 					self.serialInputRefreshFrequency=.1
@@ -240,7 +240,7 @@ class Console(object):
 				else:
 					ETNFlag=False
 				
-					self.game, self.serialString=self.sp.encodePacket(self.game, printString=False, ETNFlag=ETNFlag, packet=packet)
+					self.game, self.serialString=self.sp.encodePacket(self.game, printString=True, ETNFlag=ETNFlag, packet=packet)
 
 		try:
 			self.s.serialOutput(self.serialString)
@@ -1177,7 +1177,7 @@ def test():
 	c=Config()
 	c.writeSport(sport)
 	c.writeOptionJumpers('0000')
-	c=Console(checkEventsFlag=1, serialInputFlag=1, serialInputType='ASCII', serialOutputFlag=1, encodePacketFlag=1, serverThreadFlag=0)
+	c=Console(checkEventsFlag=1, serialInputFlag=1, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=1, serverThreadFlag=0)
 	#c.setKeypad(WHHBaseball=True)
 	while 1:
 		time.sleep(2)
