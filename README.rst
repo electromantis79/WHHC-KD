@@ -5,3 +5,5 @@
     :target: https://mp2ascii.readthedocs.io/
 
 BBB project
+
+Added BBB IP 232
