@@ -13,6 +13,7 @@ docs/source/_templates
 *.exe
 *.o
 *.so
+*.pyc
 
 # Packages #
 ############
