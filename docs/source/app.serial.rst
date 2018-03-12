@@ -7,7 +7,7 @@ Submodules
 app.serial.MP_Serial module
 --------------------------------
 
-.. automodule:: app.serial.MP_Serial
+.. automodule:: app.serial_IO.MP_Serial
     :members:
     :undoc-members:
     :show-inheritance:
@@ -15,7 +15,7 @@ app.serial.MP_Serial module
 app.serial.serial_packet_Class module
 ------------------------------------------
 
-.. automodule:: app.serial.serial_packet_Class
+.. automodule:: app.serial_IO.serial_packet_Class
     :members:
     :undoc-members:
     :show-inheritance:
@@ -24,7 +24,7 @@ app.serial.serial_packet_Class module
 Module contents
 ---------------
 
-.. automodule:: app.serial
+.. automodule:: app.serial_IO
     :members:
     :undoc-members:
     :show-inheritance:
