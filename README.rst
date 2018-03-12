@@ -7,3 +7,4 @@
 BBB project
 
 Added BBB IP 232
+Added public SSH
