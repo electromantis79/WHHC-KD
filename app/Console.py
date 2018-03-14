@@ -43,9 +43,9 @@ class Console(object):
 		self.encodePacketFlag=encodePacketFlag
 		self.serverThreadFlag=serverThreadFlag
 		self.vboseList=vboseList
-		self.verbose=self.vboseList[0] #Method Name or arguments
-		self.verboseMore=self.vboseList[1] #Deeper loop information in methods
-		self.verboseMost=self.vboseList[2] #Crazy Deep Stuff
+		self.verbose=self.vboseList[0]  # Method Name or arguments
+		self.verboseMore=self.vboseList[1]  # Deeper loop information in methods
+		self.verboseMost=self.vboseList[2]  # Crazy Deep Stuff
 		verbose(['\nCreating Console object'], self.verbose)
 		self.MP_StreamRefreshFlag=True
 		self.printTimesFlag=False
