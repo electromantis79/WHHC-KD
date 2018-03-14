@@ -24,13 +24,15 @@ from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
 from serial_IO.serial_packet_Class import Serial_Packet
 
+
 class Console(object):
-	'''
+	"""
 	Builds a console object.
 		*Contains verbose comments option*
-	'''
-	def __init__(self, vboseList=[1,0,0], checkEventsFlag=True, \
-	serialInputFlag=0, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=False, \
+	"""
+
+	def __init__(self, vboseList=[1,0,0], checkEventsFlag=True,
+	serialInputFlag=0, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=False,
 	serverThreadFlag=True):
 		self.className='console'
 
@@ -59,7 +61,7 @@ class Console(object):
 	#INIT Functions
 
 	def Reset(self, internalReset=0):
-		'''Resets the console to a new game.'''
+		"""Resets the console to a new game."""
 		verbose(['\nConsole Reset'], self.verbose)
 
 		#Create Game object, attach keypad and LCD screen
