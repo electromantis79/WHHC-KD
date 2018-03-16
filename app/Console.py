@@ -31,9 +31,10 @@ class Console(object):
 		*Contains verbose comments option*
 	"""
 
-	def __init__(self, vboseList=[1, 0, 0], checkEventsFlag=True,
-	serialInputFlag=0, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=False,
-	serverThreadFlag=True):
+	def __init__(
+			self, vboseList=[1, 0, 0], checkEventsFlag=True,
+			serialInputFlag=0, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=False,
+			serverThreadFlag=True):
 		self.className = 'console'
 
 		self.checkEventsFlag = checkEventsFlag
@@ -69,7 +70,8 @@ class Console(object):
 		splashTime = self.configDict['splashTime']
 		if internalReset:
 			self.game.KillClockThreads()
-		self.game = selectSportInstance(self.configDict['sport'], numberOfTeams=2, MPLX3450Flag=self.configDict['MPLX3450Flag'])
+		self.game = selectSportInstance(
+			self.configDict['sport'], numberOfTeams=2, MPLX3450Flag=self.configDict['MPLX3450Flag'])
 		self.setKeypad()
 		self.lcd = Menu_Event_Handler(sport=self.game.sport, splashTime=splashTime, vboseList=self.vboseList)
 		self.lcd.RefreshScreen(self.game)
@@ -191,7 +193,7 @@ class Console(object):
 		# G2		B1 = 17,18,19,20 	B2 = 21,22,23,24 	B3 = 25,26,27,28 		B4 = 29,30,31,32
 		if self.game.gameData['sportType'] == 'soccer' or self.game.gameData['sportType'] == 'hockey':
 			key = 'Sockey'
-		if self.game.gameData['sportType'] == 'stat':
+		elif self.game.gameData['sportType'] == 'stat':
 			key = 'Stat'
 		else:
 			key = '402'
@@ -199,8 +201,13 @@ class Console(object):
 		# Add code here for getting to the other priorities
 
 		# All known priorities
-		if (key == '402' and self.game.gameData['sport'] == 'MPFOOTBALL1' and self.game.gameSettings['trackClockEnable']
-		or key == 'Emech'):
+		if (
+				key == '402' 
+				and self.game.gameData['sport'] == 'MPFOOTBALL1' 
+				and self.game.gameSettings['trackClockEnable']
+
+				or key == 'Emech'
+		):
 			self.priorityListEmech = [18,11,22,1,6,5,21,2,7,25,9,8,24,3,23,4,20,19,17,12,10,16,15,14,13,28,27,26,32,31,30,29]
 		elif key == '402':
 			self.priorityListEmech = [22,1,6,5,21,2,7,25,9,8,24,3,23,4,20,19,17,12,10,16,15,14,13,28,27,26,32,31,30,29,18,11]
@@ -212,7 +219,8 @@ class Console(object):
 			self.priorityListEmech = [24,23,22,21,4,3,2,1,8,7,6,5,20,19,18,17,12,11,10,9,16,15,14,13,28,27,26,25,32,21,30,29]
 		elif key == 'Stat':
 			self.priorityListEmech = self.addrMap.wordListAddrStat
-			# self.priorityListEmech = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
+			# self.priorityListEmech = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,
+			# 23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
 		else:
 			self.priorityListEmech = range(32)
 		# print 'self.priorityListEmech', self.priorityListEmech
@@ -220,7 +228,7 @@ class Console(object):
 	def serialInput(self):
 		"""Inputs serial packets."""
 		# tic = time.time()
-		# print 'serial Intput', (tic-self.initTime)
+		# print 'serial Input', (tic-self.initTime)
 		self.s.serialInput()
 		# toc = time.time()
 		# print toc-tic
