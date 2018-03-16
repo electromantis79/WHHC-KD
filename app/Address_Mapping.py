@@ -154,7 +154,7 @@ class Address_Mapping(object):
 			pr = cProfile.Profile()
 			pr.enable()
 			# ... do something ...
-			elapseTime(self._adjustAllBanks, On=1, Timeit=0)
+			elapseTime(self._adjustAllBanks, On=True, Timeit=False)
 			pr.disable()
 			s = StringIO.StringIO()
 			sortby = 'cumulative'

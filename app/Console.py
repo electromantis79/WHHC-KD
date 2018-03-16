@@ -161,12 +161,7 @@ class Console(object):
 					args=(self.serialOutput, self.serialOutputRefreshFrequency, None, self.alignTime))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
-						
-			if self.serverThreadFlag and not internalReset:
-				self.serverThread = Thread(target=self.socketServer)
-				self.serverThread.daemon = True				
-				self.serverThread.start()	
-											
+
 		elif _platform == "darwin":
 			#  OS X
 			print 'Apple Sucks!!!!!', 'Disabling input and output flags'
@@ -1103,114 +1098,6 @@ class Console(object):
 		print 'Console key pressed', keyPressed, self.quickKeysPressedList
 
 	#  THREADS ------------------------------------------
-
-	def socketServer(self):
-		#  Tcp Chat server
-		# RUN IN ITS OWN THREAD-PROCESS
-
-		import socket, select, sys, multiprocessing
-
-		HOST = ''
-		SOCKET_LIST = []
-		RECV_BUFFER = 4096
-		PORT = 60032
-
-		p = multiprocessing.current_process()
-		print 'Starting:',p.name,p.pid
-		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		try:
-			server_socket.bind((HOST, PORT))
-		except socket.error as err:
-			print 'errno', err.errno
-			if err.errno == 98:
-				# This means we already have a server
-				connected = 0
-				while not connected:
-					time.sleep(3)
-					try:
-						server_socket.bind((HOST, PORT))
-						connected = 1
-					except:
-						pass
-			else:
-				sys.exit(err.errno)
-
-		server_socket.listen(10)
-
-		#  add server socket object to the list of readable connections
-		SOCKET_LIST.append(server_socket)
-
-		print "Chat server started on port " + str(PORT)
-
-		while 1:
-
-			#  get the list sockets which are ready to be read through select
-			#  4th arg, time_out  = 0 : poll and never block
-			ready_to_read, ready_to_write, in_error = select.select(SOCKET_LIST, [], [], 0)
-
-			for sock in ready_to_read:
-				#  a new connection request received
-				if sock == server_socket:
-					sockfd, addr = server_socket.accept()
-					SOCKET_LIST.append(sockfd)
-					print "[%s, %s] is connected" % addr
-
-					SOCKET_LIST = broadcast(server_socket, sockfd, "[%s:%s] entered our chatting room\n" % addr, SOCKET_LIST)
-
-				else:
-					#  process data received from client
-					try:
-						#  receiving data from the socket.
-						data = sock.recv(RECV_BUFFER)
-						if data:
-							#  there is something in the socket
-							# data = data[-3:-1]
-							self.keyPressed(data)
-							# print 'F1 pressed'
-							SOCKET_LIST = broadcast(server_socket, sock, data, SOCKET_LIST)
-						else:
-							#  remove the socket that's broken
-							if sock in SOCKET_LIST:
-								SOCKET_LIST.remove(sock)
-
-							#  at this stage, no data means probably the connection has been broken
-							SOCKET_LIST = broadcast(server_socket, sock, "[%s, %s] is offline\n" % addr, SOCKET_LIST)
-
-					#  exception
-					except:
-						SOCKET_LIST = broadcast(server_socket, sock, "[%s, %s] is offline\n" % addr, SOCKET_LIST)
-						continue
-
-			if self.broadcastFlag:
-				self.broadcastFlag = False
-				SOCKET_LIST = broadcast(server_socket, 0, self.broadcastString, SOCKET_LIST)
-				self.broadcastString = ''
-			time.sleep(.1)
-
-		server_socket.close()
-		"""
-		import Network, logging
-		jobs = []
-		server = multiprocessing.Process(name = 'server', target = Network.chat_server)
-		jobs.append(server)
-		multiprocessing.log_to_stderr(logging.DEBUG)
-		server.start()
-		server.join()
-		while 1:
-			# 
-			if not server.is_alive() and configDict['SERVER'] == True:
-				print server.exitcode
-				configDict['SERVER'] = False
-				c.writeSERVER(False)
-				server.terminate()
-			elif configDict['SERVER'] == False:
-				time.sleep(3)
-				server = multiprocessing.Process(name = 'server', target = Network.chat_server)
-				jobs.append(server)
-				server.start()
-				server.join()
-		"""
 
 
 def test():

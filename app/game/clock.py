@@ -408,7 +408,7 @@ def test():
 	pr = cProfile.Profile()
 	pr.enable()
 	# ... do something ...
-	elapseTime(periodClock.Update, On=1)
+	elapseTime(periodClock.Update, On=True)
 	pr.disable()
 	s = StringIO.StringIO()
 	sortby = 'cumulative'

@@ -2,21 +2,17 @@
 # -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 99%  Sphinx Approved = **True**
-
 .. topic:: Overview
 
     This module holds all of the global functions.
 
     :Created Date: 3/12/2015
-    :Modified Date: 11/11/2016
     :Author: **Craig Gunter**
-
 """
 
-#All Functions
+# All Functions
 
-import csv, time, os, threading, timeit
+import csv, time, os, timeit
 from sys import platform as _platform
 
 if _platform == "linux" or _platform == "linux2":
@@ -25,106 +21,99 @@ if _platform == "linux" or _platform == "linux2":
 	except:
 		pass
 
-MIN=1000
-MAX=0
+MIN = 1000
+MAX = 0
 
-sportList = ['MMBASEBALL3','MPBASEBALL1','MMBASEBALL4','MPLINESCORE4','MPLINESCORE5',\
-'MPMP-15X1','MPMP-14X1','MPMULTISPORT1-baseball','MPMULTISPORT1-football', 'MPFOOTBALL1','MMFOOTBALL4','MPBASKETBALL1', \
-'MPSOCCER_LX1-soccer','MPSOCCER_LX1-football','MPSOCCER1','MPHOCKEY_LX1','MPHOCKEY1','MPCRICKET1','MPRACETRACK1','MPLX3450-baseball','MPLX3450-football','MPGENERIC', 'MPSTAT']
+sportList = [
+	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5', 
+	'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1', 'MMFOOTBALL4',
+	'MPBASKETBALL1', 'MPSOCCER_LX1-soccer', 'MPSOCCER_LX1-football', 'MPSOCCER1', 'MPHOCKEY_LX1', 'MPHOCKEY1',
+	'MPCRICKET1', 'MPRACETRACK1', 'MPLX3450-baseball', 'MPLX3450-football', 'MPGENERIC',  'MPSTAT']
 
-def threadTimer(function, period=.01, arg=None, alignTime=0.0):
-	nextCall=time.time()
-	startTime=time.time()
+
+def threadTimer(passed_function, period=.01, arg=None, alignTime=0.0):
+	nextCall = time.time()
+	startTime = time.time()
 	#print 'startTime', startTime
 	if _platform == "linux" or _platform == "linux2":
 		os.nice(-1)
 		if alignTime:
 			#print 'alignTime', alignTime
 			#print 'startTime', startTime
-			nextCall=alignTime
-			count=0
-			while (nextCall-startTime)<0:
-				nextCall=nextCall+period
-				count+=1
-			nextCall=nextCall+period*count
+			nextCall = alignTime
+			count = 0
+			while (nextCall-startTime) < 0:
+				nextCall = nextCall+period
+				count += 1
+			nextCall = nextCall+period*count
 			#print count, nextCall
 
-	stamp=0
-	name=threading.current_thread().getName()+str(function)
+	stamp = 0
+	#name = threading.current_thread().getName()+str(passed_function)
 	if _platform == "linux" or _platform == "linux2":
 		try:
-			prctl.set_name(function.__name__)
+			prctl.set_name(passed_function.__name__)
 		except:
 			pass
 	while 1:
-		stamp+=1
+		stamp += 1
 		#startTime=time.time()
 		#print name, 'stamp1', stamp, nextCall-1486587172
-		nextCall=nextCall+period
+		nextCall = nextCall+period
 		#print name, 'stamp2', stamp, nextCall-1486587172
 		if arg is not None:
-			function(arg)
+			passed_function(arg)
 		else:
-			function()
+			passed_function()
 		#endTime=time.time()
 		#elapse=endTime-startTime
-		count=0
-
+		count = 0
 
 		try:
-			now=time.time()
+			now = time.time()
 			time.sleep(nextCall-now)
 		except Exception as err:
 			#print name, 'threadTimer sleep error is', err, 'for', function
 			#print name, 'stamp3', stamp, nextCall-1486587172, 'nextCall-time.time()', nextCall-now
-			while (nextCall-now)<0:
-				nextCall=nextCall+period
-				count+=1
+			while (nextCall-now) < 0:
+				nextCall = nextCall+period
+				count += 1
 			#print name, 'stamp4', stamp, 'count', count
 			#print name, 'stamp5', stamp, nextCall-1486587172
-			nextCall=nextCall+period*count
+			nextCall = nextCall+period*count
 			#print name, 'stamp6', stamp, nextCall-1486587172
 			#nextCall=nextCall+period*(count+1)
 			#print name, 'stamp7', stamp, 'count', count, nextCall-1486587172, nextCall-now
 			try:
-				now=time.time()
+				now = time.time()
 				time.sleep(nextCall-now)
 			except:
 				#print name, 'stamp8', stamp, 'count', count, nextCall-1486587172, nextCall-now
 				#nextCall=nextCall+period*(count+3)
 				time.sleep(period)
 
-def elapseTime(function, lowerLimit=0, On=False, Timeit=False):
-	#global MIN, MAX
-	result=None
+
+def elapseTime(passed_function, lowerLimit=0, On=False, Timeit=False):
+	"""
+	Simple function to test execution time of the passed function.
+	Does not accept args.
+	"""
 	if On:
-		startTime=time.time()
-		result=function()
-		endTime=time.time()
-		total_time=(endTime-startTime)*1000
-		if(0):
-			if total_time>MAX:
-				MAX=total_time
-				Max=MAX
-			else:
-				Max=MAX
-			if total_time<MIN:
-				MIN=total_time
-				Min=MIN
-			else:
-				Min=MIN
-			Avg=abs(Max-Min)/2
-			if total_time>=lowerLimit*1000:
-				print function, 'took',total_time,'ms, with lower limit of', str(lowerLimit),'. Min=',Min, ',Max=', Max, ',Avg=', Avg
-		else:
-			if total_time>=lowerLimit*1000:
-				print function, 'took',total_time,'ms, lower limit=', str(lowerLimit)
+		startTime = time.time()
+		result = passed_function()
+		endTime = time.time()
+		total_time = (endTime-startTime)*1000
+		if total_time >= lowerLimit*1000:
+			print passed_function, 'took', total_time, 'ms, lower limit=', str(lowerLimit)
 	else:
-		result=function()
+		result = passed_function()
+
 	if Timeit:
-		t = timeit.Timer(function, "print 'Timeit'")
+		t = timeit.Timer(passed_function, "print 'Timeit'")
 		print t.timeit(1)*1000, 'ms'
+
 	return result
+
 
 def broadcast(server_socket, sock, message, SOCKET_LIST):
 	# broadcast chat messages to all connected clients
