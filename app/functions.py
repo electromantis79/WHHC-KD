@@ -21,9 +21,6 @@ if _platform == "linux" or _platform == "linux2":
 	except:
 		pass
 
-MIN = 1000
-MAX = 0
-
 sportList = [
 	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5', 
 	'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1', 'MMFOOTBALL4',
@@ -120,9 +117,9 @@ def broadcast(server_socket, sock, message, SOCKET_LIST):
 	for socket in SOCKET_LIST:
 		# send the message only to peer
 		if socket != server_socket:
-			try :
+			try:
 				socket.send(message)
-			except :
+			except:
 				# broken socket connection
 				socket.close()
 				# broken socket, remove it
@@ -130,127 +127,133 @@ def broadcast(server_socket, sock, message, SOCKET_LIST):
 					SOCKET_LIST.remove(socket)
 	return SOCKET_LIST
 
-def tf(string):
-	'''
-	Returns boolean True for string = 'True' or string = 'TRUE' or returns boolean False for string = 'False' or string = 'FALSE'.
-	'''
-	if (string=='True' or string=='TRUE'):
-		return True
-	elif (string=='False' or string=='FALSE'):
-		return False
-	return
 
-def verbose(messages=[], enable=1):
-	'''
+def tf(string):
+	"""
+	Returns boolean True for string = 'True' or string = 'TRUE'
+	or returns boolean False for string = 'False' or string = 'FALSE'.
+	"""
+	if string == 'True' or string == 'TRUE':
+		return True
+	elif string == 'False' or string == 'FALSE':
+		return False
+	return None
+
+
+def verbose(messages=[], enable=True):
+	"""
 	Prints a list of items for debugging.
-	'''
-	#Use list format for messages
+	.. warning:: Only send list type messages.
+	"""
+	# Use list format for messages
 	if enable:
 		for x, message in enumerate(messages):
-			if x==len(messages)-1:
+			if x == len(messages)-1:
 				print message
 			else:
 				print message,
 
+
 def toggle(data):
-	'''
+	"""
 	Inverts a boolean value.
-	'''
-	if data==True:
-		data=False
-	elif data==False:
-		data=True
+	"""
+	if data == True:
+		data = False
+	elif data == False:
+		data = True
 	else:
 		raise ValueError('Only Boolean values allowed!!!!!')
 	return data
 
+
 def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
-	'''
+	"""
 	Returns an object from the *Game* module based on the sport passed.
-	'''
+	"""
 	from Config import Config
-	c=Config()
-	if sport=='MPMULTISPORT1-baseball' and MPLX3450Flag:
-		sport='MPLX3450-baseball'
-	elif sport=='MPMULTISPORT1-football' and MPLX3450Flag:
-		sport='MPLX3450-football'
+	c = Config()
+	if sport == 'MPMULTISPORT1-baseball' and MPLX3450Flag:
+		sport = 'MPLX3450-baseball'
+	elif sport == 'MPMULTISPORT1-football' and MPLX3450Flag:
+		sport = 'MPLX3450-football'
 	c.writeSport(sport)
 
-	choice=sportList.index(sport)+1
-	#'MMBASEBALL3'#'MPBASEBALL1'#'MMBASEBALL4'
-	#'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
-	#'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
-	if (choice>=1 and choice<=8) or choice==20:
+	choice = sportList.index(sport)+1
+
+	# 'MMBASEBALL3'#'MPBASEBALL1'#'MMBASEBALL4'
+	# 'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
+	# 'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
+	if (1 <= choice <= 8) or choice == 20:
 		from game.Game import Baseball
-		game=Baseball(numberOfTeams)
+		game = Baseball(numberOfTeams)
 
-	#'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
-	#'MPSOCCER_LX1-football'#'MPLX3450-football'
-	elif choice==9 or choice==10 or choice==11 or choice==14 or choice==21:
+	# 'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
+	# 'MPSOCCER_LX1-football'#'MPLX3450-football'
+	elif (9 <= choice <= 11) or choice == 14 or choice == 21:
 		from game.Game import Football
-		game=Football(numberOfTeams)
+		game = Football(numberOfTeams)
 
-	elif choice==12:#'MPBASKETBALL1'
+	elif choice == 12:  # 'MPBASKETBALL1'
 		from game.Game import Basketball
-		game=Basketball(numberOfTeams)
+		game = Basketball(numberOfTeams)
 
-	elif choice==13 or choice==15:#'MPSOCCER_LX1-soccer'#'MPSOCCER1'
+	elif choice == 13 or choice == 15:  # 'MPSOCCER_LX1-soccer'#'MPSOCCER1'
 		from game.Game import Soccer
-		game=Soccer(numberOfTeams)
+		game = Soccer(numberOfTeams)
 
-	elif choice==16 or choice==17:#'MPHOCKEY_LX1'#'MPHOCKEY1'
+	elif choice == 16 or choice == 17:  # 'MPHOCKEY_LX1'#'MPHOCKEY1'
 		from game.Game import Hockey
-		game=Hockey(numberOfTeams)
+		game = Hockey(numberOfTeams)
 
-	elif choice==18:#'MPCRICKET1'
+	elif choice == 18:  # 'MPCRICKET1'
 		from game.Game import Cricket
-		game=Cricket(numberOfTeams)
+		game = Cricket(numberOfTeams)
 
-	elif choice==19:#'MPRACETRACK1'
+	elif choice == 19:  # 'MPRACETRACK1'
 		from game.Game import Racetrack
-		game=Racetrack(numberOfTeams)
-	elif choice==23:#'STAT'
+		game = Racetrack(numberOfTeams)
+	elif choice == 23:  # 'STAT'
 		from game.Game import Stat
-		game=Stat(numberOfTeams)
-	elif choice==22:#'GENERIC'
+		game = Stat(numberOfTeams)
+	elif choice == 22:  # 'GENERIC'
 		from game.Game import Game
-		game=Game(numberOfTeams)
+		game = Game(numberOfTeams)
 	return game
 
+
 def readConfig():
-	'''
+	"""
 	Returns a dictionary of the userConfig file.
-	'''
+	"""
 	from Config import Config
-	con = Config(write=False, fileType='user')
-	configDict={}
-	configDict = con.getDict()
-	return configDict
+	c = Config(write=False, fileType='user')
+	return c.getDict()
+
 
 def readGameDefaultSettings():
-	'''
+	"""
 	Returns a dictionary of the gameUserSettings file.
-	'''
+	"""
 	from app.game.GameDefaultSettings import GameDefaultSettings
-	g = GameDefaultSettings(write=False, fileType='user')# All values and keys are in string format
-	gameSettings = g.getDict()
-	return gameSettings
+	g = GameDefaultSettings(write=False, fileType='user')  # All values and keys are in string format
+	return g.getDict()
 
 def readSegmentTimerSettings():
-	'''
+	"""
 	Returns a dictionary of the segmentTimerUserSettings file.
-	'''
+	"""
 	from app.game.SegmentTimerDefaultSettings import SegmentTimerSettings
 	g = SegmentTimerSettings(write=False, fileType='user')# All values and keys are in string format
 	gameSettings = g.getDict()
 	return gameSettings
 
 def readAddressMap(sport, sportType, wordListAddr):
-	'''
+	"""
 	Return an address map of the current sport with *all* alternates.
 
 	This is built with "Spreadsheets/AddressMap.csv"
-	'''
+	"""
 	AddressMap='Spreadsheets/AddressMap.csv'
 	csvReader=csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
 	AltDict = {}
@@ -348,9 +351,9 @@ def readLXJumperDefinition(driverType, driverName):
 	return jumperDict, sizeDict
 
 def readMP_Keypad_Layouts():
-	'''
+	"""
 	Uses Spreadsheets/MP_Keypad_Layouts.csv to build a dictionary of all keypads.
-	'''
+	"""
 	MP_Keypad_Layouts='Spreadsheets/MP_Keypad_Layouts.csv'
 	csvReader=csv.DictReader(open(MP_Keypad_Layouts, 'rb'), delimiter=',', quotechar="'")
 	keypad=[]
@@ -382,9 +385,9 @@ def readMP_Keypad_Layouts():
 	return dictionary
 
 def readMasksPerModel(model):
-	'''
+	"""
 	Read Spreadsheets/Masks_Per_Model.csv and build 3 dictionaries and 3 variables.
-	'''
+	"""
 	masksPerModel='Spreadsheets/Masks_Per_Model.csv'
 	csvReader=csv.DictReader(open(masksPerModel, 'rb'), delimiter=',', quotechar="'")
 	partsDict={}
@@ -414,9 +417,9 @@ def readMasksPerModel(model):
 	return partsDict, positionDict, heightDict, boardWidth, boardHeight
 
 def readLED_Positions(pcbSize, pcbType):
-	'''
+	"""
 	Uses Spreadsheets/LED_Positions.csv to build a few dictionaries.
-	'''
+	"""
 	LED_Positions='Spreadsheets/LED_Positions.csv'
 	csvReader=csv.DictReader(open(LED_Positions, 'rb'), delimiter=',', quotechar="'")
 	positionDict={}
@@ -457,9 +460,9 @@ def readLED_Positions(pcbSize, pcbType):
 	return positionDict, segmentDict, specs
 
 def readMaskParts(maskType):
-	'''
+	"""
 	Uses Spreadsheets/Masks_Parts.csv to build a few dictionaries.
-	'''
+	"""
 	maskParts='Spreadsheets/Mask_Parts.csv'
 	csvReader=csv.DictReader(open(maskParts, 'rb'), delimiter=',', quotechar="'")
 	partsDict={}
@@ -490,9 +493,9 @@ def readMaskParts(maskType):
 	return partsDict, positionDict, maskWidth, maskHeight, maskRadius
 
 def readChassisParts(maskType):
-	'''
+	"""
 	Uses Spreadsheets/Chassis_Parts.csv to build a few dictionaries.
-	'''
+	"""
 	chassisParts='Spreadsheets/Chassis_Parts.csv'
 	csvReader=csv.DictReader(open(chassisParts, 'rb'), delimiter=',', quotechar="'")
 	partsDict={}
@@ -516,7 +519,7 @@ def readChassisParts(maskType):
 	return partsDict, positionDict
 
 def readLCDButtonMenus():
-	'''Builds self.Menu_LCD_Text[func+menuNum]=row from the Spreadsheets/MenuMap.csv file.'''
+	"""Builds self.Menu_LCD_Text[func+menuNum]=row from the Spreadsheets/MenuMap.csv file."""
 	MenuMap='Spreadsheets/MenuMap.csv'
 	csvReader=csv.DictReader(open(MenuMap, 'rb'), delimiter=',', quotechar="'")
 	Menu_LCD_Text={}
@@ -555,9 +558,9 @@ def readLCDButtonMenus():
 	return Menu_LCD_Text
 
 def readMP_Keypad_Button_Names():
-	'''
+	"""
 	Uses Spreadsheets/MP_Keypad_Button_Names.csv to build a dictionary functions corresponding with the text on the button.
-	'''
+	"""
 	MP_Keypad_Button_Names='Spreadsheets/MP_Keypad_Button_Names.csv'
 	csvReader=csv.DictReader(open(MP_Keypad_Button_Names, 'rb'), delimiter=',', quotechar="'")
 	dictionary = {}
@@ -573,9 +576,9 @@ def readMP_Keypad_Button_Names():
 	return dictionary
 
 def printDict(Dict, PrintDicts=True):
-	'''
+	"""
 	Prints an alphebetized display of a dictionaries contents for debugging.
-	'''
+	"""
 	keys = Dict.keys()
 	values = []
 	keys.sort(key=str.lower)
@@ -605,9 +608,9 @@ def printDict(Dict, PrintDicts=True):
 	print len(Dict), 'Variables including Dictionaries'
 
 def printDictsExpanded(Dict, PrintDict=True):
-	'''
+	"""
 	Prints an alphebetized display of a dictionaries contents for debugging then does again for each element in main dictionary.
-	'''
+	"""
 	printDict(Dict.__dict__, PrintDict)
 	print 'Main Dictionary'
 	raw_input()
@@ -622,9 +625,9 @@ def printDictsExpanded(Dict, PrintDict=True):
 		raw_input()
 
 def csvOneRowRead(fileName):
-	'''
+	"""
 	Creates a dictionary from the csv data with only 1 row of keys and 1 row of values.
-	'''
+	"""
 	fileMode='r' #read
 	binaryFile='b'
 	fileMode+=binaryFile
@@ -662,9 +665,9 @@ def csvOneRowRead(fileName):
 	return row
 
 def silentremove(filename):
-	'''
+	"""
 	Deletes a file but doesn't care if it is not there to begin with.
-	'''
+	"""
 	import os, errno
 	try:
 		os.remove(filename)
@@ -673,9 +676,9 @@ def silentremove(filename):
 			raise # re-raise exception if a different error occured
 
 def save_obj(obj, name ):
-	'''
+	"""
 	Creates a .txt file with the objects name in obj folder.
-	'''
+	"""
 	try:
 		output_file=open('obj/'+name+'.txt','w')
 		sortObj=obj.keys()
@@ -697,9 +700,9 @@ def _load_obj(name ):
 		print er
 
 def activePlayerListSelect(game):
-	'''
+	"""
 	Loads the current list of active players for the current team.
-	'''
+	"""
 	activePlayerList=None
 	if game.gameSettings['currentTeamGuest']:
 		teamName='GUEST'
@@ -718,9 +721,9 @@ def activePlayerListSelect(game):
 	return activePlayerList, team, teamName
 
 def binar(bina):
-	'''
+	"""
 	Function rename to avoid conflict with PyQt bin() function.
-	'''
+	"""
 	return bin(bina)
 
 def _bitLen(int_type):
@@ -731,9 +734,9 @@ def _bitLen(int_type):
 	return(length)
 
 def fontWidth(list_type, space=False, fontName=None):
-	'''
+	"""
 	Measures width of ETN character.
-	'''
+	"""
 	#Use only after trim
 	if space:
 		if fontName is None:
@@ -756,9 +759,9 @@ def fontWidth(list_type, space=False, fontName=None):
 			return 0
 
 def fontTrim(fontList, shift=True, displayHeight=9):
-	'''
+	"""
 	Trims the pixels around a ETN character. Standard font is in a 16 x 16 grid.
-	'''
+	"""
 	if displayHeight==14:
 		x=2
 	else:
