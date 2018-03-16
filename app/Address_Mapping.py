@@ -16,11 +16,10 @@
 """
 import cProfile, pstats, StringIO
 import time
-from functions import *
 from MP_Data_Handler import MP_Data_Handler
 
 class Address_Mapping(object):
-	'''
+	"""
 
 	**Initialization**
 
@@ -46,7 +45,7 @@ class Address_Mapping(object):
 	
 	* 
 	
-	'''
+	"""
 
 	def __init__(self, sportType='Generic', game=None):
 		self.sportType=sportType
@@ -99,7 +98,7 @@ class Address_Mapping(object):
 
 	#Startup methods
 	def _blankMap(self):
-		'''Build blank MP wordsDict'''
+		"""Build blank MP wordsDict"""
 		if self.statFlag:
 			for k in range(2):
 				for i in range(2):
@@ -117,7 +116,7 @@ class Address_Mapping(object):
 					self.wordsDict[(i*4+j)*4+4] = self.mp.Encode(i+1, j+1, 4, 1, 0, 0, 0, 'AlwaysHighLow', 0)
 
 	def _buildAddrMap(self):
-		'''Build an address map with the current state of flag selected alternates.'''
+		"""Build an address map with the current state of flag selected alternates."""
 		for address in self.wordListAddr:
 			try:
 				self.addressMapDict[address]=self.fullAddressMapDict[address][1]
@@ -134,7 +133,7 @@ class Address_Mapping(object):
 
 	def Map(self):
 		#PUBLIC
-		'''
+		"""
 		Updates the list of MP Formated data packs to be sent
 
 		The _adjustAllBanks chain::
@@ -145,7 +144,7 @@ class Address_Mapping(object):
 				Current Dict of 32 words are up to date
 
 		.. note:: Map and UnMap are the only publically callable methods for this class.
-		'''
+		"""
 		if 0:
 			#This section is for testing time characteristics
 			
@@ -174,11 +173,11 @@ class Address_Mapping(object):
 
 	#Map()'s main methods - "The _adjustAllBanks chain"
 	def _adjustAllBanks(self):
-		'''
+		"""
 		Checks states of flags per sport and creates a list of alternate mapping adressess and adds them to the standard addressMapDict.
 
 		Fetch the data, make any changes, and adjust the **wordsDict**.
-		'''
+		"""
 
 		verbose('\n-------_adjustAllBanks-------\n', self.verbose)
 		Alts = []
@@ -401,7 +400,7 @@ class Address_Mapping(object):
 				self.game.setTeamData(team, 'points'+self.game.statNumberList[x+1+len(activePlayerList)], 255, 2)
 
 	def _loadFromAddDict(self, address): #This is the beginning of data manipulation into the MP Format!!!
-		''' Get word info, adjust it, and convert it to memory value.'''
+		""" Get word info, adjust it, and convert it to memory value."""
 
 		#addressMapDict fetch
 		group= int(self.addressMapDict[address]['GROUP']) #INT
@@ -533,9 +532,9 @@ class Address_Mapping(object):
 		return 1
 
 	def _Nibble_Format(self, highNibbleName, lowNibbleName, blankType, word, addrWordNumber):
-		'''
+		"""
 		Gets the current game data values with these names, formats them, and returns them.
-		'''
+		"""
 		verbose(['\nNibble Format(before) - highNibbleName, lowNibbleName, blankType, word, addrWordNumber - \n', \
 		highNibbleName, lowNibbleName, blankType, word, addrWordNumber], self.verbose)
 
@@ -1015,9 +1014,9 @@ class Address_Mapping(object):
 	
 	def UnMap(self, wordList=[]): #MP Data decoded and stored in Game Object
 		#PUBLIC
-		'''
+		"""
 		Decodes words in the wordList and saves them to the game object based on sport.
-		'''
+		"""
 
 		sportList = ['MMBASEBALL3','MPBASEBALL1','MMBASEBALL4','MPLINESCORE4','MPLINESCORE5',\
 		'MPMP-15X1','MPMP-14X1','MPMULTISPORT1-baseball','MPMULTISPORT1-football', 'MPFOOTBALL1','MMFOOTBALL4','MPBASKETBALL1', \
@@ -1581,7 +1580,7 @@ class Address_Mapping(object):
 			print 'FAIL'
 
 class Lamptest_Mapping(Address_Mapping):
-	'''Map of all non-horn segments on per the sport.'''
+	"""Map of all non-horn segments on per the sport."""
 	def __init__(self, sportType='Generic'):
 		super(Lamptest_Mapping, self).__init__(sportType, game=None)
 
@@ -1607,11 +1606,11 @@ class Lamptest_Mapping(Address_Mapping):
 		pass
 
 	def _buildAddrMap(self):
-		'''pass'''
+		"""pass"""
 		pass
 
 	def _adjustAllBanks(self):
-		'''Sets all non-horn segments on per the sport.'''
+		"""Sets all non-horn segments on per the sport."""
 		if self.sport=='MPBASEBALL1' or self.sport=='MMBASEBALL3' or self.sport=='MPLINESCORE5':
 			self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
 			self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
@@ -1700,53 +1699,49 @@ class Lamptest_Mapping(Address_Mapping):
 			self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
 
 	def Map(self):
-		'''pass'''
+		"""pass"""
 		pass
 
 	def UnMap(self):
-		'''pass'''
+		"""pass"""
 		pass
 
 class Blanktest_Mapping(Address_Mapping):
-	'''Map of all segements off.'''
+	"""Map of all segements off."""
 	def __init__(self, sportType='Generic'):
 		super(Blanktest_Mapping, self).__init__(sportType, game=None)
 
 	def _buildAddrMap(self):
-		'''pass'''
+		"""pass"""
 		pass
 
 	def _adjustAllBanks(self):
-		'''pass'''
+		"""pass"""
 		pass
 
 	def Map(self):
-		'''pass'''
+		"""pass"""
 		pass
 
 	def UnMap(self):
-		'''pass'''
+		"""pass"""
 		pass
 
+
 def test():
-	'''Test function if module ran independently.'''
+	"""Test function if module ran independently."""
 	print "ON"
-	c=Config()
-	sport='MPSTAT'
+	c = Config()
+	sport = 'MPSTAT'
 	c.writeSport(sport)
 	game = selectSportInstance(sport)
-	#addrMap=Lamptest_Mapping()
-	#addrDict=addrMap.__dict__
-	#printDict(addrDict)
-	#raw_input()
-	addrMap=Address_Mapping(game.gameData['sportType'], game=game)
+	addrMap = Address_Mapping(game.gameData['sportType'], game=game)
 	elapseTime(addrMap.Map, On=False, Timeit=False)
 	
-	'''
-	#raw_input()
-	#addrDict=addrMap.__dict__
-	#printDictsExpanded(addrMap, True)
-	#raw_input()
+	printDictsExpanded(addrMap, True)
+	raw_input()
+
+	"""
 	LHword0 = addrMap.mp.Encode(1, 3, 1, 1, 0, 6, 9, 0, 0)
 	LHword1 = addrMap.mp.Encode(1, 3, 2, 0, 0, 5, 8, 0, 0)
 	LHword2 = addrMap.mp.Encode(1, 3, 3, 1, 0, 0, 5, 0, 0)
@@ -1763,9 +1758,12 @@ def test():
 	#addrDict=addrMap.__dict__
 	#printDict(addrDict)
 	#printDictsExpanded(addrMap, True)
-	'''
+	"""
+
 
 if __name__ == '__main__':
-	#from serial_packet_Class import Serial_Packet
+	# from serial_packet_Class import Serial_Packet
 	from Config import Config
+	from functions import *
+
 	test()
