@@ -16,6 +16,8 @@
 """
 import cProfile, pstats, StringIO
 import time
+
+from functions import *
 from MP_Data_Handler import MP_Data_Handler
 
 class Address_Mapping(object):
@@ -1764,6 +1766,4 @@ def test():
 if __name__ == '__main__':
 	# from serial_packet_Class import Serial_Packet
 	from Config import Config
-	from functions import *
-
 	test()

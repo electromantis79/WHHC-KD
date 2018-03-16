@@ -18,7 +18,7 @@ import thread, threading, time, timeit, os
 from sys import platform as _platform
 from threading import Thread
 
-import functions
+from functions import *
 from Menu_Class import Menu_Event_Handler
 from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
@@ -31,7 +31,7 @@ class Console(object):
 		*Contains verbose comments option*
 	"""
 
-	def __init__(self, vboseList=[1,0,0], checkEventsFlag=True,
+	def __init__(self, vboseList=[1, 0, 0], checkEventsFlag=True,
 	serialInputFlag=0, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=False,
 	serverThreadFlag=True):
 		self.className = 'console'
