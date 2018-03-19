@@ -19,7 +19,6 @@ from sys import platform as _platform
 from threading import Thread
 
 from functions import *
-from Menu_Class import Menu_Event_Handler
 from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
 from serial_IO.serial_packet_Class import Serial_Packet
@@ -73,7 +72,7 @@ class Console(object):
 		self.game = selectSportInstance(
 			self.configDict['sport'], numberOfTeams=2, MPLX3450Flag=self.configDict['MPLX3450Flag'])
 		self.setKeypad()
-		self.lcd = Menu_Event_Handler(sport=self.game.sport, splashTime=splashTime, vboseList=self.vboseList)
+		#self.lcd = Menu_Event_Handler(sport=self.game.sport, splashTime=splashTime, vboseList=self.vboseList)
 		self.lcd.RefreshScreen(self.game)
 		print 'sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']
 		if self.serialInputFlag and self.serialInputType == 'ASCII':
