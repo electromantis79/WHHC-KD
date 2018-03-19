@@ -637,6 +637,8 @@ def printDictsExpanded(Dict, PrintDict=True):
 def csvOneRowRead(fileName):
 	"""
 	Creates a dictionary from the csv data with only 1 row of keys and 1 row of values.
+
+	..warning: Path to fileName must be from app folder.
 	"""
 	fileMode='r' #read
 	binaryFile='b'
