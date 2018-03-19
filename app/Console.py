@@ -73,7 +73,7 @@ class Console(object):
 			self.configDict['sport'], numberOfTeams=2, MPLX3450Flag=self.configDict['MPLX3450Flag'])
 		self.setKeypad()
 		#self.lcd = Menu_Event_Handler(sport=self.game.sport, splashTime=splashTime, vboseList=self.vboseList)
-		self.lcd.RefreshScreen(self.game)
+		#self.lcd.RefreshScreen(self.game)
 		print 'sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']
 		if self.serialInputFlag and self.serialInputType == 'ASCII':
 			pass
