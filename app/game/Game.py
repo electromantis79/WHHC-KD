@@ -19,7 +19,7 @@ import threading
 from app.functions import *
 from app.game.clock import clock
 from app.game.option_jumpers_class import OptionJumpers
-from app.game.Team import Team
+from app.game.team import Team
 
 class Game(object):
 	'''Generic base class for all sports.'''
