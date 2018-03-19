@@ -90,14 +90,14 @@ class clock(object):
 
 			else:
 				# User input
-				elapseTime = time.time() - self._start
+				elapse_time = time.time() - self._start
 
 				# If user time is outside of clock time cancel
 				if self.currentTime > 86399.999:
 					self.Reset(0)
 					return
 
-				self.currentTime = self.maxSeconds + elapseTime
+				self.currentTime = self.maxSeconds + elapse_time
 
 				hours = int(self.currentTime)/(60*60)
 				minutes = int(self.currentTime/60)-hours*60
@@ -139,10 +139,10 @@ class clock(object):
 			return self.timeUnitsDict
 
 		if self.running:
-			elapseTime = time.time() - self._start - self.changeTime
+			elapse_time = time.time() - self._start - self.changeTime
 
 			if self.countUp:
-				self.currentTime = elapseTime
+				self.currentTime = elapse_time
 				if self.currentTime >= self.maxSeconds:
 					self._stop = time.time() - self._start
 					self.currentTime = self.maxSeconds
@@ -152,7 +152,7 @@ class clock(object):
 					print 'self.autoStop up', self.autoStop
 			else:
 				# Down counting clocks
-				self.currentTime = self.maxSeconds - elapseTime
+				self.currentTime = self.maxSeconds - elapse_time
 
 				# Check for auto stop
 				if self.clockName == 'shotClock':
@@ -265,7 +265,6 @@ class clock(object):
 		Resets the clock to passed value.
 		"""
 		if self.clockName == 'timeOfDayClock' and not self.internalClock:
-			#print 'self.maxSeconds', self.maxSeconds, 'self.currentTime', self.currentTime
 			if resetValueSeconds is not None:
 				self.currentTime = self.maxSeconds
 				self.maxSeconds = resetValueSeconds
@@ -274,7 +273,6 @@ class clock(object):
 			else:
 				self.PM = False
 			self._start = time.time()
-			#print 'self._start', self._start, 'self.currentTime', self.currentTime
 		else:
 			if resetValueSeconds is not None:
 				self.maxSeconds = resetValueSeconds
@@ -312,7 +310,7 @@ class clockThread(Thread):
 				prctl.set_name(name)  # Used on BBB to show name of process in htop
 			except:
 				pass
-		#self.daemon=True
+		#self.daemon=True TODO: check this
 		self.nextCall = 0.0
 		self.paused = True
 		self._stopevent = threading.Event()
@@ -367,58 +365,56 @@ class clockThread(Thread):
 	def kill(self):
 		self._stopevent.set()
 
-
-def test():
-	"""Test function if module ran independently."""
-	# TODO: clean this function and create real test functions
-	tic = time.time()
-	print 'OK'
-	toc = time.time()
-	elapse = toc-tic
-	#print toc, tic, elapse, type(elapse)
-	#direction=input("Input clock direction ('0' = down): ")
-	#length=input("Input Max time until stop in seconds: ")
-	#hours=input("Input '1' for Hours mode or '0' for Minutes Mode: ")
-
-	#periodClock=clock(countUp=direction, maxSeconds=length, resolution=0.01, hoursFlag=hours, clockName='generic', internalClock=False)
-	periodClock=clock(maxSeconds=10, countUp=False, clockName='shotClock', resolution=0.01)
-	#clockThread(threadTimer(periodClock.Update, 0.01), 0.01)
-
-	#clocky = periodClock.Update()
-	periodClock.Start()
-	while periodClock.running:
-		#periodClock.updateValues()
-		print (
-			periodClock.timeUnitsDict['minutesTens'], periodClock.timeUnitsDict['minutesUnits'],
-			periodClock.timeUnitsDict['secondsTens'], periodClock.timeUnitsDict['secondsUnits'],
-			periodClock.timeUnitsDict['tenthsUnits'], periodClock.timeUnitsDict['hundredthsUnits'])
-		time.sleep(0.01)
-		if periodClock.timeUnitsDict['secondsUnits']<=5:
-			periodClock.Kill()
-			break
-	periodClock.Stop()
-	time.sleep(.2)
-
-	while 1:
-		pass
-	printDict(periodClock.__dict__)
-
-	import cProfile, pstats, StringIO
-	tic = time.time()
-	pr = cProfile.Profile()
-	pr.enable()
-	# ... do something ...
-	elapseTime(periodClock.Update, On=True)
-	pr.disable()
-	s = StringIO.StringIO()
-	sortby = 'cumulative'
-	ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-	ps.print_stats()
-	print 'stat', s.getvalue()
-	toc = time.time()
-	elapse = toc-tic
-	print 'elapse', elapse*1000, 'ms'
+# TODO: clean this function and create real test functions
 
 
-if __name__ == '__main__':
-	test()
+"""
+
+tic = time.time()
+print 'OK'
+toc = time.time()
+elapse = toc-tic
+#print toc, tic, elapse, type(elapse)
+#direction=input("Input clock direction ('0' = down): ")
+#length=input("Input Max time until stop in seconds: ")
+#hours=input("Input '1' for Hours mode or '0' for Minutes Mode: ")
+
+#periodClock=clock(countUp=direction, maxSeconds=length, resolution=0.01, hoursFlag=hours, clockName='generic', internalClock=False)
+periodClock=clock(maxSeconds=10, countUp=False, clockName='shotClock', resolution=0.01)
+#clockThread(threadTimer(periodClock.Update, 0.01), 0.01)
+
+#clocky = periodClock.Update()
+periodClock.Start()
+while periodClock.running:
+	#periodClock.updateValues()
+	print (
+		periodClock.timeUnitsDict['minutesTens'], periodClock.timeUnitsDict['minutesUnits'],
+		periodClock.timeUnitsDict['secondsTens'], periodClock.timeUnitsDict['secondsUnits'],
+		periodClock.timeUnitsDict['tenthsUnits'], periodClock.timeUnitsDict['hundredthsUnits'])
+	time.sleep(0.01)
+	if periodClock.timeUnitsDict['secondsUnits']<=5:
+		periodClock.Kill()
+		break
+periodClock.Stop()
+time.sleep(.2)
+
+while 1:
+	pass
+printDict(periodClock.__dict__)
+
+import cProfile, pstats, StringIO
+tic = time.time()
+pr = cProfile.Profile()
+pr.enable()
+# ... do something ...
+elapseTime(periodClock.Update, On=True)
+pr.disable()
+s = StringIO.StringIO()
+sortby = 'cumulative'
+ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+ps.print_stats()
+print 'stat', s.getvalue()
+toc = time.time()
+elapse = toc-tic
+print 'elapse', elapse*1000, 'ms'
+"""
