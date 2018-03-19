@@ -1124,5 +1124,5 @@ def test():
 
 
 if __name__ == '__main__':
-	from Config import Config
+	from config_default_settings import Config
 	test()

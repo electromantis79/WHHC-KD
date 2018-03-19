@@ -171,8 +171,8 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 	"""
 	Returns an object from the *Game* module based on the sport passed.
 	"""
-	from Config import Config
-	c = Config()
+	import config_default_settings
+	c = config_default_settings.Config()
 	if sport == 'MPMULTISPORT1-baseball' and MPLX3450Flag:
 		sport = 'MPLX3450-baseball'
 	elif sport == 'MPMULTISPORT1-football' and MPLX3450Flag:
@@ -226,8 +226,8 @@ def readConfig():
 	"""
 	Returns a dictionary of the userConfig file.
 	"""
-	from Config import Config
-	c = Config(write=False, fileType='user')
+	import config_default_settings
+	c = config_default_settings.Config(write=False, fileType='user')
 	return c.getDict()
 
 
@@ -235,8 +235,9 @@ def readGameDefaultSettings():
 	"""
 	Returns a dictionary of the gameUserSettings file.
 	"""
-	from app.game.GameDefaultSettings import GameDefaultSettings
-	g = GameDefaultSettings(write=False, fileType='user')  # All values and keys are in string format
+	import app.game.game_default_settings
+	g = app.game.game_default_settings.GameDefaultSettings(
+		write=False, fileType='user')  # All values and keys are in string format
 	return g.getDict()
 
 
@@ -244,8 +245,9 @@ def readSegmentTimerSettings():
 	"""
 	Returns a dictionary of the segmentTimerUserSettings file.
 	"""
-	from app.game.SegmentTimerDefaultSettings import SegmentTimerSettings
-	g = SegmentTimerSettings(write=False, fileType='user')  # All values and keys are in string format
+	import app.game.segment_timer_default_settings
+	g = app.game.segment_timer_default_settings.SegmentTimerSettings(
+		write=False, fileType='user')  # All values and keys are in string format
 	return g.getDict()
 
 
@@ -787,19 +789,20 @@ def fontTrim(fontList, shift=True, displayHeight=9):
 			fontList[x]=element>>2
 	return fontList
 
+
 def saveObject2File(dictionary, dictionaryName):
-	from configobj import ConfigObj
+	import app.configobj
 	try:
-		configObj = ConfigObj(dictionaryName)
+		configObj = app.configobj.ConfigObj(dictionaryName)
 		silentremove(dictionaryName)
 	except:
-		raise
 		print 'Object does not exist!'
+		raise
 
 	try:
 		configObj.clear()
 		configObj.update(dictionary)
 		configObj.write()
 	except:
-		raise
 		print 'Saving Object Failed!'
+		raise
