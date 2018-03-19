@@ -32,7 +32,7 @@ class Menu_Event_Handler(object):
 		self.configDict=readConfig()
 		self.sport=sport
 		self.splashTime = splashTime
-		from game.Game import readGameDefaultSettings
+		from game.game import readGameDefaultSettings
 		self.gameSettings=readGameDefaultSettings()
 
 		self.enterFlag = False

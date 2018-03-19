@@ -2,121 +2,131 @@
 # -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 99%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
     This module holds the game data for all sports.
 
     :Created Date: 3/12/2015
-    :Modified Date: 10/21/2016
-    :Author: **Craig Gunter**
+   :Author: **Craig Gunter**
 
 """
 
 import threading
 
-from app.functions import *
-from app.game.clock import clock
+import app.functions
+import app.game.team
+from app.game.clock import clock as clock
 from app.game.option_jumpers_class import OptionJumpers
-from app.game.team import Team
+
 
 class Game(object):
-	'''Generic base class for all sports.'''
+	"""Generic base class for all sports."""
+	
 	def __init__(self, numberOfTeams=2):
-		self.numberOfTeams=numberOfTeams
+		self.numberOfTeams = numberOfTeams
 
-		#build dictionaries	from files
-		self.configDict=readConfig()
-		self.gameSettings=readGameDefaultSettings()
-		self.segmentTimerSettings=readSegmentTimerSettings()
-		self.gameSettings.update(self.segmentTimerSettings)#Don't use the same names
-		self.gameData=csvOneRowRead(fileName='Spreadsheets/gameDefaultValues.csv')
+		# Build dictionaries from files
+		self.configDict = app.functions.readConfig()
+		self.gameSettings = app.functions.readGameDefaultSettings()
+		self.segmentTimerSettings = app.functions.readSegmentTimerSettings()
+		self.gameSettings.update(self.segmentTimerSettings)  # Don't use the same names
+		self.gameData = app.functions.csvOneRowRead(fileName='Spreadsheets/gameDefaultValues.csv')
 
-		#classes and attributes
-		self.gameData['sportType']="GENERIC"
-		self.gameData['sport']=self.configDict['sport']
-		self.sport=self.configDict['sport']
-		self.gameData['optionJumpers']=self.configDict['optionJumpers']
-		self.gameData['Version']=self.configDict['Version']
+		# Classes and attributes
+		self.gameData['sportType'] = "GENERIC"
+		self.gameData['sport'] = self.configDict['sport']
+		self.sport = self.configDict['sport']
+		self.gameData['optionJumpers'] = self.configDict['optionJumpers']
+		self.gameData['Version'] = self.configDict['Version']
 		
-		#Handle option jumpers
-		self.optionJumpers=OptionJumpers(self.sport, sportList, jumperString=self.gameData['optionJumpers'])
-		self.gameSettings=self.optionJumpers.getOptions(self.gameSettings)
+		# Handle option jumpers
+		self.optionJumpers = OptionJumpers(self.sport, app.functions.SPORT_LIST, jumperString=self.gameData['optionJumpers'])
+		self.gameSettings = self.optionJumpers.getOptions(self.gameSettings)
 		
-		self.decimalIndicator=not self.gameData['colonIndicator']
+		self.decimalIndicator = not self.gameData['colonIndicator']
 
 		self._createTeams()
 
 		self._addTeamNameData()
 
+		self.clockDict = {}
 		self._createClockDict()
 
-		#digit values common to all _sports
+		# Digit values common to all sports
 		self.setGameData('segmentCount', self.getGameData('segmentCount'))
 		self.setGameData('period', self.getGameData('period'))
 
-		if self.configDict['sport'][-4:]=='ball' or self.configDict['sport'][-6:]=='soccer':
+		if self.configDict['sport'][-4:] == 'ball' or self.configDict['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportMenuFlag'] = True
 		else:
 			self.gameSettings['multisportMenuFlag'] = False
 
-		if self.configDict['sport'][-8:]=='football' or self.configDict['sport'][-6:]=='soccer':
+		if self.configDict['sport'][-8:] == 'football' or self.configDict['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportChoiceFlag'] = True
 		else:
 			self.gameSettings['multisportChoiceFlag'] = False
 
-		#This is problematic when switching sports alot while coding
-		#saveObject2File(dictionary=self.gameSettings, dictionaryName='game/gameUserSettings')
-		#print "Saved current user settings to file."
-
-	def _createClockDict(self):
-		#class object instantiation
-		self.clockDict={}
-
-		self.clockDict['timeOutTimer']=clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clockName='timeOutTimer')
-		self.gameData = self.clockDict['timeOutTimer'].gameDataUpdate(self.gameData, name='timeOutTimer') #function adds values to the gameData dictionary
-		self.clockDict['timeOfDayClock']=clock(True, maxSeconds=self.gameSettings['timeOfDayClockMaxSeconds'], resolution=0.1, hoursFlag=True, clockName='timeOfDayClock')
-		self.gameData = self.clockDict['timeOfDayClock'].gameDataUpdate(self.gameData, name='timeOfDayClock') #function adds values to the gameData dictionary
-		self.clockDict['segmentTimer']=clock(self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clockName='segmentTimer')
-		self.gameData = self.clockDict['segmentTimer'].gameDataUpdate(self.gameData, name='segmentTimer') #function adds values to the gameData dictionary
-		self.clockDict['flashTimer']=clock(False, self.gameSettings['flashTimerMaxSeconds'], clockName='flashTimer')
-		self.clockDict['intervalTimer']=clock(False, self.gameSettings['intervalTimerMaxSeconds'], clockName='intervalTimer')
-		self.clockDict['periodHornFlashTimer']=clock(False, self.gameSettings['periodHornFlashDuration'], clockName='periodHornFlashTimer')
-		self.clockDict['periodBlinkyFlashTimer']=clock(False, .5, clockName='periodBlinkyFlashTimer')
-		if self.gameData['sport']=="MPGENERIC":
-			self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], 15*60, clockName='periodClock')
-			self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock') #function adds values to the gameData dictionary
-		self.clockList=self.clockDict.keys()
-		#print self.clockList
-		
-	def KillClockThreads(self):
-		for clock in self.clockList:
-			self.clockDict[clock].Kill()
-		
 	def _createTeams(self):
-		'''Instantiate all teams into a dictionary.'''
-		self.teamsDict={}
-		self.teamNamesList=[]
+		"""Instantiate all teams into a dictionary."""
+		self.teamsDict = {}
+		self.teamNamesList = []
 		for team in range(self.numberOfTeams):
-			name='TEAM_'+str(team+1)
+			name = 'TEAM_'+str(team+1)
 			self.teamNamesList.append(name)
-			self.teamsDict[name]=Team(self.gameData['sportType'])
+			self.teamsDict[name] = app.game.team.Team(self.gameData['sportType'])
 
 	def _addTeamNameData(self):
-		self.home=self.teamNamesList[self.gameSettings['home']]
-		self.guest=self.teamNamesList[self.gameSettings['guest']]
-		self.teamsDict[self.guest].teamData['name']=self.gameSettings['teamOneName']
-		self.teamsDict[self.home].teamData['name']=self.gameSettings['teamTwoName']
-		self.teamsDict[self.guest].teamData['font']=self.gameSettings['teamOneFont']
-		self.teamsDict[self.home].teamData['font']=self.gameSettings['teamTwoFont']
-		self.teamsDict[self.guest].teamData['justify']=self.gameSettings['teamOneJustify']
-		self.teamsDict[self.home].teamData['justify']=self.gameSettings['teamTwoJustify']
-		#print 'self.teamsDict[self.guest].teamData[name]', self.teamsDict[self.guest].teamData['name']
+		self.home = self.teamNamesList[self.gameSettings['home']]
+		self.guest = self.teamNamesList[self.gameSettings['guest']]
+		self.teamsDict[self.guest].teamData['name'] = self.gameSettings['teamOneName']
+		self.teamsDict[self.home].teamData['name'] = self.gameSettings['teamTwoName']
+		self.teamsDict[self.guest].teamData['font'] = self.gameSettings['teamOneFont']
+		self.teamsDict[self.home].teamData['font'] = self.gameSettings['teamTwoFont']
+		self.teamsDict[self.guest].teamData['justify'] = self.gameSettings['teamOneJustify']
+		self.teamsDict[self.home].teamData['justify'] = self.gameSettings['teamTwoJustify']
+
+	def _createClockDict(self):
+		# class object instantiation
+		self.clockDict['timeOutTimer'] = clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clockName='timeOutTimer')
+		self.gameData = self.clockDict['timeOutTimer'].gameDataUpdate(self.gameData, name='timeOutTimer')
+
+		self.clockDict['timeOfDayClock'] = clock(
+			True, maxSeconds=self.gameSettings['timeOfDayClockMaxSeconds'],
+			resolution=0.1, hoursFlag=True, clockName='timeOfDayClock')
+		self.gameData = self.clockDict['timeOfDayClock'].gameDataUpdate(self.gameData, name='timeOfDayClock')
+
+		self.clockDict['segmentTimer'] = clock(
+			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clockName='segmentTimer')
+		self.gameData = self.clockDict['segmentTimer'].gameDataUpdate(self.gameData, name='segmentTimer')
+
+		self.clockDict['flashTimer'] = clock(False, self.gameSettings['flashTimerMaxSeconds'], clockName='flashTimer')
+
+		self.clockDict['intervalTimer'] = clock(
+			False, self.gameSettings['intervalTimerMaxSeconds'], clockName='intervalTimer')
+
+		self.clockDict['periodHornFlashTimer'] = clock(
+			False, self.gameSettings['periodHornFlashDuration'], clockName='periodHornFlashTimer')
+
+		self.clockDict['periodBlinkyFlashTimer'] = clock(False, .5, clockName='periodBlinkyFlashTimer')
+
+		if self.gameData['sport'] == "MPGENERIC":
+			self.clockDict['periodClock'] = clock(self.gameSettings['periodClockCountUp'], 15*60, clockName='periodClock')
+			self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
+
+		# gameDataUpdate adds values to the gameData dictionary
 
 	def _reverseHomeAndGuest(self):
-		#Never used
+		# method never used
 		self.home, self.guest = self.guest, self.home
+
+	# END INIT ------------------------
+
+	# PUBLIC methods
+
+	def KillClockThreads(self):
+		for clock in self.clockDict:
+			self.clockDict[clock].Kill()
 
 	def getPlayerData(self, team, dataName, playerID=None, playerNumber=None):
 		if playerID is None and playerNumber is None:
@@ -255,7 +265,7 @@ class Game(object):
 			elif operator=='/':
 				playerData[dataName] = (playerData[dataName] / modValue) % modulusValue
 			elif operator=='toggle':
-				playerData[dataName] = toggle(playerData[dataName])
+				playerData[dataName] = app.functions.toggle(playerData[dataName])
 				places=0
 			if places==3:
 				playerData[dataName+'Hundreds'] = playerData[dataName]/100
@@ -276,7 +286,7 @@ class Game(object):
 		elif operator=='/':
 			teamData[dataName] = (teamData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			teamData[dataName] = toggle(teamData[dataName])
+			teamData[dataName] = app.functions.toggle(teamData[dataName])
 			places=0
 		if places==3:
 			teamData[dataName+'Hundreds'] = teamData[dataName]/100
@@ -296,7 +306,7 @@ class Game(object):
 		elif operator=='/':
 			self.gameData[dataName] = (self.gameData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			self.gameData[dataName] = toggle(self.gameData[dataName])
+			self.gameData[dataName] = app.functions.toggle(self.gameData[dataName])
 			places=0
 		if places==3:
 			self.gameData[dataName+'Hundreds'] = self.gameData[dataName]/100
@@ -318,7 +328,7 @@ class Game(object):
 		elif operator=='/':
 			clockData[dataName] = (clockData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			clockData[dataName] = toggle(clockData[dataName])
+			clockData[dataName] = app.functions.toggle(clockData[dataName])
 			places=0
 		if places==3:
 			clockData[dataName+'Hundreds'] = clockData[dataName]/100
@@ -1005,7 +1015,7 @@ class Game(object):
 	#STAT FUNCTIONS----------------------------------------
 
 	def fouls_digsMinusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='-')
@@ -1014,7 +1024,7 @@ class Game(object):
 		return
 
 	def fouls_digsPlusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='+')
@@ -1036,7 +1046,7 @@ class Game(object):
 		return
 
 	def points_killsMinusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='-')
@@ -1045,7 +1055,7 @@ class Game(object):
 		return
 
 	def points_killsPlusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='+')
@@ -1054,7 +1064,7 @@ class Game(object):
 		return
 
 	def nextPlayer(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		notActiveList=[]
 		for playerID in self.teamsDict[team].playersDict.keys():
 			playerNumber=self.getPlayerData(team, 'playerNumber', playerID=playerID)
@@ -1141,7 +1151,7 @@ class Game(object):
 		return
 
 	def previousPlayer(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 
 		index=self.statNumberList.index(self.gameSettings['statNumber'])
 		if len(activePlayerList):
@@ -1500,17 +1510,17 @@ class Stat(Game):
 		self.activeHomePlayerList=[]
 
 def test():
-	'''Test function if module ran independently.
-	Prints object data with printDictsExpanded function.'''
+	"""Test function if module ran independently.
+	Prints object data with printDictsExpanded function."""
 	print "ON"
 	sport='MPLINESCORE5'
-	game = selectSportInstance(sport)
+	game = app.functions.selectSportInstance(sport)
 	time.sleep(4)
 	game.KillClockThreads()
 	while 1:
-		printDictsExpanded(game)
+		app.functions.printDictsExpanded(game)
 
-	'''
+	"""
 	print game.getPlayerData('TEAM_1', 'playerNumber', playerID='PLAYER_1', playerNumber='kk')
 	game.setPlayerData('TEAM_1', 'PLAYER_1', 'playerNumber', ' 0', places=2)
 	print game.getPlayerData('TEAM_1', 'playerNumber', playerID='PLAYER_1', playerNumber='kk')
@@ -1532,10 +1542,10 @@ def test():
 
 	#attrs = vars(game)
 	#print ''.join("%s: %s\n" % item for item in attrs.items())
-	'''
+	"""
 
 if __name__ == '__main__':
 	os.chdir('..') 
-	'''Added this for csvOneRowRead to work with this structure, 
-	add this line for each level below project root'''
+	"""Added this for csvOneRowRead to work with this structure, 
+	add this line for each level below project root"""
 	test()
