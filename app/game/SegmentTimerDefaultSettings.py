@@ -115,7 +115,7 @@ def createSettingsFiles():
 	Next press enter to copy it to the segmentTimerUserSettings file.
 	'''
 	print "ON"
-	from Team import printDict
+	from team import printDict
 	writeSegmentTimerSettingsFlag=True
 	#writeSegmentTimerSettingsFlag=False
 	if writeSegmentTimerSettingsFlag:
