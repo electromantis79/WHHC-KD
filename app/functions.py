@@ -239,14 +239,15 @@ def readGameDefaultSettings():
 	g = GameDefaultSettings(write=False, fileType='user')  # All values and keys are in string format
 	return g.getDict()
 
+
 def readSegmentTimerSettings():
 	"""
 	Returns a dictionary of the segmentTimerUserSettings file.
 	"""
 	from app.game.SegmentTimerDefaultSettings import SegmentTimerSettings
-	g = SegmentTimerSettings(write=False, fileType='user')# All values and keys are in string format
-	gameSettings = g.getDict()
-	return gameSettings
+	g = SegmentTimerSettings(write=False, fileType='user')  # All values and keys are in string format
+	return g.getDict()
+
 
 def readAddressMap(sport, sportType, wordListAddr):
 	"""
@@ -254,39 +255,38 @@ def readAddressMap(sport, sportType, wordListAddr):
 
 	This is built with "Spreadsheets/AddressMap.csv"
 	"""
-	AddressMap='Spreadsheets/AddressMap.csv'
-	csvReader=csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
+	AddressMap = 'Spreadsheets/AddressMap.csv'
+	csvReader = csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
 	AltDict = {}
 	dictionary = dict.fromkeys(wordListAddr, 0)
 	for row in csvReader:
 		try:
-			sportRow=row['SPORT']
-			sportTypeRow=row['SPORT_TYPE']
-			if sportRow==sport and sportTypeRow==sportType:
-				addressWord=int(row['ADDRESS_WORD_NUMBER'])
-				ALT=int(row['ALT'])
+			sportRow = row['SPORT']
+			sportTypeRow = row['SPORT_TYPE']
+			if sportRow == sport and sportTypeRow == sportType:
+				addressWord = int(row['ADDRESS_WORD_NUMBER'])
+				ALT = int(row['ALT'])
 				#print '\nsport', sportRow,'\nsportType', sportTypeRow,'\naddressWord', addressWord,'\nALT', ALT
 				del row['SPORT']
 				del row['SPORT_TYPE']
 				del row['ADDRESS_WORD_NUMBER']
 				del row['ALT']
 
-				if dictionary.has_key(addressWord):
-					if dictionary[addressWord]==0:
+				if addressWord in dictionary:
+					if dictionary[addressWord] == 0:
 						AltDict.clear()
-						AltDict[ALT]=row
-						copyDict=AltDict.copy()
-						dictionary[addressWord]=copyDict
-					elif dictionary[addressWord].has_key(ALT):
+						AltDict[ALT] = row
+						copyDict = AltDict.copy()
+						dictionary[addressWord] = copyDict
+					elif ALT in dictionary[addressWord]:
 						AltDict.clear()
-						AltDict[ALT]=row
-						copyDict=AltDict.copy()
-						dictionary[addressWord]=copyDict
+						AltDict[ALT] = row
+						copyDict = AltDict.copy()
+						dictionary[addressWord] = copyDict
 					else:
-						AltDict[ALT]=row
-						copyDict=AltDict.copy()
-						dictionary[addressWord]=copyDict
-
+						AltDict[ALT] = row
+						copyDict = AltDict.copy()
+						dictionary[addressWord] = copyDict
 
 				#print '\nAltDict\n', AltDict, '\ndictionary\n', dictionary[addressWord]
 				#AltDict.clear()
@@ -302,30 +302,38 @@ def readAddressMap(sport, sportType, wordListAddr):
 	#print sport, sportType, dictionary
 	return dictionary
 
+
 def readLXJumperDefinition(driverType, driverName):
-	#Can't be used by base class because of driverType
-	if driverType=='ETNDriver':
-		AddressMap='Spreadsheets/ETN_Jumper_Definition.csv'
+	"""
+	Return a jumperDict and a sizeDict.
+
+	This is built with "Spreadsheets/ETN_Jumper_Definition.csv" or "Spreadsheets/LX_Jumper_Definition.csv"
+	"""
+
+	# Can't be used by base class because of driverType
+	if driverType == 'ETNDriver':
+		AddressMap = 'Spreadsheets/ETN_Jumper_Definition.csv'
 	else:
-		AddressMap='Spreadsheets/LX_Jumper_Definition.csv'
-	csvReader=csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
+		AddressMap = 'Spreadsheets/LX_Jumper_Definition.csv'
+
+	csvReader = csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
 	jumperDict = {}
 	sizeDict = {}
-	if driverName[-2]=='_':
-		dn=driverName[:-2]
+	if driverName[-2] == '_':
+		dn = driverName[:-2]
 	else:
-		dn=driverName
+		dn = driverName
 	for row in csvReader:
 		try:
-			driver=row['DRIVER']
+			driver = row['DRIVER']
 			del row['DRIVER']
 
-			if driver=='':
+			if driver == '':
 				pass
-			elif driver==dn:
-				jumperDict=row
-			if driverType=='ETNDriver':
-				sizeDict[driver]=dict(row)
+			elif driver == dn:
+				jumperDict = row
+			if driverType == 'ETNDriver':
+				sizeDict[driver] = dict(row)
 				del sizeDict[driver]['H9']
 				del sizeDict[driver]['H10']
 				del sizeDict[driver]['H11']
@@ -339,21 +347,23 @@ def readLXJumperDefinition(driverType, driverName):
 			pass
 
 	for jumper in jumperDict:
-		if jumperDict[jumper]=='':
-			jumperDict[jumper]=0
-
+		if jumperDict[jumper] == '':
+			jumperDict[jumper] = 0
 		else:
-			jumperDict[jumper]=1
+			jumperDict[jumper] = 1
+
 	for driver in sizeDict:
 		for element in sizeDict[driver]:
-			sizeDict[driver][element]=int(sizeDict[driver][element])
-	#print jumperDict
+			sizeDict[driver][element] = int(sizeDict[driver][element])
+
 	return jumperDict, sizeDict
+
 
 def readMP_Keypad_Layouts():
 	"""
 	Uses Spreadsheets/MP_Keypad_Layouts.csv to build a dictionary of all keypads.
 	"""
+	# TODO: finish doing clean inspections from here
 	MP_Keypad_Layouts='Spreadsheets/MP_Keypad_Layouts.csv'
 	csvReader=csv.DictReader(open(MP_Keypad_Layouts, 'rb'), delimiter=',', quotechar="'")
 	keypad=[]
