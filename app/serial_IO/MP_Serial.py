@@ -12,7 +12,7 @@
 
 """
 
-from app.serial_IO.serial_packet_Class import Serial_Packet
+import app.serial_IO.serial_packet_Class
 import app.serial_IO.Platform
 
 
@@ -30,9 +30,8 @@ class MP_Serial_Handler(object):
 		self.ETNpacketList = []
 
 		# Prepare for ETN packet inspection
-		self.sp = Serial_Packet()
+		self.sp = app.serial_IO.serial_packet_Class.Serial_Packet(self.game)
 		self.sp.ETNFlag = False
-		self.sp.game = self.game
 		self.sp.decodePacket = 'from serial ETN check'
 		self.sp.MPserial = True
 

@@ -2,31 +2,37 @@
 # # -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 20%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
-    This module handles encoding game data in to the packet format for Ross systems.
+    This module handles encoding game data in to the packet format.
 
     :Created Date: 3/16/2015
-    :Modified Date: 12/1/2016
     :Author: **Craig Gunter**
 
 """
 
-from app.functions import *
 
 class Serial_Packet (object):
 	'''Creates serial packet object.'''
-	def __init__(self):
-		self.MPserial=False
 
-	def encodePacket(self, game, printString=False, ETNFlag=False, packet=None):
-		'''Encodes packet for serial transmission.'''
-		string=''
-		self.ETNFlag=ETNFlag
-		self.game=game
-		originalPacket=packet
+	def __init__(self, game):
+		self.game = game
+
+		self.MPserial = False
+		self.ETNFlag = False
+
+	@staticmethod
+	def stringEater(packet, places=1):
+		if packet is not None:
+			packet = packet[places:]
+		return packet
+
+	def encodePacket(self, printString=False, ETNFlag=False, packet=None):
+		"""Encodes packet for serial transmission."""
+		string = ''
+		self.ETNFlag = ETNFlag
+		originalPacket = packet
 		self.decodePacket=packet
 		
 		self.ETNChangeFlag=False
@@ -168,12 +174,7 @@ class Serial_Packet (object):
 				#print 'length', len(packet)
 			return self.game, packet
 
-#----------------------------------------------------------------------
-
-	def stringEater(self, packet, places=1):
-		if packet is not None:
-			packet=packet[places:]
-		return packet
+# ----------------------------------------------------------------------
 
 	def getValue(self, valueName, minValueNotBlanked=1, team=None, clock=None):
 		if team is None:
@@ -1581,15 +1582,14 @@ class Serial_Packet (object):
 				print 'checkSum try failed', packet
 				return 1
 		else:
-			string+=checkSum
+			string += checkSum
 			return string
 
-	def loadOutputWords(self, game):
-		print '123456789'
-		print
-		string='123456789'
-		return string
 
+# TODO: clean this function and create real test functions
+
+
+"""
 def test():
 	'''Test function if module ran independently.'''
 	print "ON"
@@ -1620,3 +1620,4 @@ if __name__ == '__main__':
 	'''Added this for csvOneRowRead to work with this structure, 
 	add this line for each level below project root'''
 	test()
+"""
