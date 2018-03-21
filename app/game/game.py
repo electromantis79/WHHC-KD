@@ -2,121 +2,131 @@
 # -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 99%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
     This module holds the game data for all sports.
 
     :Created Date: 3/12/2015
-    :Modified Date: 10/21/2016
-    :Author: **Craig Gunter**
+   :Author: **Craig Gunter**
 
 """
 
 import threading
 
-from app.functions import *
-from app.game.clock import clock
-from app.game.option_jumpers_class import OptionJumpers
-from app.game.Team import Team
+import app.functions
+import app.game.team
+import app.game.option_jumpers
+import app.game.clock
+
 
 class Game(object):
-	'''Generic base class for all sports.'''
+	"""Generic base class for all sports."""
+	
 	def __init__(self, numberOfTeams=2):
-		self.numberOfTeams=numberOfTeams
+		self.numberOfTeams = numberOfTeams
 
-		#build dictionaries	from files
-		self.configDict=readConfig()
-		self.gameSettings=readGameDefaultSettings()
-		self.segmentTimerSettings=readSegmentTimerSettings()
-		self.gameSettings.update(self.segmentTimerSettings)#Don't use the same names
-		self.gameData=csvOneRowRead(fileName='Spreadsheets/gameDefaultValues.csv')
+		# Build dictionaries from files
+		self.configDict = app.functions.readConfig()
+		self.gameSettings = app.functions.readGameDefaultSettings()
+		self.segmentTimerSettings = app.functions.readSegmentTimerSettings()
+		self.gameSettings.update(self.segmentTimerSettings)  # Don't use the same names
+		self.gameData = app.functions.csvOneRowRead(fileName='Spreadsheets/gameDefaultValues.csv')
 
-		#classes and attributes
-		self.gameData['sportType']="GENERIC"
-		self.gameData['sport']=self.configDict['sport']
-		self.sport=self.configDict['sport']
-		self.gameData['optionJumpers']=self.configDict['optionJumpers']
-		self.gameData['Version']=self.configDict['Version']
+		# Classes and attributes
+		self.gameData['sportType'] = "GENERIC"
+		self.gameData['sport'] = self.configDict['sport']
+		self.sport = self.configDict['sport']
+		self.gameData['optionJumpers'] = self.configDict['optionJumpers']
+		self.gameData['Version'] = self.configDict['Version']
 		
-		#Handle option jumpers
-		self.optionJumpers=OptionJumpers(self.sport, sportList, jumperString=self.gameData['optionJumpers'])
-		self.gameSettings=self.optionJumpers.getOptions(self.gameSettings)
+		# Handle option jumpers
+		self.optionJumpers = app.game.option_jumpers.OptionJumpers(self.sport, app.functions.SPORT_LIST, jumperString=self.gameData['optionJumpers'])
+		self.gameSettings = self.optionJumpers.getOptions(self.gameSettings)
 		
-		self.decimalIndicator=not self.gameData['colonIndicator']
+		self.decimalIndicator = not self.gameData['colonIndicator']
 
 		self._createTeams()
 
 		self._addTeamNameData()
 
+		self.clockDict = {}
 		self._createClockDict()
 
-		#digit values common to all _sports
+		# Digit values common to all sports
 		self.setGameData('segmentCount', self.getGameData('segmentCount'))
 		self.setGameData('period', self.getGameData('period'))
 
-		if self.configDict['sport'][-4:]=='ball' or self.configDict['sport'][-6:]=='soccer':
+		if self.configDict['sport'][-4:] == 'ball' or self.configDict['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportMenuFlag'] = True
 		else:
 			self.gameSettings['multisportMenuFlag'] = False
 
-		if self.configDict['sport'][-8:]=='football' or self.configDict['sport'][-6:]=='soccer':
+		if self.configDict['sport'][-8:] == 'football' or self.configDict['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportChoiceFlag'] = True
 		else:
 			self.gameSettings['multisportChoiceFlag'] = False
 
-		#This is problematic when switching sports alot while coding
-		#saveObject2File(dictionary=self.gameSettings, dictionaryName='game/gameUserSettings')
-		#print "Saved current user settings to file."
-
-	def _createClockDict(self):
-		#class object instantiation
-		self.clockDict={}
-
-		self.clockDict['timeOutTimer']=clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clockName='timeOutTimer')
-		self.gameData = self.clockDict['timeOutTimer'].gameDataUpdate(self.gameData, name='timeOutTimer') #function adds values to the gameData dictionary
-		self.clockDict['timeOfDayClock']=clock(True, maxSeconds=self.gameSettings['timeOfDayClockMaxSeconds'], resolution=0.1, hoursFlag=True, clockName='timeOfDayClock')
-		self.gameData = self.clockDict['timeOfDayClock'].gameDataUpdate(self.gameData, name='timeOfDayClock') #function adds values to the gameData dictionary
-		self.clockDict['segmentTimer']=clock(self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clockName='segmentTimer')
-		self.gameData = self.clockDict['segmentTimer'].gameDataUpdate(self.gameData, name='segmentTimer') #function adds values to the gameData dictionary
-		self.clockDict['flashTimer']=clock(False, self.gameSettings['flashTimerMaxSeconds'], clockName='flashTimer')
-		self.clockDict['intervalTimer']=clock(False, self.gameSettings['intervalTimerMaxSeconds'], clockName='intervalTimer')
-		self.clockDict['periodHornFlashTimer']=clock(False, self.gameSettings['periodHornFlashDuration'], clockName='periodHornFlashTimer')
-		self.clockDict['periodBlinkyFlashTimer']=clock(False, .5, clockName='periodBlinkyFlashTimer')
-		if self.gameData['sport']=="MPGENERIC":
-			self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], 15*60, clockName='periodClock')
-			self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock') #function adds values to the gameData dictionary
-		self.clockList=self.clockDict.keys()
-		#print self.clockList
-		
-	def KillClockThreads(self):
-		for clock in self.clockList:
-			self.clockDict[clock].Kill()
-		
 	def _createTeams(self):
-		'''Instantiate all teams into a dictionary.'''
-		self.teamsDict={}
-		self.teamNamesList=[]
+		"""Instantiate all teams into a dictionary."""
+		self.teamsDict = {}
+		self.teamNamesList = []
 		for team in range(self.numberOfTeams):
-			name='TEAM_'+str(team+1)
+			name = 'TEAM_'+str(team+1)
 			self.teamNamesList.append(name)
-			self.teamsDict[name]=Team(self.gameData['sportType'])
+			self.teamsDict[name] = app.game.team.Team(self.gameData['sportType'])
 
 	def _addTeamNameData(self):
-		self.home=self.teamNamesList[self.gameSettings['home']]
-		self.guest=self.teamNamesList[self.gameSettings['guest']]
-		self.teamsDict[self.guest].teamData['name']=self.gameSettings['teamOneName']
-		self.teamsDict[self.home].teamData['name']=self.gameSettings['teamTwoName']
-		self.teamsDict[self.guest].teamData['font']=self.gameSettings['teamOneFont']
-		self.teamsDict[self.home].teamData['font']=self.gameSettings['teamTwoFont']
-		self.teamsDict[self.guest].teamData['justify']=self.gameSettings['teamOneJustify']
-		self.teamsDict[self.home].teamData['justify']=self.gameSettings['teamTwoJustify']
-		#print 'self.teamsDict[self.guest].teamData[name]', self.teamsDict[self.guest].teamData['name']
+		self.home = self.teamNamesList[self.gameSettings['home']]
+		self.guest = self.teamNamesList[self.gameSettings['guest']]
+		self.teamsDict[self.guest].teamData['name'] = self.gameSettings['teamOneName']
+		self.teamsDict[self.home].teamData['name'] = self.gameSettings['teamTwoName']
+		self.teamsDict[self.guest].teamData['font'] = self.gameSettings['teamOneFont']
+		self.teamsDict[self.home].teamData['font'] = self.gameSettings['teamTwoFont']
+		self.teamsDict[self.guest].teamData['justify'] = self.gameSettings['teamOneJustify']
+		self.teamsDict[self.home].teamData['justify'] = self.gameSettings['teamTwoJustify']
+
+	def _createClockDict(self):
+		# class object instantiation
+		self.clockDict['timeOutTimer'] = app.game.clock.clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clockName='timeOutTimer')
+		self.gameData = self.clockDict['timeOutTimer'].gameDataUpdate(self.gameData, name='timeOutTimer')
+
+		self.clockDict['timeOfDayClock'] = app.game.clock.clock(
+			True, maxSeconds=self.gameSettings['timeOfDayClockMaxSeconds'],
+			resolution=0.1, hoursFlag=True, clockName='timeOfDayClock')
+		self.gameData = self.clockDict['timeOfDayClock'].gameDataUpdate(self.gameData, name='timeOfDayClock')
+
+		self.clockDict['segmentTimer'] = app.game.clock.clock(
+			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clockName='segmentTimer')
+		self.gameData = self.clockDict['segmentTimer'].gameDataUpdate(self.gameData, name='segmentTimer')
+
+		self.clockDict['flashTimer'] = app.game.clock.clock(False, self.gameSettings['flashTimerMaxSeconds'], clockName='flashTimer')
+
+		self.clockDict['intervalTimer'] = app.game.clock.clock(
+			False, self.gameSettings['intervalTimerMaxSeconds'], clockName='intervalTimer')
+
+		self.clockDict['periodHornFlashTimer'] = app.game.clock.clock(
+			False, self.gameSettings['periodHornFlashDuration'], clockName='periodHornFlashTimer')
+
+		self.clockDict['periodBlinkyFlashTimer'] = app.game.clock.clock(False, .5, clockName='periodBlinkyFlashTimer')
+
+		if self.gameData['sport'] == "MPGENERIC":
+			self.clockDict['periodClock'] = app.game.clock.clock(self.gameSettings['periodClockCountUp'], 15*60, clockName='periodClock')
+			self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
+
+		# gameDataUpdate adds values to the gameData dictionary
 
 	def _reverseHomeAndGuest(self):
-		#Never used
+		# method never used
 		self.home, self.guest = self.guest, self.home
+
+	# END INIT ------------------------
+
+	# PUBLIC methods
+
+	def KillClockThreads(self):
+		for clock in self.clockDict:
+			self.clockDict[clock].Kill()
 
 	def getPlayerData(self, team, dataName, playerID=None, playerNumber=None):
 		if playerID is None and playerNumber is None:
@@ -255,7 +265,7 @@ class Game(object):
 			elif operator=='/':
 				playerData[dataName] = (playerData[dataName] / modValue) % modulusValue
 			elif operator=='toggle':
-				playerData[dataName] = toggle(playerData[dataName])
+				playerData[dataName] = app.functions.toggle(playerData[dataName])
 				places=0
 			if places==3:
 				playerData[dataName+'Hundreds'] = playerData[dataName]/100
@@ -276,7 +286,7 @@ class Game(object):
 		elif operator=='/':
 			teamData[dataName] = (teamData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			teamData[dataName] = toggle(teamData[dataName])
+			teamData[dataName] = app.functions.toggle(teamData[dataName])
 			places=0
 		if places==3:
 			teamData[dataName+'Hundreds'] = teamData[dataName]/100
@@ -296,7 +306,7 @@ class Game(object):
 		elif operator=='/':
 			self.gameData[dataName] = (self.gameData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			self.gameData[dataName] = toggle(self.gameData[dataName])
+			self.gameData[dataName] = app.functions.toggle(self.gameData[dataName])
 			places=0
 		if places==3:
 			self.gameData[dataName+'Hundreds'] = self.gameData[dataName]/100
@@ -318,7 +328,7 @@ class Game(object):
 		elif operator=='/':
 			clockData[dataName] = (clockData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			clockData[dataName] = toggle(clockData[dataName])
+			clockData[dataName] = app.functions.toggle(clockData[dataName])
 			places=0
 		if places==3:
 			clockData[dataName+'Hundreds'] = clockData[dataName]/100
@@ -1005,7 +1015,7 @@ class Game(object):
 	#STAT FUNCTIONS----------------------------------------
 
 	def fouls_digsMinusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='-')
@@ -1014,7 +1024,7 @@ class Game(object):
 		return
 
 	def fouls_digsPlusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='+')
@@ -1036,7 +1046,7 @@ class Game(object):
 		return
 
 	def points_killsMinusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='-')
@@ -1045,7 +1055,7 @@ class Game(object):
 		return
 
 	def points_killsPlusOne(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='+')
@@ -1054,7 +1064,7 @@ class Game(object):
 		return
 
 	def nextPlayer(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 		notActiveList=[]
 		for playerID in self.teamsDict[team].playersDict.keys():
 			playerNumber=self.getPlayerData(team, 'playerNumber', playerID=playerID)
@@ -1141,7 +1151,7 @@ class Game(object):
 		return
 
 	def previousPlayer(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
 
 		index=self.statNumberList.index(self.gameSettings['statNumber'])
 		if len(activePlayerList):
@@ -1214,11 +1224,11 @@ class Baseball(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['shotClock']=clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
+		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
 		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')
-		self.clockDict['delayOfGameClock']=clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
+		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
 		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, 'delayOfGameClock')
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.gameSettings['baseballPeriodClockMaxSeconds'], \
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['baseballPeriodClockMaxSeconds'], \
 		self.gameSettings['periodClockResolution'], self.gameSettings['hoursFlag'], clockName='periodClock')	
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)	
 		self.clockList=self.clockDict.keys()
@@ -1264,9 +1274,9 @@ class Football(Game):
 
 		self._addTeamNameData()
 		
-		self.clockDict['delayOfGameClock']=clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
+		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
 		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, name='delayOfGameClock')
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.gameSettings['footballPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['footballPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
 		self.clockList=self.clockDict.keys()
 
@@ -1308,9 +1318,9 @@ class Soccer(Game):
 
 		self._addTeamNameData()
 		
-		self.clockDict['delayOfGameClock']=clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='periodClock')
+		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='periodClock')
 		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, 'delayOfGameClock')
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_soccerPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_soccerPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')
 
 		self.clockList=self.clockDict.keys()
@@ -1325,25 +1335,25 @@ class Hockey(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['penalty1_teamOne']=clock(False, 0, clockName='penalty1_teamOne')
+		self.clockDict['penalty1_teamOne']=app.game.clock.clock(False, 0, clockName='penalty1_teamOne')
 		self.gameData = self.clockDict['penalty1_teamOne'].gameDataUpdate(self.gameData, 'penalty1_teamOne')
-		self.clockDict['penalty1_teamTwo']=clock(False, 0, clockName='penalty1_teamTwo')
+		self.clockDict['penalty1_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty1_teamTwo')
 		self.gameData = self.clockDict['penalty1_teamTwo'].gameDataUpdate(self.gameData, 'penalty1_teamTwo')
-		self.clockDict['penalty2_teamOne']=clock(False, 0, clockName='penalty2_teamOne')
+		self.clockDict['penalty2_teamOne']=app.game.clock.clock(False, 0, clockName='penalty2_teamOne')
 		self.gameData = self.clockDict['penalty2_teamOne'].gameDataUpdate(self.gameData, 'penalty2_teamOne')
-		self.clockDict['penalty2_teamTwo']=clock(False, 0, clockName='penalty2_teamTwo')
+		self.clockDict['penalty2_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty2_teamTwo')
 		self.gameData = self.clockDict['penalty2_teamTwo'].gameDataUpdate(self.gameData, 'penalty2_teamTwo')
-		self.clockDict['penalty3_teamOne']=clock(False, 0, clockName='penalty3_teamOne')
+		self.clockDict['penalty3_teamOne']=app.game.clock.clock(False, 0, clockName='penalty3_teamOne')
 		self.gameData = self.clockDict['penalty3_teamOne'].gameDataUpdate(self.gameData, 'penalty3_teamOne')
-		self.clockDict['penalty3_teamTwo']=clock(False, 0, clockName='penalty3_teamTwo')
+		self.clockDict['penalty3_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty3_teamTwo')
 		self.gameData = self.clockDict['penalty3_teamTwo'].gameDataUpdate(self.gameData, 'penalty3_teamTwo')
-		self.clockDict['penalty4_teamOne']=clock(False, 0, clockName='penalty4_teamOne')
+		self.clockDict['penalty4_teamOne']=app.game.clock.clock(False, 0, clockName='penalty4_teamOne')
 		self.gameData = self.clockDict['penalty4_teamOne'].gameDataUpdate(self.gameData, 'penalty4_teamOne')
-		self.clockDict['penalty4_teamTwo']=clock(False, 0, clockName='penalty4_teamTwo')
+		self.clockDict['penalty4_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty4_teamTwo')
 		self.gameData = self.clockDict['penalty4_teamTwo'].gameDataUpdate(self.gameData, 'penalty4_teamTwo')
-		self.clockDict['shotClock']=clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
+		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
 		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')		
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_hockeyPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_hockeyPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')		
 		self.clockList=self.clockDict.keys()
 
@@ -1387,9 +1397,9 @@ class Basketball(Game):
 		self.setGameData('playerFouls', self.gameData['playerFouls'])
 		
 		#Order of thread creation sets priority when init same class, last is highest
-		self.clockDict['shotClock']=clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
+		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
 		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.basketballPeriodClockMaxSeconds, self.gameSettings['periodClockResolution'], clockName='periodClock')
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.basketballPeriodClockMaxSeconds, self.gameSettings['periodClockResolution'], clockName='periodClock')
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')
 
 		self.clockList=self.clockDict.keys()
@@ -1455,7 +1465,7 @@ class Cricket(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_cricketPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_cricketPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)
 		self.clockList=self.clockDict.keys()
 
@@ -1471,7 +1481,7 @@ class Racetrack(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['periodClock']=clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_racetrackPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
+		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_racetrackPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
 		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)
 		self.clockList=self.clockDict.keys()
 
@@ -1498,44 +1508,3 @@ class Stat(Game):
 		self.notActiveIndex=None
 		self.activeGuestPlayerList=[]
 		self.activeHomePlayerList=[]
-
-def test():
-	'''Test function if module ran independently.
-	Prints object data with printDictsExpanded function.'''
-	print "ON"
-	sport='MPLINESCORE5'
-	game = selectSportInstance(sport)
-	time.sleep(4)
-	game.KillClockThreads()
-	while 1:
-		printDictsExpanded(game)
-
-	'''
-	print game.getPlayerData('TEAM_1', 'playerNumber', playerID='PLAYER_1', playerNumber='kk')
-	game.setPlayerData('TEAM_1', 'PLAYER_1', 'playerNumber', ' 0', places=2)
-	print game.getPlayerData('TEAM_1', 'playerNumber', playerID='PLAYER_1', playerNumber='kk')
-
-	while 1:
-		#game.homeScorePlusTen()
-		#game.homeScorePlusOne()
-		#game.guestScorePlusTen()
-		#game.guestScorePlusOne()
-
-		game.fouls_digsPlusOne()
-		printDict(game.__dict__)
-		game.getTeamData(game.home, 'foulOne')
-		raw_input('\nPress enter to choose another sport\n')
-
-		game.possession()
-		#printDict(game.__dict__)
-		#raw_input('\nPress enter to choose another sport\n')
-
-	#attrs = vars(game)
-	#print ''.join("%s: %s\n" % item for item in attrs.items())
-	'''
-
-if __name__ == '__main__':
-	os.chdir('..') 
-	'''Added this for csvOneRowRead to work with this structure, 
-	add this line for each level below project root'''
-	test()

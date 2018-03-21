@@ -1267,7 +1267,7 @@ class Address_Mapping(object):
 				#and checkGuestDict.viewitems() <= self.game.teamsDict[self.game.guest].teamData.viewitems():
 
 					#Change sport							
-					from Config import Config
+					from config_default_settings import Config
 					c=Config()							
 					c.writeSport(sport)
 					
@@ -1765,5 +1765,5 @@ def test():
 
 if __name__ == '__main__':
 	# from serial_packet_Class import Serial_Packet
-	from Config import Config
+	from config_default_settings import Config
 	test()

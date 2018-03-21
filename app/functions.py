@@ -21,7 +21,7 @@ if _platform == "linux" or _platform == "linux2":
 	except:
 		pass
 
-sportList = [
+SPORT_LIST = [
 	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5', 
 	'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1', 'MMFOOTBALL4',
 	'MPBASKETBALL1', 'MPSOCCER_LX1-soccer', 'MPSOCCER_LX1-football', 'MPSOCCER1', 'MPHOCKEY_LX1', 'MPHOCKEY1',
@@ -171,53 +171,53 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 	"""
 	Returns an object from the *Game* module based on the sport passed.
 	"""
-	from Config import Config
-	c = Config()
+	import config_default_settings
+	c = config_default_settings.Config()
 	if sport == 'MPMULTISPORT1-baseball' and MPLX3450Flag:
 		sport = 'MPLX3450-baseball'
 	elif sport == 'MPMULTISPORT1-football' and MPLX3450Flag:
 		sport = 'MPLX3450-football'
 	c.writeSport(sport)
 
-	choice = sportList.index(sport)+1
+	choice = SPORT_LIST.index(sport) + 1
 
 	# 'MMBASEBALL3'#'MPBASEBALL1'#'MMBASEBALL4'
 	# 'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
 	# 'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
 	if (1 <= choice <= 8) or choice == 20:
-		from game.Game import Baseball
+		from game.game import Baseball
 		game = Baseball(numberOfTeams)
 
 	# 'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
 	# 'MPSOCCER_LX1-football'#'MPLX3450-football'
 	elif (9 <= choice <= 11) or choice == 14 or choice == 21:
-		from game.Game import Football
+		from game.game import Football
 		game = Football(numberOfTeams)
 
 	elif choice == 12:  # 'MPBASKETBALL1'
-		from game.Game import Basketball
+		from game.game import Basketball
 		game = Basketball(numberOfTeams)
 
 	elif choice == 13 or choice == 15:  # 'MPSOCCER_LX1-soccer'#'MPSOCCER1'
-		from game.Game import Soccer
+		from game.game import Soccer
 		game = Soccer(numberOfTeams)
 
 	elif choice == 16 or choice == 17:  # 'MPHOCKEY_LX1'#'MPHOCKEY1'
-		from game.Game import Hockey
+		from game.game import Hockey
 		game = Hockey(numberOfTeams)
 
 	elif choice == 18:  # 'MPCRICKET1'
-		from game.Game import Cricket
+		from game.game import Cricket
 		game = Cricket(numberOfTeams)
 
 	elif choice == 19:  # 'MPRACETRACK1'
-		from game.Game import Racetrack
+		from game.game import Racetrack
 		game = Racetrack(numberOfTeams)
 	elif choice == 23:  # 'STAT'
-		from game.Game import Stat
+		from game.game import Stat
 		game = Stat(numberOfTeams)
 	elif choice == 22:  # 'GENERIC'
-		from game.Game import Game
+		from game.game import Game
 		game = Game(numberOfTeams)
 	return game
 
@@ -226,8 +226,8 @@ def readConfig():
 	"""
 	Returns a dictionary of the userConfig file.
 	"""
-	from Config import Config
-	c = Config(write=False, fileType='user')
+	import config_default_settings
+	c = config_default_settings.Config(write=False, fileType='user')
 	return c.getDict()
 
 
@@ -235,8 +235,9 @@ def readGameDefaultSettings():
 	"""
 	Returns a dictionary of the gameUserSettings file.
 	"""
-	from app.game.GameDefaultSettings import GameDefaultSettings
-	g = GameDefaultSettings(write=False, fileType='user')  # All values and keys are in string format
+	import app.game.game_default_settings
+	g = app.game.game_default_settings.GameDefaultSettings(
+		write=False, fileType='user')  # All values and keys are in string format
 	return g.getDict()
 
 
@@ -244,8 +245,9 @@ def readSegmentTimerSettings():
 	"""
 	Returns a dictionary of the segmentTimerUserSettings file.
 	"""
-	from app.game.SegmentTimerDefaultSettings import SegmentTimerSettings
-	g = SegmentTimerSettings(write=False, fileType='user')  # All values and keys are in string format
+	import app.game.segment_timer_default_settings
+	g = app.game.segment_timer_default_settings.SegmentTimerSettings(
+		write=False, fileType='user')  # All values and keys are in string format
 	return g.getDict()
 
 
@@ -637,6 +639,8 @@ def printDictsExpanded(Dict, PrintDict=True):
 def csvOneRowRead(fileName):
 	"""
 	Creates a dictionary from the csv data with only 1 row of keys and 1 row of values.
+
+	..warning: Path to fileName must be from app folder.
 	"""
 	fileMode='r' #read
 	binaryFile='b'
@@ -785,19 +789,20 @@ def fontTrim(fontList, shift=True, displayHeight=9):
 			fontList[x]=element>>2
 	return fontList
 
+
 def saveObject2File(dictionary, dictionaryName):
-	from configobj import ConfigObj
+	import app.configobj
 	try:
-		configObj = ConfigObj(dictionaryName)
+		configObj = app.configobj.ConfigObj(dictionaryName)
 		silentremove(dictionaryName)
 	except:
-		raise
 		print 'Object does not exist!'
+		raise
 
 	try:
 		configObj.clear()
 		configObj.update(dictionary)
 		configObj.write()
 	except:
-		raise
 		print 'Saving Object Failed!'
+		raise
