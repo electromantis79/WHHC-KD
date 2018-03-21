@@ -304,11 +304,6 @@ class Console(object):
 
 					# Clear buffered MP words
 					self.s.receiveList = []
-					
-					# Should never have to do this hopefully
-					if self.s.bufferSize > 100:
-						self.s.flushInput()
-						print 'Serial Input Buffer Cleared'
 
 					# Reset sport
 					if (

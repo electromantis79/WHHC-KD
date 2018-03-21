@@ -2,145 +2,150 @@
 # # -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 100%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
-    This module handles MP style communication on the native serial ports Biotch.
+    This module handles MP style communication on the native serial ports.
 
     :Created Date: 3/16/2015
-    :Modified Date: 10/24/2016
     :Author: **Craig Gunter**
 
 """
-from time import sleep
 
-from app.functions import *
 from app.serial_IO.serial_packet_Class import Serial_Packet
-from app.serial_IO.Platform import *
+import app.serial_IO.Platform
+
 
 class MP_Serial_Handler(object):
-	'''Creates a serial port object.'''
-	def __init__(self, timeout=0, serialInputType='MP', verbose=False, game=None):
-		self.serialInputType=serialInputType
-		self.verbose=verbose
-		self.game=game
-		PLATFORM=platform_detect()
+	"""Creates a serial port object."""
 
-		if PLATFORM==2:
-			import Adafruit_BBIO.GPIO as GPIO
+	def __init__(self, timeout=0, serialInputType='MP', verboseFlag=False, game=None):
+		self.serialInputType = serialInputType
+		self.verboseFlag = verboseFlag
+		self.game = game
+
+		# Variables
+		self.receiveList = []
+		self.packet = ''
+		self.ETNpacketList = []
+
+		# Prepare for ETN packet inspection
+		self.sp = Serial_Packet()
+		self.sp.ETNFlag = False
+		self.sp.game = self.game
+		self.sp.decodePacket = 'from serial ETN check'
+		self.sp.MPserial = True
+
+		# Mulit-platform support
+		PLATFORM = app.serial_IO.Platform.platform_detect()
+		if PLATFORM == 2:
 			import Adafruit_BBIO.UART as UART
 			import serial
 			UART.setup('UART1')
-			portName='/dev/ttyO1'
-		elif PLATFORM==1:
-			import RPi.GPIO as GPIO
+			portName = '/dev/ttyO1'
+		elif PLATFORM == 1:
 			import serial
-			portName='/dev/ttyS0'
+			portName = '/dev/ttyS0'
 		else:
-			self.ser="Don't work on windows yet"
-			print self.ser
-			return
-			
-		if self.serialInputType=='MP':
-			self.previousLowByte=None
-			self.maxBytes=10
-			self.bufferSize=0
-		elif self.serialInputType=='ASCII':
-			timeout=0.008
-			self.maxBytes=1024
-			self.bufferSize=0
-			
-		print 'portName', portName
-		self.ser = serial.Serial(port = portName, baudrate=38400, bytesize=8, timeout=timeout)
+			print ("Don't work on windows yet")
+			return  # Needed to skip the rest of __init__
+
+		# Select input type
+		if self.serialInputType == 'MP':
+			self.previousLowByte = None
+			self.maxBytes = 10
+		elif self.serialInputType == 'ASCII':
+			timeout = 0.008
+			self.maxBytes = 1024
+
+		# Setup serial port
+		print ('portName', portName)
+		self.ser = serial.Serial(port=portName, baudrate=38400, bytesize=8, timeout=timeout)
+
+		# TODO: Do I need these 3 lines?
 		self.ser.close()
 		self.ser.open()
-		self.receiveList=[]
-		self.packet=''
-		self.ETNpacketList=[]
-		self.sp=Serial_Packet()
-		self.sp.ETNFlag=False
-		self.sp.game=self.game
-		self.sp.decodePacket='from serial ETN check'
-		self.sp.MPserial=True
-
 		self.ser.flushInput()
 
-	def serialInput(self):
-		if self.serialInputType=='MP':
-			'''Handles serial input.'''
+	# PUBLIC methods
 
-			#verbose(['---- self.previousLowByte', self.previousLowByte], self.verbose)
+	def serialInput(self):
+		if self.serialInputType == 'MP':
+			"""Handles serial input."""
+
+			if self.verboseFlag:
+				print ('---- self.previousLowByte', self.previousLowByte)
 			try:
 				
 				data_out = bytearray(self.ser.read(1))
-				
-				#verbose(['data_out', data_out], self.verbose)
+
+				if self.verboseFlag:
+					print ('data_out', data_out)
 				for x, byte in enumerate(data_out):
-					if byte>127:
-						byteType='high'	
+					if byte > 127:
+						byteType = 'high'
 						if self.previousLowByte is not None:
-							word=(self.previousLowByte<<8)+byte
+							word = (self.previousLowByte << 8)+byte
 							self.receiveList.append(word)
 					else:
-						byteType='low'
-						self.previousLowByte=byte
-					#verbose([byte], self.verbose)
-				#verbose([byteType, byte], self.verbose)
-				#verbose(['self.receiveList', self.receiveList], self.verbose)
-				#self.ser.close()
-				#self.bufferSize=self.ser.inWaiting()
-				#if self.ser.inWaiting():
-					#verbose([ self.ser.inWaiting(), 'bytes in buffer'], self.verbose)
-				
-				
+						byteType = 'low'
+						self.previousLowByte = byte
+					if self.verboseFlag:
+						print (byte)
+
+				if self.verboseFlag and data_out:
+					print (byteType, byte)
+					print ('self.receiveList', self.receiveList)
+					if self.ser.inWaiting():
+						print (self.ser.inWaiting(), 'bytes in buffer')
+
 			except:
-				print 'ERROR serialInput function'#pass	
-			#verbose(['---'], self.verbose)	
+				print ('ERROR serialInput function')
+
+			if self.verboseFlag:
+				print ('---')
 				
-		elif self.serialInputType=='ASCII':
-			#print 'ASCII'
+		elif self.serialInputType == 'ASCII':
+			if self.verboseFlag:
+				print ('ASCII')
 			try:
 				self.packet = self.ser.read(self.maxBytes)
-				string=''
+				string = ''
 				self.sp.versionIDByte(string, packet=self.packet, lengthCheck=1)
 				if self.sp.ETNFlag:
-					self.sp.ETNFlag=False
+					self.sp.ETNFlag = False
 					self.ETNpacketList.append(self.packet)
-				if len(self.ETNpacketList)>0:
-					pass#print '-----len(self.ETNpacketList', len(self.ETNpacketList)
+				if self.verboseFlag and len(self.ETNpacketList) > 0:
+					print ('-----len(self.ETNpacketList', len(self.ETNpacketList))
 			except:
-				print 'ERROR serialInput function'
-			#print self.packet
-
+				print ('ERROR serialInput function')
+			if self.verboseFlag:
+				print (self.packet)
 
 	def serialOutput(self, data):
-		'''Handles serial output.'''
+		"""Handles serial output."""
 		data_in = data
-		#print data
 		try:
 			self.ser.write(data_in)
 		except:
-			print 'ERROR serial output function'
+			print ('ERROR serial output function')
 
-	def flushInput(self):
-		print 'self.bufferSize', self.bufferSize
-		self.ser.flushInput()
-		self.receiveList=[]
+# TODO: clean this function and create real test functions
 
+	"""
 def test():
 	'''Test function if module ran independently.
 	Called in a thread every serialInputRefreshFrequency.
 	'''
-	tic=time.time()
-	count=0
-	byte=s.ser.inWaiting()
+	tic = time.time()
+	count = 0
+	byte = s.ser.inWaiting()
 	if byte:
-		count+=1
-	ElapseTime=elapseTime(s.serialInput, On=False)
-	toc=time.time()
-	elaps=toc-tic
-	#print 'Test', byte, elaps, (tic-1446587172)
+		count += 1
+	elapseTime(s.serialInput, On=False)
+	toc = time.time()
+	elaps = toc-tic
+	print 'Test', byte, elaps, (tic-1446587172)
 
 
 if __name__ == '__main__':
@@ -150,9 +155,9 @@ if __name__ == '__main__':
 	
 	from app.MP_Data_Handler import MP_Data_Handler
 	s = MP_Serial_Handler(verbose=False)
-	mp=MP_Data_Handler()
-	serialInputRefreshFrequency=.001
-	refresherSerialInput=Thread(target=threadTimer, args=(test,serialInputRefreshFrequency))
+	mp = MP_Data_Handler()
+	serialInputRefreshFrequency = .001
+	refresherSerialInput = Thread(target=threadTimer, args=(test, serialInputRefreshFrequency))
 	#refresherSerialInput.daemon=True
 	verbose(['\nSerial Input On'], 1)
 	refresherSerialInput.start()
@@ -164,7 +169,8 @@ if __name__ == '__main__':
 		sleep(2)
 	for words in s.receiveList:
 		group, bank, word, I_Bit, numericData = mp.Decode(words)
-		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.GBW_to_MP_Address(group, bank, word)+1, 'I_Bit', I_Bit, 'data', bin(numericData), bin(words)
+		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.GBW_to_MP_Address(
+			group, bank, word)+1, 'I_Bit', I_Bit, 'data', bin(numericData), bin(words)
 	'''
 	try:
 		s.ser.close()
@@ -172,3 +178,5 @@ if __name__ == '__main__':
 		print 'ERROR close'
 	'''
 	print 'DONE'
+	
+	"""
