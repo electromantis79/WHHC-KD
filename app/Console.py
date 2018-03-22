@@ -21,7 +21,7 @@ from threading import Thread
 from functions import *
 from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
-import serial_IO.serial_packet_Class
+import serial_IO.serial_packet
 
 
 class Console(object):
@@ -105,7 +105,7 @@ class Console(object):
 		self.broadcastString = ''
 		self.showOutputString = False
 
-		self.sp = serial_IO.serial_packet_Class.Serial_Packet(self.game)
+		self.sp = serial_IO.serial_packet.SerialPacket(self.game)
 		self.serialInputRefreshFrequency = 0.004
 		self.serialOutputRefreshFrequency = .1
 		self.checkEventsRefreshFrequency = self.game.gameSettings['periodClockResolution']
@@ -245,11 +245,11 @@ class Console(object):
 				if self.addrMap.quantumETNTunnelProcessed:
 					self.addrMap.quantumETNTunnelProcessed = False
 					ETNFlag = True
-					self.game, self.serialString = self.sp.encodePacket(printString=True, ETNFlag=ETNFlag, packet=packet)
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
 				else:
 					ETNFlag = False
 				
-					self.game, self.serialString = self.sp.encodePacket(printString=True, ETNFlag=ETNFlag, packet=packet)
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
 
 		try:
 			self.s.serialOutput(self.serialString)
@@ -288,8 +288,7 @@ class Console(object):
 						self.s.ETNpacketList.pop(0)
 					else:
 						packet = self.s.packet
-					self.game, encodePacket = self.sp.encodePacket(printString=False, packet=packet)
-					# print 'encodePacket', encodePacket
+					self.sp.encode_packet(print_string=False, packet=packet)
 				elif self.serialInputType == 'MP':
 					# This area is called 10X faster than normal else area
 					
