@@ -21,7 +21,7 @@ from threading import Thread
 from functions import *
 from Keypad_Mapping import Keypad_Mapping
 from Address_Mapping import *
-from serial_IO.serial_packet_Class import Serial_Packet
+import serial_IO.serial_packet
 
 
 class Console(object):
@@ -105,7 +105,7 @@ class Console(object):
 		self.broadcastString = ''
 		self.showOutputString = False
 
-		self.sp = Serial_Packet()
+		self.sp = serial_IO.serial_packet.SerialPacket(self.game)
 		self.serialInputRefreshFrequency = 0.004
 		self.serialOutputRefreshFrequency = .1
 		self.checkEventsRefreshFrequency = self.game.gameSettings['periodClockResolution']
@@ -126,8 +126,8 @@ class Console(object):
 			print 'Platform is', _platform
 			if self.serialInputFlag and not internalReset:
 				verbose(['\nSerial Input On'], self.verbose)
-				from serial_IO.MP_Serial import MP_Serial_Handler
-				self.s = MP_Serial_Handler(serialInputType=self.serialInputType, game=self.game)
+				import serial_IO.mp_serial
+				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
 				if self.serialInputType == 'ASCII':
 					self.serialInputRefreshFrequency = .1
 				self.refresherSerialInput = Thread(target=threadTimer, args=(self.serialInput, self.serialInputRefreshFrequency))
@@ -223,7 +223,7 @@ class Console(object):
 		"""Inputs serial packets."""
 		# tic = time.time()
 		# print 'serial Input', (tic-self.initTime)
-		self.s.serialInput()
+		self.s.serial_input()
 		# toc = time.time()
 		# print toc-tic
 
@@ -245,16 +245,14 @@ class Console(object):
 				if self.addrMap.quantumETNTunnelProcessed:
 					self.addrMap.quantumETNTunnelProcessed = False
 					ETNFlag = True
-					self.game, self.serialString = self.sp.encodePacket(
-						self.game, printString=True, ETNFlag=ETNFlag, packet=packet)
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
 				else:
 					ETNFlag = False
 				
-					self.game, self.serialString = self.sp.encodePacket(
-						self.game, printString=True, ETNFlag=ETNFlag, packet=packet)
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
 
 		try:
-			self.s.serialOutput(self.serialString)
+			self.s.serial_output(self.serialString)
 			if self.printTimesFlag or self.verboseDiagnostic or self.ETNSendListFlag:
 				pass  # print 'Serial Output', self.serialString
 		except:
@@ -290,8 +288,7 @@ class Console(object):
 						self.s.ETNpacketList.pop(0)
 					else:
 						packet = self.s.packet
-					self.game, encodePacket = self.sp.encodePacket(self.game, printString=False, packet=packet)
-					# print 'encodePacket', encodePacket
+					self.sp.encode_packet(print_string=False, packet=packet)
 				elif self.serialInputType == 'MP':
 					# This area is called 10X faster than normal else area
 					
@@ -304,11 +301,6 @@ class Console(object):
 
 					# Clear buffered MP words
 					self.s.receiveList = []
-					
-					# Should never have to do this hopefully
-					if self.s.bufferSize > 100:
-						self.s.flushInput()
-						print 'Serial Input Buffer Cleared'
 
 					# Reset sport
 					if (

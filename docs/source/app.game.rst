@@ -1,61 +1,62 @@
 app.game package
-=====================
+================
 
 Submodules
 ----------
 
-app.game.Game module
--------------------------
 
-.. automodule:: app.game.Game
+app.game.game module
+--------------------
+
+.. automodule:: app.game.game
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.game.GameDefaultSettings module
-----------------------------------------
+app.game.team module
+--------------------
 
-.. automodule:: app.game.GameDefaultSettings
+.. automodule:: app.game.team
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.game.Player module
----------------------------
+app.game.player module
+----------------------
 
-.. automodule:: app.game.Player
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.game.SegmentTimerDefaultSettings module
-------------------------------------------------
-
-.. automodule:: app.game.SegmentTimerDefaultSettings
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.game.Team module
--------------------------
-
-.. automodule:: app.game.Team
+.. automodule:: app.game.player
     :members:
     :undoc-members:
     :show-inheritance:
 
 app.game.clock module
---------------------------
+---------------------
 
 .. automodule:: app.game.clock
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.game.option_jumpers_class module
------------------------------------------
+app.game.option_jumpers module
+------------------------------
 
-.. automodule:: app.game.option_jumpers_class
+.. automodule:: app.game.option_jumpers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+app.game.game_default_settings module
+-------------------------------------
+
+.. automodule:: app.game.game_default_settings
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+app.game.segment_timer_default_settings module
+----------------------------------------------
+
+.. automodule:: app.game.segment_timer_default_settings
     :members:
     :undoc-members:
     :show-inheritance:

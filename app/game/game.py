@@ -8,7 +8,7 @@
     This module holds the game data for all sports.
 
     :Created Date: 3/12/2015
-   :Author: **Craig Gunter**
+    :Author: **Craig Gunter**
 
 """
 
