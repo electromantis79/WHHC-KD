@@ -12,10 +12,10 @@ Subpackages
 Submodules
 ----------
 
-app.Address_Mapping module
+app.address_mapping module
 --------------------------
 
-.. automodule:: app.Address_Mapping
+.. automodule:: app.address_mapping
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,26 +28,26 @@ app.config_default_settings module
     :undoc-members:
     :show-inheritance:
 
-app.Console module
+app.console module
 ------------------
 
-.. automodule:: app.Console
+.. automodule:: app.console
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.Keypad_Mapping module
+app.keypad_mapping module
 -------------------------
 
-.. automodule:: app.Keypad_Mapping
+.. automodule:: app.keypad_mapping
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.MpDataHandler module
+app.mp_data_handler module
 --------------------------
 
-.. automodule:: app.MpDataHandler
+.. automodule:: app.mp_data_handler
     :members:
     :undoc-members:
     :show-inheritance:

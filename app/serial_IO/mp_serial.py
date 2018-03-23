@@ -169,7 +169,7 @@ if __name__ == '__main__':
 		sleep(2)
 	for words in s.receiveList:
 		group, bank, word, I_Bit, numericData = mp.Decode(words)
-		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.GBW_to_MP_Address(
+		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.gbw_to_mp_address(
 			group, bank, word)+1, 'I_Bit', I_Bit, 'data', bin(numericData), bin(words)
 	'''
 	try:

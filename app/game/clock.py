@@ -10,9 +10,8 @@
     :Author: **Craig Gunter**
 """
 
-import time, threading, os
+import threading
 
-from threading import Thread
 from sys import platform as _platform
 
 from app.functions import *
@@ -298,10 +297,10 @@ class clock(object):
 		self.refresher.kill()
 
 
-class clockThread(Thread):
+class clockThread(threading.Thread):
 	"""Pausable thread for clock"""
 	def __init__(self, function, period, name='Generic'):
-		Thread.__init__(self)
+		threading.Thread.__init__(self)
 		self.function = function
 		self.period = period
 		self.clockName = name

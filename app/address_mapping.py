@@ -14,10 +14,10 @@
 """
 
 import functions
-from mp_data_handler import MpDataHandler
+import app.mp_data_handler
 
 
-class Address_Mapping(object):
+class AddressMapping(object):
 	"""
 
 	**Initialization**
@@ -30,11 +30,11 @@ class Address_Mapping(object):
 
 		  **Word** in this context is one packet of information a driver needs to update a single header
 
-			===========  ===========
+			======================
 			High Byte    Low Byte
-			===========  ===========
+			======================
 			1GBBWWIH     0GFEDCBA
-			===========  ===========
+			======================
 
 			G = Group, B = Bank, W = Word (Different than the word mentioned above)
 
@@ -47,78 +47,78 @@ class Address_Mapping(object):
 	"""
 
 	def __init__(self, sportType='Generic', game=None):
-		self.sportType=sportType
+		self.sportType = sportType
 		if game is not None:
-			self.game=game
+			self.game = game
 
-		#Variables and Dictionaries
-		self.verbose=False
-		self.verboseTunnel=False
-		self.rssi=0
-		self.rssiFlag=False
-		self.tenthsTransitionFlag=False
-		self.multisportChangeSportFlag=False
-		self.multisportChangeSportCount=0
-		self.brightness=100
-		self.quantumDimmingTunnel=0
-		self.quantumETNTunnel=0
-		self.fontJustifyControl=0
-		self.leftETNByte=0
-		self.rightETNByte=0
-		self.quantumETNTunnelTeam=''
-		self.addressPair=1
-		self.quantumETNTunnelProcessed=False
-		self.wordListAddrStat = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
-		self.tempClockDict={}
+		# Variables and Dictionaries
+		self.verbose = False
+		self.verboseTunnel = False
+		self.rssi = 0
+		self.rssiFlag = False
+		self.tenthsTransitionFlag = False
+		self.multisportChangeSportFlag = False
+		self.multisportChangeSportCount = 0
+		self.brightness = 100
+		self.quantumDimmingTunnel = 0
+		self.quantumETNTunnel = 0
+		self.fontJustifyControl = 0
+		self.leftETNByte = 0
+		self.rightETNByte = 0
+		self.quantumETNTunnelTeam = ''
+		self.addressPair = 1
+		self.quantumETNTunnelProcessed = False
+		self.wordListAddrStat = [
+			1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
+		self.tempClockDict = {}
 		
-		if self.sportType=='stat':
-			self.statFlag=True
-			#self.wordListAddr = range(1,65)
+		if self.sportType == 'stat':
+			self.statFlag = True
 			self.wordListAddr = self.wordListAddrStat
 		else:
-			self.statFlag=False
-			self.wordListAddr = range(1,33)
+			self.statFlag = False
+			self.wordListAddr = range(1, 33)
 
-		self.mp = MpDataHandler()
+		self.mp = app.mp_data_handler.MpDataHandler()
 		self.wordsDict = dict.fromkeys(self.wordListAddr, 0)
-		self._blankMap()
+		self._blank_map()
 
-		self.configDict=functions.readConfig()
-		self.sport=self.configDict['sport']
+		self.configDict = functions.readConfig()
+		self.sport = self.configDict['sport']
 
-		self.addressMapDict={}
+		self.addressMapDict = {}
 		self.fullAddressMapDict = functions.readAddressMap(self.sport, self.sportType, self.wordListAddr)
 		self._buildAddrMap()
 		
-		self.periodClockUnMapKeysList=['hoursUnits', 'minutesTens', \
-		'minutesUnits', 'secondsTens', 'secondsUnits', 'tenthsUnits', \
-		'hundredthsUnit', 'colonIndicator']
-		self.periodClockUnMapDict=dict.fromkeys(self.periodClockUnMapKeysList)
+		self.periodClockUnMapKeysList = [
+			'hoursUnits', 'minutesTens', 'minutesUnits', 'secondsTens', 'secondsUnits', 'tenthsUnits',
+			'hundredthsUnit', 'colonIndicator']
+		self.periodClockUnMapDict = dict.fromkeys(self.periodClockUnMapKeysList)
 
-	#Startup methods
-	def _blankMap(self):
+	# Startup methods
+	def _blank_map(self):
 		"""Build blank MP wordsDict"""
 		if self.statFlag:
 			for k in range(2):
 				for i in range(2):
 					for j in range(4):
-						self.wordsDict[((i*4+j)*4+1)+k*32] = self.mp.Encode(i+1, j+1, 1, k, 0, 0x0, 0x0, 'AlwaysHighLow', 0, True)
-						self.wordsDict[((i*4+j)*4+2)+k*32] = self.mp.Encode(i+1, j+1, 2, k, 0, 0x0, 0x0, 'AlwaysHighLow', 0, True)
-						self.wordsDict[((i*4+j)*4+3)+k*32] = self.mp.Encode(i+1, j+1, 3, k, 0, 0x0, 0x0, 'AlwaysHighLow', 0, True)
-						self.wordsDict[((i*4+j)*4+4)+k*32] = self.mp.Encode(i+1, j+1, 4, k, 0, 0, 0, 'AlwaysHighLow', 0)
+						self.wordsDict[((i*4+j)*4+1)+k*32] = self.mp.encode(i + 1, j + 1, 1, k, 0, 0x0, 0x0, 'AlwaysHighLow', 0, True)
+						self.wordsDict[((i*4+j)*4+2)+k*32] = self.mp.encode(i + 1, j + 1, 2, k, 0, 0x0, 0x0, 'AlwaysHighLow', 0, True)
+						self.wordsDict[((i*4+j)*4+3)+k*32] = self.mp.encode(i + 1, j + 1, 3, k, 0, 0x0, 0x0, 'AlwaysHighLow', 0, True)
+						self.wordsDict[((i*4+j)*4+4)+k*32] = self.mp.encode(i + 1, j + 1, 4, k, 0, 0, 0, 'AlwaysHighLow', 0)
 		else:
 			for i in range(2):
 				for j in range(4):
-					self.wordsDict[(i*4+j)*4+1] = self.mp.Encode(i+1, j+1, 1, 0, 0, 0x0, 0x0, 'AlwaysHighLow', 0)
-					self.wordsDict[(i*4+j)*4+2] = self.mp.Encode(i+1, j+1, 2, 0, 0, 0x0, 0x0, 'AlwaysHighLow', 0)
-					self.wordsDict[(i*4+j)*4+3] = self.mp.Encode(i+1, j+1, 3, 0, 0, 0, 0, 'AlwaysHighLow', 0)
-					self.wordsDict[(i*4+j)*4+4] = self.mp.Encode(i+1, j+1, 4, 1, 0, 0, 0, 'AlwaysHighLow', 0)
+					self.wordsDict[(i*4+j)*4+1] = self.mp.encode(i + 1, j + 1, 1, 0, 0, 0x0, 0x0, 'AlwaysHighLow', 0)
+					self.wordsDict[(i*4+j)*4+2] = self.mp.encode(i + 1, j + 1, 2, 0, 0, 0x0, 0x0, 'AlwaysHighLow', 0)
+					self.wordsDict[(i*4+j)*4+3] = self.mp.encode(i + 1, j + 1, 3, 0, 0, 0, 0, 'AlwaysHighLow', 0)
+					self.wordsDict[(i*4+j)*4+4] = self.mp.encode(i + 1, j + 1, 4, 1, 0, 0, 0, 'AlwaysHighLow', 0)
 
 	def _buildAddrMap(self):
 		"""Build an address map with the current state of flag selected alternates."""
 		for address in self.wordListAddr:
 			try:
-				self.addressMapDict[address]=self.fullAddressMapDict[address][1]
+				self.addressMapDict[address] = self.fullAddressMapDict[address][1]
 			except:
 				print 'Error', address, self.addressMapDict
 
@@ -128,7 +128,7 @@ class Address_Mapping(object):
 
 	def setGame(self, game):
 		# PUBLIC method
-		self.game=game
+		self.game = game
 
 	def Map(self):
 		# PUBLIC method
@@ -137,9 +137,9 @@ class Address_Mapping(object):
 
 		The _adjustAllBanks chain::
 
-			_adjustAllBanks first calls _updateAddrWords
-			_updateAddrWords calls _loadFromAddDict
-			_loadFromAddDict calls mp.Encode
+			_adjustAllBanks first calls _update_addr_words
+			_update_addr_words calls _loadFromAddDict
+			_loadFromAddDict calls mp.encode
 				wordsDict up to date
 		"""
 		self._adjustAllBanks()
@@ -156,224 +156,227 @@ class Address_Mapping(object):
 		"""
 
 		functions.verbose('\n-------_adjustAllBanks-------\n', self.verbose)
-		Alts = []
+		alts = []
+		under_minute = False
 
-		#Freeze clock data
-		if self.game.clockDict.has_key('periodClock'):
+		# Freeze clock data
+		if 'periodClock' in self.game.clockDict:
 			
 			self.tempClockDict.clear()
 			for clocks in self.game.clockDict.keys():
-				self.tempClockDict[clocks]=dict(self.game.clockDict[clocks].timeUnitsDict)
+				self.tempClockDict[clocks] = dict(self.game.clockDict[clocks].timeUnitsDict)
 
-			if self.tempClockDict['periodClock']['daysTens']==0 and self.tempClockDict['periodClock']['daysUnits']==0 and \
-			self.tempClockDict['periodClock']['hoursTens']==0 and self.tempClockDict['periodClock']['hoursUnits']==0 and \
-			self.tempClockDict['periodClock']['minutesTens']==0 and self.tempClockDict['periodClock']['minutesUnits']==0 and \
-			self.tempClockDict['periodClock']['secondsTens']<6:
-				underMinute = True
-			else:
-				underMinute = False
-			#print 'underMinute', underMinute, 'periodClockTenthsFlag', self.game.gameSettings['periodClockTenthsFlag']
+			if (
+					self.tempClockDict['periodClock']['daysTens'] == 0
+					and self.tempClockDict['periodClock']['daysUnits'] == 0
+					and self.tempClockDict['periodClock']['hoursTens'] == 0
+					and self.tempClockDict['periodClock']['hoursUnits'] == 0
+					and self.tempClockDict['periodClock']['minutesTens'] == 0
+					and self.tempClockDict['periodClock']['minutesUnits'] == 0
+					and self.tempClockDict['periodClock']['secondsTens'] < 6
+			):
+				under_minute = True
 
-		#Check for any flag changes
-		if self.game.sport=='MPBASEBALL1' or self.game.sport=='MMBASEBALL3':
-			if underMinute:
+		# Check for any flag changes
+		if self.game.sport == 'MPBASEBALL1' or self.game.sport == 'MMBASEBALL3':
+			if under_minute:
 				if self.game.gameSettings['2D_Clock']:
-					Alts=self._formatALTS(Alts, [2,21], 2)
+					alts = self._format_alts(alts, [2, 21], 2)
 			else:
 				if self.game.gameSettings['2D_Clock']:
-					Alts=self._formatALTS(Alts, [1,2,21,22], 2)
+					alts = self._format_alts(alts, [1, 2, 21, 22], 2)
 			if self.game.gameSettings['hoursFlagJumper'] and self.game.gameSettings['2D_Clock']:
-				Alts=self._formatALTS(Alts, [3,23], 2)
+				alts = self._format_alts(alts, [3, 23], 2)
 			if self.game.gameSettings['scoreTo19Flag']:
-				Alts=self._formatALTS(Alts, [5,6,7,8,9,10,11,12,25,26,27,28], 2)
+				alts = self._format_alts(alts, [5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28], 2)
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [1,2,21,22], 4)
+				alts = self._format_alts(alts, [1, 2, 21, 22], 4)
 
-		elif self.game.sport=='MPLINESCORE5':
-			if self.game.gameSettings['clock_3D_or_less_Flag'] and not underMinute:
-				Alts=self._formatALTS(Alts, [23], 2)
+		elif self.game.sport == 'MPLINESCORE5':
+			if self.game.gameSettings['clock_3D_or_less_Flag'] and not under_minute:
+				alts = self._format_alts(alts, [23], 2)
 				
 			if self.game.gameSettings['doublePitchCountFlag'] and self.game.gameSettings['pitchSpeedFlag']:
-				Alts=self._formatALTS(Alts, [5,14,15,16,31,32], 2)
+				alts = self._format_alts(alts, [5, 14, 15, 16, 31, 32], 2)
 			elif self.game.gameSettings['doublePitchCountFlag']:
-				Alts=self._formatALTS(Alts, [14,15,16,31,32], 2)
+				alts = self._format_alts(alts, [14, 15, 16, 31, 32], 2)
 			elif self.game.gameSettings['pitchSpeedFlag']:
-				Alts=self._formatALTS(Alts, [31,32], 3)
-				Alts=self._formatALTS(Alts, [5], 2)
+				alts = self._format_alts(alts, [31, 32], 3)
+				alts = self._format_alts(alts, [5], 2)
 				
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [21,22], 4)
-			elif underMinute and self.game.gameSettings['periodClockTenthsFlag']:
-				Alts=self._formatALTS(Alts, [21,22], 2)
+				alts = self._format_alts(alts, [21, 22], 4)
+			elif under_minute and self.game.gameSettings['periodClockTenthsFlag']:
+				alts = self._format_alts(alts, [21, 22], 2)
 
-		elif self.game.sport=='MPLINESCORE4':
-			if underMinute and self.game.gameSettings['periodClockTenthsFlag']:
-				Alts=self._formatALTS(Alts, [21,22], 2)
+		elif self.game.sport == 'MPLINESCORE4':
+			if under_minute and self.game.gameSettings['periodClockTenthsFlag']:
+				alts = self._format_alts(alts, [21, 22], 2)
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [21,22], 4)
+				alts = self._format_alts(alts, [21, 22], 4)
 
-		elif self.game.sport=='MPMP_15X1' or self.game.sport=='MPMP_14X1' or self.game.sport=='MMBASEBALL4':
+		elif self.game.sport == 'MPMP_15X1' or self.game.sport == 'MPMP_14X1' or self.game.sport == 'MMBASEBALL4':
 			pass
 
-		elif self.sport=='MPMULTISPORT1-football' or self.sport=='MPMULTISPORT1-baseball' or \
-		self.sport=='MPLX3450-football' or self.sport=='MPLX3450-baseball':
-			
-			if self.sport=='MPLX3450-baseball' and underMinute:
-				Alts=self._formatALTS(Alts, [1], 2)
-			if underMinute and self.game.gameSettings['periodClockTenthsFlag']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 2)
-				if self.sport=='MPLX3450-football':
-					Alts=self._formatALTS(Alts, [1,2], 2)
-			if self.game.gameSettings['clock_3D_or_less_Flag'] and (self.sport=='MPLX3450-baseball' or self.sport=='MPMULTISPORT1-baseball'):
-				Alts=self._formatALTS(Alts, [31], 2)
-				if underMinute:
-					Alts=self._formatALTS(Alts, [8], 3)
+		elif (
+				self.sport == 'MPMULTISPORT1-football' or self.sport == 'MPMULTISPORT1-baseball' or
+				self.sport == 'MPLX3450-football' or self.sport == 'MPLX3450-baseball'
+		):
+			if self.sport == 'MPLX3450-baseball' and under_minute:
+				alts = self._format_alts(alts, [1], 2)
+			if under_minute and self.game.gameSettings['periodClockTenthsFlag']:
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 2)
+				if self.sport == 'MPLX3450-football':
+					alts = self._format_alts(alts, [1, 2], 2)
+			if self.game.gameSettings['clock_3D_or_less_Flag'] and (
+					self.sport == 'MPLX3450-baseball' or self.sport == 'MPMULTISPORT1-baseball'):
+				alts = self._format_alts(alts, [31], 2)
+				if under_minute:
+					alts = self._format_alts(alts, [8], 3)
 				else:
-					Alts=self._formatALTS(Alts, [8], 5)
+					alts = self._format_alts(alts, [8], 5)
 					
-			if self.sport=='MPMULTISPORT1-football':
+			if self.sport == 'MPMULTISPORT1-football':
 				if self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
-					Alts=self._formatALTS(Alts, [6,7,8,21,22], 3)
+					alts = self._format_alts(alts, [6, 7, 8, 21, 22], 3)
 				if self.game.gameSettings['timeOfDayClockEnable']:
-					Alts=self._formatALTS(Alts, [6,7,8,21,22], 4)
+					alts = self._format_alts(alts, [6, 7, 8, 21, 22], 4)
 					
-			elif self.sport=='MPLX3450-football':
+			elif self.sport == 'MPLX3450-football':
 				if self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
-					Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 3)
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 3)
 				if self.game.gameSettings['timeOfDayClockEnable']:
-					Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 4)
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 4)
 
-					
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 4)
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 4)
 
-		elif self.game.sport=='MPFOOTBALL1':
+		elif self.game.sport == 'MPFOOTBALL1':
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 4)
+				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 4)
 			elif self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
-				Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 3)
-			elif underMinute:
+				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 3)
+			elif under_minute:
 				if not self.game.gameSettings['trackClockEnable'] and self.game.gameSettings['periodClockTenthsFlag']:
-					Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 2)
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 2)
 
-			if self.game.gameSettings['trackClockEnable']: # Just Tenths Units word 3 or 4
+			if self.game.gameSettings['trackClockEnable']:  # Just Tenths Units word 3 or 4
 				if self.game.gameSettings['periodClockTenthsFlag']:
-					Alts=self._formatALTS(Alts, [11,18], 2)
+					alts = self._format_alts(alts, [11, 18], 2)
 
-			if self.game.gameSettings['yardsToGoUnits_to_quarter']:# or 1:# This added for a range test with a 2180 WARNING
-				Alts=self._formatALTS(Alts, [23], 2)
+			if self.game.gameSettings['yardsToGoUnits_to_quarter']:  # or 1:# This added for a range test with a 2180 WARNING
+				alts = self._format_alts(alts, [23], 2)
 
-		elif self.game.sport=='MMFOOTBALL4':
-			if underMinute and self.game.gameSettings['periodClockTenthsFlag']:
-				Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 2)
+		elif self.game.sport == 'MMFOOTBALL4':
+			if under_minute and self.game.gameSettings['periodClockTenthsFlag']:
+				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 2)
 			if self.game.gameSettings['yardsToGoUnits_to_quarter']:
-				Alts=self._formatALTS(Alts, [3,23], 2)
+				alts = self._format_alts(alts, [3, 23], 2)
 
-		elif self.sport=='MPSOCCER_LX1-football' or self.sport=='MPSOCCER_LX1-soccer':
+		elif self.sport == 'MPSOCCER_LX1-football' or self.sport == 'MPSOCCER_LX1-soccer':
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 4)
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 4)
 			elif self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 3)
-			elif underMinute:
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 3)
+			elif under_minute:
 				if not self.game.gameSettings['trackClockEnable'] and self.game.gameSettings['periodClockTenthsFlag']:
-					Alts=self._formatALTS(Alts, [6,7,8,21,22], 2)
+					alts = self._format_alts(alts, [6, 7, 8, 21, 22], 2)
 
 			if self.game.gameSettings['trackClockEnable']:
 				if self.game.gameSettings['periodClockTenthsFlag']:
-					Alts=self._formatALTS(Alts, [18], 2)			
+					alts = self._format_alts(alts, [18], 2)
 
-		elif self.game.sport=='MPBASKETBALL1':
+		elif self.game.sport == 'MPBASKETBALL1':
 			if self.game.gameSettings['shotClockBlankEnable']:
-				Alts=self._formatALTS(Alts, [5], 3)
+				alts = self._format_alts(alts, [5], 3)
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 4)
+				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 4)
 			elif self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
-				Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 3)
-			elif underMinute and self.game.gameSettings['periodClockTenthsFlag']:
-				Alts=self._formatALTS(Alts, [1,2,6,7,8,21,22], 2)
+				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 3)
+			elif under_minute and self.game.gameSettings['periodClockTenthsFlag']:
+				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 2)
 
-		elif self.game.sport=='MPHOCKEY_LX1':
+		elif self.game.sport == 'MPHOCKEY_LX1':
 			if self.game.gameSettings['shotClockBlankEnable']:
-				Alts=self._formatALTS(Alts, [5], 3)
+				alts = self._format_alts(alts, [5], 3)
 			if self.game.gameSettings['timeOfDayClockEnable']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 4)
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 4)
 			elif self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 3)
-			elif underMinute and self.game.gameSettings['periodClockTenthsFlag']:
-				Alts=self._formatALTS(Alts, [6,7,8,21,22], 2)
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 3)
+			elif under_minute and self.game.gameSettings['periodClockTenthsFlag']:
+				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 2)
 
-		#Build addressMapDict with all level 1 Alts
+		# Build addressMapDict with all level 1 alts
 		self._buildAddrMap()
 
-		#Use addressMapDict to get values, format them and update the wordsDict
-		self._updateAddrWords(Alts)
+		# Use addressMapDict to get values, format them and update the wordsDict
+		self._update_addr_words(alts)
 
-	def _formatALTS(self, List, addresses, ALT):
+	@staticmethod
+	def _format_alts(list_, addresses, alt):
 		for address in addresses:
-			List.append((address, ALT))
-		return List
+			list_.append((address, alt))
+		return list_
 
-	def _updateAddrWords(self, Alts):
-		functions.verbose(['Alts', Alts], self.verbose)
-		#print self.addressMapDict
-		#print Alts
+	def _update_addr_words(self, alts):
+		functions.verbose(['alts', alts], self.verbose)
 
-		#Method for blanking others in time of day clock mode
+		# Method for blanking others in time of day clock mode
 		if self.game.gameSettings['timeOfDayClockBlankingEnable']:
 			self.addressMapDict.clear()
-			self._blankMap()
-			addressList=[]
-			for index, addressTup in enumerate(Alts):
-				if addressTup[1]!=4:
-					Alts.remove(Alts[index])
+			self._blank_map()
+			address_list = []
+			for index, addressTup in enumerate(alts):
+				if addressTup[1] != 4:
+					alts.remove(alts[index])
 				else:
-					addressList.append(addressTup[0])
+					address_list.append(addressTup[0])
 		else:
-			#Normal Operation
-			addressList=self.wordListAddr
+			# Normal Operation
+			address_list = self.wordListAddr
 
-		#Switch out alternates
-		for addressTup in Alts:
+		# Switch out alternates
+		for addressTup in alts:
 			try:
-				self.addressMapDict[addressTup[0]]=self.fullAddressMapDict[addressTup[0]][addressTup[1]]
+				self.addressMapDict[addressTup[0]] = self.fullAddressMapDict[addressTup[0]][addressTup[1]]
 			except:
-				print 'Alts', Alts , 'Not in address map'
-				#print self.addressMapDict
+				print 'alts', alts, 'Not in address map'
 
-		#Sort the players on a stat board
-		if self.statFlag:# 0 for troubleshooting ASCII 2 MP converter
-			self._sortPlayers()
+		# Sort the players on a stat board
+		if self.statFlag:  # 0 for troubleshooting ASCII 2 MP converter
+			self._sort_players()
 
-		#Use map to get correct variable, then store in the words dictionary
-		for address in addressList:
+		# Use map to get correct variable, then store in the words dictionary
+		for address in address_list:
 
-			#Fetch all data values
+			# Fetch all data values
 			group, bank, word, iBit, hBit, highNibble, lowNibble, blankType, segmentData = self._loadFromAddDict(address)
 			
-			#Replace 221 with rssi value - For testing of WHH Console
-			if group==2 and bank==2 and word==1 and self.rssiFlag:
-				highNibble=self.rssi/10
-				lowNibble=self.rssi%10
+			# Replace 221 with rssi value - For testing of WHH Console
+			if group == 2 and bank == 2 and word == 1 and self.rssiFlag:
+				highNibble = self.rssi/10
+				lowNibble = self.rssi % 10
 			
-			#Encode values into MP style word and fill wordsDict
-			self.wordsDict[address]=self.mp.Encode(group, bank, word, iBit, hBit, highNibble, lowNibble, blankType, segmentData, statFlag=self.statFlag)
+			# encode values into MP style word and fill wordsDict
+			self.wordsDict[address] = self.mp.encode(
+				group, bank, word, iBit, hBit, highNibble, lowNibble, blankType, segmentData, stat_flag=self.statFlag)
 
-	def _sortPlayers(self):
-		activePlayerList, team, teamName=functions.activePlayerListSelect(self.game)
-		activePlayerList.sort()
+	def _sort_players(self):
+		active_player_list, team, team_name = functions.activePlayerListSelect(self.game)
+		active_player_list.sort()
 
-		for x, playerNumber in enumerate(activePlayerList):
-			playerID=self.game.getPlayerData(team, 'playerNumber', playerNumber=playerNumber)
+		for x, playerNumber in enumerate(active_player_list):
+			playerID = self.game.getPlayerData(team, 'playerNumber', playerNumber=playerNumber)
 			self.game.setTeamData(team, 'player'+self.game.statNumberList[x+1], int(playerNumber), 2)
-			foul=self.game.getPlayerData(team, 'fouls', playerID=playerID)
+			foul = self.game.getPlayerData(team, 'fouls', playerID=playerID)
 			self.game.setTeamData(team, 'foul'+self.game.statNumberList[x+1], foul, 2)
-			points=self.game.getPlayerData(team, 'points', playerID=playerID)
+			points = self.game.getPlayerData(team, 'points', playerID=playerID)
 			self.game.setTeamData(team, 'points'+self.game.statNumberList[x+1], points, 2)
-		if len(activePlayerList)<self.game.maxActive:
-			for x in range((len(self.game.statNumberList)-1)-len(activePlayerList)):
-				self.game.setTeamData(team, 'player'+self.game.statNumberList[x+1+len(activePlayerList)], 255, 2)
-				self.game.setTeamData(team, 'foul'+self.game.statNumberList[x+1+len(activePlayerList)], 255, 2)
-				self.game.setTeamData(team, 'points'+self.game.statNumberList[x+1+len(activePlayerList)], 255, 2)
+		if len(active_player_list) < self.game.maxActive:
+			for x in range((len(self.game.statNumberList)-1)-len(active_player_list)):
+				self.game.setTeamData(team, 'player'+self.game.statNumberList[x+1+len(active_player_list)], 255, 2)
+				self.game.setTeamData(team, 'foul'+self.game.statNumberList[x+1+len(active_player_list)], 255, 2)
+				self.game.setTeamData(team, 'points'+self.game.statNumberList[x+1+len(active_player_list)], 255, 2)
 
 	def _loadFromAddDict(self, address): #This is the beginning of data manipulation into the MP Format!!!
 		""" Get word info, adjust it, and convert it to memory value."""
@@ -410,40 +413,40 @@ class Address_Mapping(object):
 	def _iBit_Format(self, iBit):
 		#Format data - iBit
 		team=self._teamExtract(iBit)
-		if iBit=='0'or iBit=='':
+		if iBit == '0'or iBit == '':
 			iBit=0
-		elif iBit=='1' or iBit=='active':
+		elif iBit == '1' or iBit == 'active':
 			iBit=1
-		elif iBit=='teamOneBonus2' or iBit=='teamTwoBonus2':
+		elif iBit == 'teamOneBonus2' or iBit == 'teamTwoBonus2':
 			value=self.game.getTeamData(team, 'bonus')
-			if value==2:
+			if value == 2:
 				iBit=1
 			else:
 				iBit=0
-		elif iBit[:7]=='teamTwo' or iBit[:7]=='teamOne':
+		elif iBit[:7] == 'teamTwo' or iBit[:7] == 'teamOne':
 			iBit=iBit[:7]+str.lower(iBit[7])+iBit[8:]
 			iBit=self.game.getTeamData(team, iBit[7:])
-		elif iBit[:7]=='penalty':
+		elif iBit[:7] == 'penalty':
 			timerNumber=iBit[7]
 			iBit=self._trimPenalty(iBit)
 			teamString=iBit[:7]
 			iBit=self._trimTeamName(iBit)
-			if iBit[:5]=='colon':
+			if iBit[:5] == 'colon':
 				team=self._teamExtract(teamString)
 				iBit=self.game.getTeamData(team, 'TIMER'+timerNumber+'_COLON_INDICATOR')
-		elif iBit=='outs1':
+		elif iBit == 'outs1':
 			outs=self.game.getGameData('outs')
 			if outs>=1:
 				iBit=1
 			else:
 				iBit=0
-		elif iBit=='outs2':
+		elif iBit == 'outs2':
 			outs=self.game.getGameData('outs')
 			if outs>=2:
 				iBit=1
 			else:
 				iBit=0
-		elif iBit=='quarter4':
+		elif iBit == 'quarter4':
 			quarter=self.game.getGameData('quarter')
 			if quarter>=4:
 				iBit=1
@@ -456,19 +459,19 @@ class Address_Mapping(object):
 	def _hBit_Format(self, hBit):
 		#Format data - hBit
 		team=self._teamExtract(hBit)
-		if hBit=='0'or hBit=='':
+		if hBit == '0'or hBit == '':
 			hBit=0
-		elif hBit=='1':
+		elif hBit == '1':
 			hBit=1
-		elif hBit[:7]=='teamTwo' or hBit[:7]=='teamOne':
+		elif hBit[:7] == 'teamTwo' or hBit[:7] == 'teamOne':
 			hBit=hBit[:7]+str.lower(hBit[7])+hBit[8:]
 			hBit=self.game.getTeamData(team, hBit[7:])
-		elif hBit[:7]=='penalty':
+		elif hBit[:7] == 'penalty':
 			timerNumber=hBit[7]
 			hBit=self._trimPenalty(hBit)
 			teamString=hBit[:7]
 			hBit=self._trimTeamName(hBit)
-			if hBit[:5]=='colon':
+			if hBit[:5] == 'colon':
 				team=self._teamExtract(teamString)
 				hBit=self.game.getTeamData(team, 'TIMER'+timerNumber+'_COLON_INDICATOR')
 		else:
@@ -477,9 +480,9 @@ class Address_Mapping(object):
 
 	def _teamExtract(self, value):
 		team=None
-		if value[:7]=='teamOne' or value[9:16]=='teamOne':
+		if value[:7] == 'teamOne' or value[9:16] == 'teamOne':
 			team=self.game.guest
-		elif value[:7]=='teamTwo' or value[9:16]=='teamTwo':
+		elif value[:7] == 'teamTwo' or value[9:16] == 'teamTwo':
 			team=self.game.home
 		return team
 
@@ -493,12 +496,12 @@ class Address_Mapping(object):
 		return name
 
 	def _periodClockValueCheck(self, value):
-		answer = value=='hoursUnits' or value=='tenthsUnits' or value=='minutesUnits' \
-			or value=='minutesTens'or value=='secondsUnits'or value=='secondsTens'
+		answer = value == 'hoursUnits' or value == 'tenthsUnits' or value == 'minutesUnits' \
+			or value == 'minutesTens'or value == 'secondsUnits'or value == 'secondsTens'
 		return answer
 
 	def _teamValueCheck(self, value):
-		return value[:4]=='team' or value[9:13]=='team'
+		return value[:4] == 'team' or value[9:13] == 'team'
 
 	def _gameValueCheck(self, value):
 		if self._periodClockValueCheck(value):
@@ -515,23 +518,23 @@ class Address_Mapping(object):
 		highNibbleName, lowNibbleName, blankType, word, addrWordNumber], self.verbose)
 
 		#Handle nibble blanking
-		if highNibbleName=='blank'and lowNibbleName=='blank':
+		if highNibbleName == 'blank'and lowNibbleName == 'blank':
 			highNibble=lowNibble=highNibbleName=lowNibbleName=0
 			blankType='AlwaysHighLow'
 			
-		elif highNibbleName=='blank':
+		elif highNibbleName == 'blank':
 			highNibble=highNibbleName=0
 			blankType='AlwaysHigh'
 			
-		elif lowNibbleName=='blank':
+		elif lowNibbleName == 'blank':
 			lowNibble=lowNibbleName=0
 			blankType='AlwaysLow'
 
 		#Handle rejected values
-		if highNibbleName=='' or highNibbleName=='0':
+		if highNibbleName == '' or highNibbleName == '0':
 			highNibble=highNibbleName=0
 			
-		if lowNibbleName=='' or lowNibbleName=='0':
+		if lowNibbleName == '' or lowNibbleName == '0':
 			lowNibble=lowNibbleName=0
 
 		#High nibble
@@ -542,42 +545,42 @@ class Address_Mapping(object):
 			if self._periodClockValueCheck(highNibbleName):
 				
 				#cancel blanking for this
-				LINE5andCjumper= self.game.gameData['sport']=='MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
-				BASEBALL1_3andCjumper= (self.game.gameData['sport']=='MPBASEBALL1' or self.game.gameData['sport']=='MMBASEBALL3') \
+				LINE5andCjumper= self.game.gameData['sport'] == 'MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
+				BASEBALL1_3andCjumper= (self.game.gameData['sport'] == 'MPBASEBALL1' or self.game.gameData['sport'] == 'MMBASEBALL3') \
 				and 'C' in self.game.gameData['optionJumpers']
-				MultiBBandCjumper= (self.sport=='MPMULTISPORT1-baseball' or self.sport=='MPLX3450-baseball') and 'C' in self.game.gameData['optionJumpers']
+				MultiBBandCjumper= (self.sport == 'MPMULTISPORT1-baseball' or self.sport == 'MPLX3450-baseball') and 'C' in self.game.gameData['optionJumpers']
 				if BASEBALL1_3andCjumper or LINE5andCjumper or MultiBBandCjumper or \
 				self.tempClockDict['periodClock']['hoursUnits']!=0 or self.game.gameSettings['hoursFlag'] and \
-				(highNibbleName=='minutesTens' or highNibbleName=='secondsTens'):
-					if self.game.gameData['sport']=='MPLINESCORE5' and 'C' not in self.game.gameData['optionJumpers']:
+				(highNibbleName == 'minutesTens' or highNibbleName == 'secondsTens'):
+					if self.game.gameData['sport'] == 'MPLINESCORE5' and 'C' not in self.game.gameData['optionJumpers']:
 						pass
 					else:
 						blankType=0
 				
 				highNibble=self.tempClockDict['periodClock'][highNibbleName]#int
 				
-			elif highNibbleName=='delayOfGameClock_secondsTens':
+			elif highNibbleName == 'delayOfGameClock_secondsTens':
 				highNibble=self.tempClockDict['delayOfGameClock'][highNibbleName[17:]]#int
 				
-				if highNibble==255 or highNibble==25:
+				if highNibble == 255 or highNibble == 25:
 					blankTypeH=True
 					
-			elif highNibbleName=='shotClock_secondsTens':
+			elif highNibbleName == 'shotClock_secondsTens':
 				highNibble=self.tempClockDict['shotClock'][highNibbleName[10:]]#int
 				
-				if highNibble==255 or highNibble==25:
+				if highNibble == 255 or highNibble == 25:
 					blankTypeH=True
 					
-			elif highNibbleName=='timeOutTimer_secondsTens' or highNibbleName=='timeOutTimer_minutesTens':
+			elif highNibbleName == 'timeOutTimer_secondsTens' or highNibbleName == 'timeOutTimer_minutesTens':
 				highNibble=self.tempClockDict['timeOutTimer'][highNibbleName[13:]]#int
 				
-			elif highNibbleName=='segmentTimer_secondsTens' or highNibbleName=='segmentTimer_minutesTens':
+			elif highNibbleName == 'segmentTimer_secondsTens' or highNibbleName == 'segmentTimer_minutesTens':
 				highNibble=self.tempClockDict['segmentTimer'][highNibbleName[13:]]#int
 				
-			elif highNibbleName=='timeOfDayClock_hoursTens' or highNibbleName=='timeOfDayClock_minutesTens':
+			elif highNibbleName == 'timeOfDayClock_hoursTens' or highNibbleName == 'timeOfDayClock_minutesTens':
 				highNibble=self.tempClockDict['timeOfDayClock'][highNibbleName[15:]]#int
 				
-			elif highNibbleName[:7]=='penalty':
+			elif highNibbleName[:7] == 'penalty':
 				timerNumber=highNibbleName[7]
 				
 				highNibbleName=self._trimPenalty(highNibbleName)
@@ -586,7 +589,7 @@ class Address_Mapping(object):
 				
 				highNibbleName=self._trimTeamName(highNibbleName)
 				
-				if highNibbleName[:6]=='player':
+				if highNibbleName[:6] == 'player':
 					place=highNibbleName[6:]
 					teamH=self._teamExtract(teamString)
 					varName='timer'+timerNumber+teamString+'playerFlag'
@@ -595,14 +598,14 @@ class Address_Mapping(object):
 					highNibble=self.game.getTeamData(teamH, 'TIMER'+timerNumber+'_PLAYER_NUMBER'+place)#int
 					#print 'TIMER'+timerNumber+'_PLAYER_NUMBER'+place, highNibble
 					
-					if highNibble==0 and _flagCheck:
+					if highNibble == 0 and _flagCheck:
 						blankType=0
 
-					if highNibble==255 or highNibble==25:
+					if highNibble == 255 or highNibble == 25:
 						blankTypeH=True
 
 					
-				elif highNibbleName[:5]=='colon':
+				elif highNibbleName[:5] == 'colon':
 					teamH=self._teamExtract(teamString)
 					highNibble=self.game.getTeamData(teamH, 'TIMER'+timerNumber+'_COLON_INDICATOR')#int
 					#print 'TIMER'+timerNumber+'_COLON_INDICATOR', highNibble
@@ -611,23 +614,23 @@ class Address_Mapping(object):
 					highNibble=self.tempClockDict['penalty'+timerNumber+'_'+teamString][highNibbleName]#int
 					#print 'penalty'+timerNumber+'_'+teamString, highNibble
 
-					if highNibble==255 or highNibble==25:
+					if highNibble == 255 or highNibble == 25:
 						blankTypeH=True
 
 			elif self._teamValueCheck(highNibbleName):
 				highNibbleName=self._trimTeamName(highNibbleName)
 				highNibble=self.game.getTeamData(teamH, highNibbleName)#int
 				
-				if highNibble==255 or highNibble==25:
+				if highNibble == 255 or highNibble == 25:
 					blankTypeH=True
 
 			else:
 				highNibble=self.game.getGameData(highNibbleName)#int
 				
-				if highNibble==255 or highNibble==25:
+				if highNibble == 255 or highNibble == 25:
 					blankTypeH=True
 					
-				elif highNibble==0 and self.game.gameSettings['playerMatchGameFlag']:
+				elif highNibble == 0 and self.game.gameSettings['playerMatchGameFlag']:
 					#Need to comment explicitly
 					blankType=0
 
@@ -639,46 +642,46 @@ class Address_Mapping(object):
 			if self._periodClockValueCheck(lowNibbleName):
 				lowNibble=self.tempClockDict['periodClock'][lowNibbleName]#int
 				
-			elif lowNibbleName=='inningUnits':
+			elif lowNibbleName == 'inningUnits':
 				lowNibble=self.game.getGameData(lowNibbleName)#int
 				
 				if self.game.getGameData('inningTens'):
 					blankType=0
 					
-			elif lowNibbleName=='singlePitchCountTens':
+			elif lowNibbleName == 'singlePitchCountTens':
 				lowNibble=self.game.getGameData(lowNibbleName)#int
 				
 				if self.game.getGameData('singlePitchCountHundreds'):
 					blankType=0
 					
-			elif lowNibbleName=='pitchSpeedUnits':
+			elif lowNibbleName == 'pitchSpeedUnits':
 				lowNibble=self.game.getGameData(lowNibbleName)#int
 				
 				if self.game.getGameData('pitchSpeedHundreds'):
 					blankType=0
 										
-			elif lowNibbleName=='delayOfGameClock_secondsUnits':
+			elif lowNibbleName == 'delayOfGameClock_secondsUnits':
 				lowNibble=self.tempClockDict['delayOfGameClock'][lowNibbleName[17:]]#int
 				
-				if lowNibble==255 or lowNibble==25:
+				if lowNibble == 255 or lowNibble == 25:
 					blankTypeL=True
 					
-			elif lowNibbleName=='shotClock_secondsUnits':
+			elif lowNibbleName == 'shotClock_secondsUnits':
 				lowNibble=self.tempClockDict['shotClock'][lowNibbleName[10:]]#int
 				
-				if lowNibble==255 or lowNibble==25:
+				if lowNibble == 255 or lowNibble == 25:
 					blankTypeL=True
 					
-			elif lowNibbleName=='timeOutTimer_secondsUnits' or lowNibbleName=='timeOutTimer_minutesUnits' or lowNibbleName=='timeOutTimer_minutesTens':
+			elif lowNibbleName == 'timeOutTimer_secondsUnits' or lowNibbleName == 'timeOutTimer_minutesUnits' or lowNibbleName == 'timeOutTimer_minutesTens':
 				lowNibble=self.tempClockDict['timeOutTimer'][lowNibbleName[13:]]#int
 				
-			elif lowNibbleName=='segmentTimer_secondsUnits' or lowNibbleName=='segmentTimer_minutesUnits' or lowNibbleName=='segmentTimer_minutesTens':
+			elif lowNibbleName == 'segmentTimer_secondsUnits' or lowNibbleName == 'segmentTimer_minutesUnits' or lowNibbleName == 'segmentTimer_minutesTens':
 				lowNibble=self.tempClockDict['segmentTimer'][lowNibbleName[13:]]#int
 				
-			elif lowNibbleName=='timeOfDayClock_hoursUnits' or lowNibbleName=='timeOfDayClock_minutesUnits' or lowNibbleName=='timeOfDayClock_hoursTens':
+			elif lowNibbleName == 'timeOfDayClock_hoursUnits' or lowNibbleName == 'timeOfDayClock_minutesUnits' or lowNibbleName == 'timeOfDayClock_hoursTens':
 				lowNibble=self.tempClockDict['timeOfDayClock'][lowNibbleName[15:]]#int
 				
-			elif lowNibbleName[:7]=='penalty':
+			elif lowNibbleName[:7] == 'penalty':
 				timerNumber=lowNibbleName[7]
 				
 				lowNibbleName=self._trimPenalty(lowNibbleName)
@@ -687,7 +690,7 @@ class Address_Mapping(object):
 				
 				lowNibbleName=self._trimTeamName(lowNibbleName)
 				
-				if lowNibbleName[:6]=='player':
+				if lowNibbleName[:6] == 'player':
 					place=lowNibbleName[6:]
 					teamL=self._teamExtract(teamString)
 					varName='timer'+timerNumber+teamString+'playerFlag'
@@ -695,13 +698,13 @@ class Address_Mapping(object):
 					lowNibble=self.game.getTeamData(teamL, 'TIMER'+timerNumber+'_PLAYER_NUMBER'+place)#int
 					
 					#print 'TIMER'+timerNumber+'_PLAYER_NUMBER'+place, lowNibble
-					if lowNibble==0 and _flagCheck:
+					if lowNibble == 0 and _flagCheck:
 						blankType=0
 
-					if lowNibble==255 or lowNibble==25:
+					if lowNibble == 255 or lowNibble == 25:
 						blankTypeL=True
 						
-				elif lowNibbleName[:5]=='colon':
+				elif lowNibbleName[:5] == 'colon':
 					teamL=self._teamExtract(teamString)
 					lowNibble=self.game.getTeamData(teamL, 'TIMER'+timerNumber+'_COLON_INDICATOR')#int
 					#print 'TIMER'+timerNumber+'_COLON_INDICATOR'+place, lowNibble
@@ -709,18 +712,18 @@ class Address_Mapping(object):
 				else:
 					lowNibble=self.tempClockDict['penalty'+timerNumber+'_'+teamString][lowNibbleName]#int
 					#print 'penalty'+timerNumber+'_'+teamString, lowNibble
-					if lowNibble==255 or lowNibble==25:
+					if lowNibble == 255 or lowNibble == 25:
 						blankTypeL=True
 						
 			elif self._teamValueCheck(lowNibbleName):
 				teamString=lowNibbleName[:7]
 				lowNibbleName=self._trimTeamName(lowNibbleName)
 				
-				if lowNibbleName[:6]=='player':
+				if lowNibbleName[:6] == 'player':
 					teamL=self._teamExtract(teamString)
-					if teamL==self.game.guest:
+					if teamL == self.game.guest:
 						activePlayerList=self.game.activeGuestPlayerList
-					elif teamL==self.game.home:
+					elif teamL == self.game.home:
 						activePlayerList=self.game.activeHomePlayerList
 					else:
 						activePlayerList=[]
@@ -732,15 +735,15 @@ class Address_Mapping(object):
 					if activeIndex<=len(activePlayerList):
 						playerNumber=activePlayerList[activeIndex-1]
 						try:
-							if playerNumber[0]=='0':
+							if playerNumber[0] == '0':
 								blankType=0
 						except:
 							pass
 							
-					if lowNibble==255 or lowNibble==25:
+					if lowNibble == 255 or lowNibble == 25:
 						blankTypeL=True
 						
-				elif lowNibbleName=='pitchCountTens':
+				elif lowNibbleName == 'pitchCountTens':
 					lowNibble=self.game.getTeamData(teamL, lowNibbleName)#int
 					
 					if self.game.getTeamData(teamL, 'pitchCountHundreds'):
@@ -748,12 +751,12 @@ class Address_Mapping(object):
 				else:
 					lowNibble=self.game.getTeamData(teamL, lowNibbleName)#int
 					
-					if lowNibble==255 or lowNibble==25:
+					if lowNibble == 255 or lowNibble == 25:
 						blankTypeL=True
 			else:
 				lowNibble=self.game.getGameData(lowNibbleName)#int
 				
-				if lowNibble==255 or lowNibble==25:
+				if lowNibble == 255 or lowNibble == 25:
 					blankTypeL=True
 
 		#Blanking dependent on 255 value
@@ -784,80 +787,80 @@ class Address_Mapping(object):
 		#Format data - segmentData
 		
 		#print 'segmentData before:', segmentData
-		if segmentData=='' or segmentData=='0':
+		if segmentData == '' or segmentData == '0':
 			segmentData=0
-		elif segmentData=='BSO':
+		elif segmentData == 'BSO':
 			segmentData=self._BSODecode()
-		elif segmentData=='Down_Quarter':
+		elif segmentData == 'Down_Quarter':
 			segmentData=self._DownQuarterDecode()
-		elif segmentData=='fQtr4_gDec':
+		elif segmentData == 'fQtr4_gDec':
 			segmentData=''
 			if self.game.getGameData('decimalIndicator'):
 				segmentData='g'
-			if self.game.gameData['sportType']=='soccer':
+			if self.game.gameData['sportType'] == 'soccer':
 				value='period'
 			else:
 				value='quarter'
 			if self.game.getGameData(value)>=4:
 				segmentData+='f'
-		elif segmentData=='gDec':
+		elif segmentData == 'gDec':
 			if self.game.getGameData('decimalIndicator'):
 				segmentData='g'
 			else:
 				segmentData=''
-		elif segmentData=='f_hitIndicator':
+		elif segmentData == 'f_hitIndicator':
 			if self.game.getGameData('hitIndicator'):
 				segmentData='f'
 			else:
 				segmentData=''
-		elif segmentData=='abcBall_efStrike':
+		elif segmentData == 'abcBall_efStrike':
 			segmentData=''
 			balls=self.game.getGameData('balls')
 			strikes=self.game.getGameData('strikes')
-			if balls==0:
+			if balls == 0:
 				pass
-			elif balls==1:
+			elif balls == 1:
 				segmentData='a'
-			elif balls==2:
+			elif balls == 2:
 				segmentData='ab'
 			elif balls>=3:
 				segmentData='abc'
-			if strikes==0:
+			if strikes == 0:
 				pass
-			elif strikes==1:
+			elif strikes == 1:
 				segmentData+='e'
 			elif strikes>=2:
 				segmentData+='ef'
-		elif segmentData=='bc_strike':
+		elif segmentData == 'bc_strike':
 			segmentData=''
 			strikes=self.game.getGameData('strikes')
-			if strikes==0:
+			if strikes == 0:
 				pass
-			elif strikes==1:
+			elif strikes == 1:
 				segmentData+='b'
 			elif strikes>=2:
 				segmentData+='bc'
-		elif segmentData=='abcBall_deOut_gDec':
+		elif segmentData == 'abcBall_deOut_gDec':
 			segmentData=''
 			balls=self.game.getGameData('balls')
 			outs=self.game.getGameData('outs')
-			if balls==0:
+			if balls == 0:
 				pass
-			elif balls==1:
+			elif balls == 1:
 				segmentData='a'
-			elif balls==2:
+			elif balls == 2:
 				segmentData='ab'
 			elif balls>=3:
 				segmentData='abc'
-			if outs==0:
+			if outs == 0:
 				pass
-			elif outs==1:
+			elif outs == 1:
 				segmentData+='d'
 			elif outs>=2:
 				segmentData+='de'
 			if self.game.getGameData('decimalIndicator'):
 				segmentData+='g'
-		elif segmentData=='aGeHposs_fQrt4_gDec':
+		elif segmentData == 'aGeHposs_fQrt4_gDec':
 			segmentData=''
 			if self.game.getTeamData(self.game.guest, 'possession'):
 				segmentData='a'
@@ -867,7 +870,7 @@ class Address_Mapping(object):
 				segmentData+='g'
 			if self.game.getGameData('quarter')>=4:
 				segmentData+='f'
-		elif segmentData=='abcde_PossBonus':
+		elif segmentData == 'abcde_PossBonus':
 			segmentData=''
 			if self.game.getTeamData(self.game.home, 'possession'):
 				segmentData='a'
@@ -875,57 +878,57 @@ class Address_Mapping(object):
 				segmentData+='b'
 			homeB=self.game.getTeamData(self.game.home, 'bonus')
 			guestB=self.game.getTeamData(self.game.guest, 'bonus')
-			if homeB==0:
+			if homeB == 0:
 				pass
-			if homeB==1:
+			if homeB == 1:
 				segmentData+='c'
 			if homeB>=2:
 				segmentData+='ce'
-			if guestB==0:
+			if guestB == 0:
 				pass
 			if guestB>=1:
 				segmentData+='d'
-		elif segmentData=='home_ace_PossBonus':
+		elif segmentData == 'home_ace_PossBonus':
 			segmentData=''
 			if self.game.getTeamData(self.game.home, 'possession'):
 				segmentData='a'
 			homeB=self.game.getTeamData(self.game.home, 'bonus')
-			if homeB==0:
+			if homeB == 0:
 				pass
-			if homeB==1:
+			if homeB == 1:
 				segmentData+='c'
 			if homeB>=2:
 				segmentData+='ce'
-		elif segmentData=='guest_ace_PossBonus':
+		elif segmentData == 'guest_ace_PossBonus':
 			segmentData=''
 			if self.game.getTeamData(self.game.guest, 'possession'):
 				segmentData='a'
 			guestB=self.game.getTeamData(self.game.guest, 'bonus')
-			if guestB==0:
+			if guestB == 0:
 				pass
-			if guestB==1:
+			if guestB == 1:
 				segmentData+='c'
 			if guestB>=2:
 				segmentData+='ce'
-		elif segmentData=='period_efg':
+		elif segmentData == 'period_efg':
 			segmentData=''
 			period=self.game.getGameData('period')
-			if period==0:
+			if period == 0:
 				pass
-			elif period==1:
+			elif period == 1:
 				segmentData+='e'
-			elif period==2:
+			elif period == 2:
 				segmentData+='ef'
-			elif period==3:
+			elif period == 3:
 				segmentData+='efg'
 			elif period>=4:
 				segmentData+='efg'
-		elif segmentData=='bc_detect':
+		elif segmentData == 'bc_detect':
 			segmentData=0
 		else:
 			print 'Address Map spreadsheet has a segment data value not handled yet'
 
-		if segmentData=='':
+		if segmentData == '':
 			segmentData=None
 		#print 'segmentData after:', segmentData
 		return segmentData
@@ -936,23 +939,23 @@ class Address_Mapping(object):
 		balls=self.game.getGameData('balls')
 		strikes=self.game.getGameData('strikes')
 		outs=self.game.getGameData('outs')
-		if balls==0:
+		if balls == 0:
 			pass
-		elif balls==1:
+		elif balls == 1:
 			segmentData='a'
-		elif balls==2:
+		elif balls == 2:
 			segmentData='ab'
 		elif balls>=3:
 			segmentData='abc'
-		if strikes==0:
+		if strikes == 0:
 			pass
-		elif strikes==1:
+		elif strikes == 1:
 			segmentData+='d'
 		elif strikes>=2:
 			segmentData+='de'
-		if outs==0:
+		if outs == 0:
 			pass
-		elif outs==1:
+		elif outs == 1:
 			segmentData+='f'
 		elif outs>=2:
 			segmentData+='fg'
@@ -962,23 +965,23 @@ class Address_Mapping(object):
 		segmentData=''
 		down=self.game.getGameData('down')
 		quarter=self.game.getGameData('quarter')
-		if down==0:
+		if down == 0:
 			pass
-		elif down==1:
+		elif down == 1:
 			segmentData='a'
-		elif down==2:
+		elif down == 2:
 			segmentData='ab'
-		elif down==3:
+		elif down == 3:
 			segmentData='abc'
 		elif down>=4:
 			segmentData='abcd'
-		if quarter==0:
+		if quarter == 0:
 			pass
-		elif quarter==1:
+		elif quarter == 1:
 			segmentData+='e'
-		elif quarter==2:
+		elif quarter == 2:
 			segmentData+='ef'
-		elif quarter==3:
+		elif quarter == 3:
 			segmentData+='efg'
 		elif quarter>=4:
 			segmentData+='efg'
@@ -1000,31 +1003,31 @@ class Address_Mapping(object):
 		#print '----Unmap wordList size', len(wordList)
 
 		#Create address word list to target one address for each data type or allow passed value
-		if self.game.gameData['sport']=='MPBASKETBALL1':
+		if self.game.gameData['sport'] == 'MPBASKETBALL1':
 			addressWordList=[5,13,14,15,19,20,21,22,23,24,25,26,27,28]
-		elif self.game.gameData['sport']=='MPFOOTBALL1' or self.game.gameData['sport']=='MMFOOTBALL4':
+		elif self.game.gameData['sport'] == 'MPFOOTBALL1' or self.game.gameData['sport'] == 'MMFOOTBALL4':
 			addressWordList=[5,19,20,21,22,24,25,26,29,30,31,32]
 			if 'E' in self.game.gameData['optionJumpers']:
 				addressWordList.append(18)
-		elif self.game.gameData['sport']=='MPHOCKEY_LX1':
+		elif self.game.gameData['sport'] == 'MPHOCKEY_LX1':
 			addressWordList=[1,2,3,4,5,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28]
-		elif self.game.gameData['sport']=='MPSOCCER_LX1-soccer':
+		elif self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer':
 			addressWordList=[5,9,10,13,14,18,19,20,21,22,23,24,25,26,29,30,31]
-		elif self.game.gameData['sport']=='MPSOCCER_LX1-football':
+		elif self.game.gameData['sport'] == 'MPSOCCER_LX1-football':
 			addressWordList=[5,13,18,19,20,21,22,24,25,26,29,30,32]
-		elif self.game.gameData['sport']=='MPLINESCORE5':
+		elif self.game.gameData['sport'] == 'MPLINESCORE5':
 			addressWordList=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,20,21,22,23,24,25,26,27,28,29,30,31,32]
-		elif self.game.gameData['sport']=='MPBASEBALL1' or self.game.gameData['sport']=='MMBASEBALL3':
+		elif self.game.gameData['sport'] == 'MPBASEBALL1' or self.game.gameData['sport'] == 'MMBASEBALL3':
 			addressWordList=[5,6,7,13,14,15,16,17,18,21,22,23,24]
-		elif self.game.gameData['sport']=='MMBASEBALL4':
+		elif self.game.gameData['sport'] == 'MMBASEBALL4':
 			addressWordList=[9,10,11,13,14,15,21,22,23]
-		elif self.game.gameData['sport']=='MPMULTISPORT1-baseball':
+		elif self.game.gameData['sport'] == 'MPMULTISPORT1-baseball':
 			addressWordList=[5,9,11,10,13,14,15,16,17,18,21,22,24,29,30,31,32,12]
-		elif self.game.gameData['sport']=='MPMULTISPORT1-football':
+		elif self.game.gameData['sport'] == 'MPMULTISPORT1-football':
 			addressWordList=[5,9,10,17,21,22,24,29,30,31,11,12]
-		elif self.game.gameData['sport']=='MPLX3450-baseball':
+		elif self.game.gameData['sport'] == 'MPLX3450-baseball':
 			addressWordList=[5,9,11,10,13,14,15,16,17,18,21,22,24,29,30,31,32,12]
-		elif self.game.gameData['sport']=='MPLX3450-football':
+		elif self.game.gameData['sport'] == 'MPLX3450-football':
 			addressWordList=[5,9,10,17,21,22,24,29,30,31,11,12]
 		elif self.statFlag:
 			addressWordList=[1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,23]
@@ -1034,8 +1037,8 @@ class Address_Mapping(object):
 
 		#Update game data with word list
 		for element in wordList:
-			group, bank, word, I_Bit, numericData = self.mp.Decode(element)
-			addr=self.mp.GBW_to_MP_Address(group, bank, word)+1
+			group, bank, word, I_Bit, numericData = self.mp.decode(element)
+			addr= self.mp.gbw_to_mp_address(group, bank, word) + 1
 			decodeData=(addr, group, bank, word, I_Bit, numericData)
 			if self.verbose:
 				print '\naddr:', addr, group, bank, word, 'I:', I_Bit, 'Data:', numericData
@@ -1043,23 +1046,23 @@ class Address_Mapping(object):
 			if self._tunnelCheck(word, numericData):
 				#Tunneling data
 				functions.verbose([ 'word', word], self.verboseTunnel)
-				if word==1:
-					if numericData==0xbc:
+				if word == 1:
+					if numericData == 0xbc:
 						functions.verbose([ 'Quantum dimming tunnel open!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel=1
-					elif numericData==0xad:
+					elif numericData == 0xad:
 						functions.verbose([ 'Quantum ETN tunnel open!!!!'], self.verboseTunnel)
 						self.quantumETNTunnel=1
 							
 			elif self.quantumDimmingTunnel or self.quantumETNTunnel:
 				functions.verbose([ 'word', word], self.verboseTunnel)
-				if word==1:
+				if word == 1:
 					if not (numericData>=0xaa and numericData<0xf0):
 						functions.verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel=0
 						self.quantumETNTunnel=0
 						
-				elif word==2:
+				elif word == 2:
 					functions.verbose([ 'numericData', numericData], self.verboseTunnel)
 					if self.quantumDimmingTunnel:
 						self.brightness=(numericData & 0x0f) + ((numericData & 0xf0) >> 4)*10
@@ -1083,12 +1086,12 @@ class Address_Mapping(object):
 							#control for font-justify either team because of trimming
 							self.fontJustifyControl=1
 
-				elif word==3:
+				elif word == 3:
 					if self.quantumETNTunnel and not self.fontJustifyControl:
 						self.leftETNByte=numericData
 						functions.verbose([ 'leftETNByte', numericData], self.verboseTunnel)
 
-				elif word==4:
+				elif word == 4:
 					if self.quantumETNTunnel and self.fontJustifyControl:
 						font=numericData/6+1
 						justify=numericData%6+1
@@ -1130,41 +1133,41 @@ class Address_Mapping(object):
 					
 					#Handle persistant ALT selection
 					ALT=1
-					BASE1orBASE3= self.game.gameData['sport']=='MPBASEBALL1' or self.game.gameData['sport']=='MMBASEBALL3'
-					MULTIbaseOr3450baseCjumper= self.game.gameData['sport']=='MPMULTISPORT1-baseball' or self.game.gameData['sport']=='MPLX3450-baseball'\
+					BASE1orBASE3= self.game.gameData['sport'] == 'MPBASEBALL1' or self.game.gameData['sport'] == 'MMBASEBALL3'
+					MULTIbaseOr3450baseCjumper= self.game.gameData['sport'] == 'MPMULTISPORT1-baseball' or self.game.gameData['sport'] == 'MPLX3450-baseball'\
 					and 'C' in self.game.gameData['optionJumpers']
-					LINE5andCjumper= self.game.gameData['sport']=='MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
+					LINE5andCjumper= self.game.gameData['sport'] == 'MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
 
 					
-					if not BASE1orBASE3 and not LINE5andCjumper and not MULTIbaseOr3450baseCjumper and (addr==21 or addr==22):
-						if self.periodClockUnMapDict['colonIndicator']==0 or self.tenthsTransitionFlag:
+					if not BASE1orBASE3 and not LINE5andCjumper and not MULTIbaseOr3450baseCjumper and (addr == 21 or addr == 22):
+						if self.periodClockUnMapDict['colonIndicator'] == 0 or self.tenthsTransitionFlag:
 							ALT=2
 					elif LINE5andCjumper or MULTIbaseOr3450baseCjumper:
-						if addr==21 and self.tenthsTransitionFlag:
+						if addr == 21 and self.tenthsTransitionFlag:
 							ALT=2
-					elif addr==18 and (self.game.gameData['sport']=='MPFOOTBALL1' \
-					or self.game.gameData['sport']=='MPSOCCER_LX1-soccer' or \
-					self.game.gameData['sport']=='MPSOCCER_LX1-football') and 'E' in self.game.gameData['optionJumpers']:
+					elif addr == 18 and (self.game.gameData['sport'] == 'MPFOOTBALL1' \
+					or self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer' or \
+					self.game.gameData['sport'] == 'MPSOCCER_LX1-football') and 'E' in self.game.gameData['optionJumpers']:
 						ALT=2
-					elif self.game.gameData['sport']=='MPLINESCORE5':
+					elif self.game.gameData['sport'] == 'MPLINESCORE5':
 						if 'D' in self.game.gameData['optionJumpers'] and 'B' in self.game.gameData['optionJumpers']:
-							if addr==14 or addr==15 or addr==16 or addr==31 or addr==32:
+							if addr == 14 or addr == 15 or addr == 16 or addr == 31 or addr == 32:
 								ALT=2
-							elif addr==5 or addr==7:
+							elif addr == 5 or addr == 7:
 								ALT=2
 						elif 'D' in self.game.gameData['optionJumpers']:
-							if addr==14 or addr==15 or addr==16 or addr==31 or addr==32:
+							if addr == 14 or addr == 15 or addr == 16 or addr == 31 or addr == 32:
 								ALT=2
 						elif 'B' in self.game.gameData['optionJumpers']:
-							if addr==31 or addr==32:
+							if addr == 31 or addr == 32:
 								ALT=3
-							elif addr==5 or addr==7:
+							elif addr == 5 or addr == 7:
 								ALT=2
 						else:
 							pass
 					elif BASE1orBASE3:
 						if 'C' in self.game.gameData['optionJumpers']:
-							if addr==21 or addr==22:
+							if addr == 21 or addr == 22:
 								ALT=2
 					if self.verbose:
 						print 'ALT', ALT			
@@ -1183,9 +1186,9 @@ class Address_Mapping(object):
 					pass#print 'addr', addr, 'skipped'#
 
 		#Multisport user switch state check
-		MPMULTISPORT1= self.game.gameData['sport']=='MPMULTISPORT1-baseball' or self.game.gameData['sport']=='MPMULTISPORT1-football'
-		MPLX3450= self.game.gameData['sport']=='MPLX3450-baseball' or self.game.gameData['sport']=='MPLX3450-football'
-		MPSOCCER_LX1= self.game.gameData['sport']=='MPSOCCER_LX1-soccer' or self.game.gameData['sport']=='MPSOCCER_LX1-football'
+		MPMULTISPORT1= self.game.gameData['sport'] == 'MPMULTISPORT1-baseball' or self.game.gameData['sport'] == 'MPMULTISPORT1-football'
+		MPLX3450= self.game.gameData['sport'] == 'MPLX3450-baseball' or self.game.gameData['sport'] == 'MPLX3450-football'
+		MPSOCCER_LX1= self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer' or self.game.gameData['sport'] == 'MPSOCCER_LX1-football'
 		MULTISPORTtype= MPMULTISPORT1 or MPLX3450 or MPSOCCER_LX1
 								
 		if MULTISPORTtype:
@@ -1196,7 +1199,7 @@ class Address_Mapping(object):
 				
 				#Select values to compare
 				if MPMULTISPORT1:
-					if self.game.gameData['sport']=='MPMULTISPORT1-baseball':
+					if self.game.gameData['sport'] == 'MPMULTISPORT1-baseball':
 						#Baseball
 						#checkHomeDict={}
 						#checkGuestDict={}
@@ -1209,7 +1212,7 @@ class Address_Mapping(object):
 						checkGameDict={'segmentQuarterFlag':False, 'quarter':1}
 						sport='MPMULTISPORT1-baseball'
 				elif MPLX3450:
-					if self.game.gameData['sport']=='MPLX3450-baseball':
+					if self.game.gameData['sport'] == 'MPLX3450-baseball':
 						#Baseball
 						#checkHomeDict={}
 						#checkGuestDict={}
@@ -1222,7 +1225,7 @@ class Address_Mapping(object):
 						checkGameDict={'segmentQuarterFlag':False, 'quarter':1}
 						sport='MPLX3450-baseball'
 				elif MPSOCCER_LX1:
-					if self.game.gameData['sport']=='MPSOCCER_LX1-soccer':
+					if self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer':
 						#Soccer
 						#checkHomeDict={}
 						#checkGuestDict={}
@@ -1251,7 +1254,7 @@ class Address_Mapping(object):
 	def _tunnelCheck(self, word, numericData):
 		highData=(numericData&0xf0)>>4
 		lowData=numericData&0x0f
-		if word==1:
+		if word == 1:
 			if (lowData>=0xa and lowData!=0xf) or (highData>=0xa and highData!=0xf):
 				return 1
 		return 0
@@ -1271,12 +1274,12 @@ class Address_Mapping(object):
 		iBit, hBit, highNibble, lowNibble, segmentData = dataNames
 		#print '\naddr', addr, 'iBit', iBit, 'hBit', hBit
 		#print 'highNibble', highNibble, 'lowNibble', lowNibble, 'segmentData', segmentData
-		if not self.statFlag and (word==3 or word==4):
+		if not self.statFlag and (word == 3 or word == 4):
 			highData=0
 			lowData=numericData&0x7f
-			lowData=self.mp.numericDataDecode(lowData)
+			lowData=self.mp.numeric_data_decode(lowData)
 			H_Bit=(numericData&0x80)>>7			
-			if segmentData=='':
+			if segmentData == '':
 				hTeam=self._teamExtract(hBit)
 				iTeam=self._teamExtract(iBit)
 				highTeam=self._teamExtract(highNibble)#may not need
@@ -1300,9 +1303,9 @@ class Address_Mapping(object):
 						print 'iBit', iBit, 'saved'
 									
 				#Special cases not to save H Bit --------------------
-				HOCK_27_28= (addr==27 or addr==28) and self.game.gameData['sport']=='MPHOCKEY_LX1'
-				SOC_soc_32= addr==32 and self.game.gameData['sport']=='MPSOCCER_LX1-soccer'
-				BB4_11= addr==11 and self.game.gameData['sport']=='MMBASEBALL4'
+				HOCK_27_28= (addr == 27 or addr == 28) and self.game.gameData['sport'] == 'MPHOCKEY_LX1'
+				SOC_soc_32= addr == 32 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
+				BB4_11= addr == 11 and self.game.gameData['sport'] == 'MMBASEBALL4'
 				
 				if HOCK_27_28 or BB4_11 or SOC_soc_32:
 					#This if statement added to handle error with 401 sending non-matching data to two locations
@@ -1338,7 +1341,7 @@ class Address_Mapping(object):
 				self._setPeriodClockUnMapDict(hBit, H_Bit)
 			
 				#Special cases not to save H Bit --------------------
-				SOC_soc_31= addr==31 and self.game.gameData['sport']=='MPSOCCER_LX1-soccer'
+				SOC_soc_31= addr == 31 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
 				if SOC_soc_31:
 					#Don't save duplicates
 					pass
@@ -1348,50 +1351,50 @@ class Address_Mapping(object):
 						print 'hBit', hBit, 'saved'
 					
 				#Area for all custom decodeing, try to use data from a better location if possible
-				if self.game.gameData['sportType']=='basketball':
-					if segmentData=='home_ace_PossBonus':
+				if self.game.gameData['sportType'] == 'basketball':
+					if segmentData == 'home_ace_PossBonus':
 						if self.verbose:
 							print bin(numericData), bin(0b00010000&numericData), 0b00000001&numericData
 						if 0b00000001&numericData:
 							self._setData('teamTwoPossession', True, self.game.home)
-						elif 0b00000001&numericData==0:
+						elif 0b00000001&numericData == 0:
 							self._setData('teamTwoPossession', False, self.game.home)
 						if 0b00010000&numericData:
 							self._setData('teamTwoBonus', 2, self.game.home)
 						elif 0b00000100&numericData:
 							self._setData('teamTwoBonus', 1, self.game.home)
-						elif 0b00010000&numericData==0 or 0b00000100&numericData==0:
+						elif 0b00010000&numericData == 0 or 0b00000100&numericData == 0:
 							self._setData('teamTwoBonus', 0, self.game.home)
-					if segmentData=='guest_ace_PossBonus':
+					if segmentData == 'guest_ace_PossBonus':
 						if self.verbose:
 							print bin(numericData), 0b00000000&numericData, 0b00000001&numericData
 						if 0b00000001&numericData:
 							self._setData('teamOnePossession', True, self.game.guest)
-						elif 0b00000000&numericData==0:
+						elif 0b00000000&numericData == 0:
 							self._setData('teamOnePossession', False, self.game.guest)
 						if 0b00010000&numericData:
 							self._setData('teamOneBonus', 2, self.game.guest)
 						elif 0b00000100&numericData:
 							self._setData('teamOneBonus', 1, self.game.guest)
-						elif 0b00010000&numericData==0 or 0b00000100&numericData==0:
+						elif 0b00010000&numericData == 0 or 0b00000100&numericData == 0:
 							self._setData('teamOneBonus', 0, self.game.guest)
-				elif self.game.gameData['sport']=='MPMULTISPORT1-football' or self.game.gameData['sport']=='MPLX3450-football':
-					if segmentData=='Down_Quarter':
+				elif self.game.gameData['sport'] == 'MPMULTISPORT1-football' or self.game.gameData['sport'] == 'MPLX3450-football':
+					if segmentData == 'Down_Quarter':
 						if 0b00010000&numericData:
 							self.game.gameData['segmentQuarterFlag']=True
-						elif 0b00010000&numericData==0:
+						elif 0b00010000&numericData == 0:
 							self.game.gameData['segmentQuarterFlag']=False
-				elif self.game.gameData['sport']=='MPMULTISPORT1-baseball' or self.game.gameData['sport']=='MPLX3450-baseball':
-					if segmentData=='bc_strike' or segmentData=='period_efg':
+				elif self.game.gameData['sport'] == 'MPMULTISPORT1-baseball' or self.game.gameData['sport'] == 'MPLX3450-baseball':
+					if segmentData == 'bc_strike' or segmentData == 'period_efg':
 						if 0b00010000&numericData:
 							self.game.gameData['segmentQuarterFlag']=True
-						elif 0b00010000&numericData==0:
+						elif 0b00010000&numericData == 0:
 							self.game.gameData['segmentQuarterFlag']=False		
-				elif self.game.gameData['sport']=='MPSOCCER_LX1-soccer':
-					if segmentData=='bc_detect':
+				elif self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer':
+					if segmentData == 'bc_detect':
 						if 0b00000110&numericData:
 							self.game.gameData['bcDetectFlag']=True
-						elif 0b00000110&numericData==0:
+						elif 0b00000110&numericData == 0:
 							self.game.gameData['bcDetectFlag']=False	
 
 		else:
@@ -1411,16 +1414,16 @@ class Address_Mapping(object):
 			self._setPeriodClockUnMapDict(lowNibble, lowData)
 			
 			#Special cases not to save I Bit --------------------
-			SOC_soc_18= addr==18 and self.game.gameData['sport']=='MPSOCCER_LX1-soccer'
-			MULTIbase3450base= (self.game.gameData['sport']=='MPMULTISPORT1-baseball' or \
-			self.game.gameData['sport']=='MPLX3450-baseball')
-			LINE5_17_18= (addr==17 or addr==18) and self.game.gameData['sport']=='MPLINESCORE5'
+			SOC_soc_18= addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
+			MULTIbase3450base= (self.game.gameData['sport'] == 'MPMULTISPORT1-baseball' or \
+			self.game.gameData['sport'] == 'MPLX3450-baseball')
+			LINE5_17_18= (addr == 17 or addr == 18) and self.game.gameData['sport'] == 'MPLINESCORE5'
 			
-			BASE1orBASE3= self.game.gameData['sport']=='MPBASEBALL1' or self.game.gameData['sport']=='MMBASEBALL3'
-			_13or14= addr==13 or addr==14
+			BASE1orBASE3= self.game.gameData['sport'] == 'MPBASEBALL1' or self.game.gameData['sport'] == 'MMBASEBALL3'
+			_13or14= addr == 13 or addr == 14
 			#Together
 			BB13and13_14= BASE1orBASE3 and _13or14
-			BB134and13_14= (BASE1orBASE3 or self.game.gameData['sport']=='MMBASEBALL4') and _13or14
+			BB134and13_14= (BASE1orBASE3 or self.game.gameData['sport'] == 'MMBASEBALL4') and _13or14
 			MULTIbase3450baseAnd13_14= MULTIbase3450base and _13or14
 						
 			if SOC_soc_18 or LINE5_17_18 or BB13and13_14:
@@ -1432,7 +1435,7 @@ class Address_Mapping(object):
 					print 'iBit', iBit, 'saved'
 			
 			#Special cases not to save High Nibble ----------------
-			SOC_soc_18= addr==18 and self.game.gameData['sport']=='MPSOCCER_LX1-soccer'
+			SOC_soc_18= addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
 			notEjumper= not('E' in self.game.gameData['optionJumpers'])
 			#Together
 			SOC_soc_18and_notEjumper= SOC_soc_18 and notEjumper
@@ -1469,20 +1472,20 @@ class Address_Mapping(object):
 	def _checkPeriodClockState(self, decodeData, dataNames, highData, lowData, H_Bit=None):
 		addr, group, bank, word, I_Bit, numericData = decodeData
 		iBit, hBit, highNibble, lowNibble, segmentData = dataNames
-		LINE5andCjumper= self.game.gameData['sport']=='MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
-		MULTIbaseOr3450baseCjumper= (self.game.gameData['sport']=='MPMULTISPORT1-baseball' or self.game.gameData['sport']=='MPLX3450-baseball')\
+		LINE5andCjumper= self.game.gameData['sport'] == 'MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
+		MULTIbaseOr3450baseCjumper= (self.game.gameData['sport'] == 'MPMULTISPORT1-baseball' or self.game.gameData['sport'] == 'MPLX3450-baseball')\
 		and 'C' in self.game.gameData['optionJumpers']
 		
 		#Minutes received
-		if highNibble=='minutesTens':
+		if highNibble == 'minutesTens':
 			#print'-minutes State Check'
 			pass			
 							
 		#Seconds received
-		elif highNibble=='secondsTens':
+		elif highNibble == 'secondsTens':
 			#print'-seconds State Check'
-			if lowData==15 or (self.periodClockUnMapDict['secondsTens']==0 and self.periodClockUnMapDict['secondsUnits']==0 \
-			and highData>=6 and lowData==0):
+			if lowData == 15 or (self.periodClockUnMapDict['secondsTens'] == 0 and self.periodClockUnMapDict['secondsUnits'] == 0 \
+			and highData>=6 and lowData == 0):
 				self.tenthsTransitionFlag=True
 				dataNames=self._getDictInfo(addr, ALT=2)
 				self._setData('minutesTens', 0)
@@ -1505,14 +1508,14 @@ class Address_Mapping(object):
 					'lowNibble', lowNibble, lowData			
 								
 		#Tenths received
-		elif highNibble=='tenthsUnits':
+		elif highNibble == 'tenthsUnits':
 			#print'-tenths State Check'
 			pass
 
 		#Colon received
-		elif hBit=='colonIndicator':
+		elif hBit == 'colonIndicator':
 			#print'-colonIndicator State Check'
-			if self.periodClockUnMapDict['colonIndicator']==0 and H_Bit==1:
+			if self.periodClockUnMapDict['colonIndicator'] == 0 and H_Bit == 1:
 				self.tenthsTransitionFlag=False
 				self._setData('tenthsUnits', 0)
 				if self.verbose:
@@ -1530,15 +1533,15 @@ class Address_Mapping(object):
 			self.game.setGameData(name, value, places=1)
 		elif self._teamValueCheck(name):
 			#print 'TEAM', name, name[:7]
-			if name[:7]=='penalty':
+			if name[:7] == 'penalty':
 				timerNumber=name[7]
 				name=self._trimPenalty(name)
 				teamString=name[:7]
 				name=self._trimTeamName(name)
-				if name[:6]=='player':
+				if name[:6] == 'player':
 					place=name[6:]
 					self.game.setTeamData(team, 'TIMER'+timerNumber+'_PLAYER_NUMBER'+place, value, places=1)
-				elif name[:5]=='colon':
+				elif name[:5] == 'colon':
 					if self.verbose:
 						print 'skip penalty timer colons'
 				else:
@@ -1555,7 +1558,7 @@ class Address_Mapping(object):
 		else:
 			print 'FAIL'
 
-class Lamptest_Mapping(Address_Mapping):
+class Lamptest_Mapping(AddressMapping):
 	"""Map of all non-horn segments on per the sport."""
 	def __init__(self, sportType='Generic'):
 		super(Lamptest_Mapping, self).__init__(sportType, game=None)
@@ -1564,21 +1567,21 @@ class Lamptest_Mapping(Address_Mapping):
 			for k in range(2):
 				for i in range(2):
 					for j in range(4):
-						self.wordsDict[((i*4+j)*4+1)+k*32] = self.mp.Encode(i+1, j+1, 1, k, 0, 8, 8, 0, 0, True)
-						self.wordsDict[((i*4+j)*4+2)+k*32] = self.mp.Encode(i+1, j+1, 2, k, 0, 8, 8, 0, 0, True)
-						self.wordsDict[((i*4+j)*4+3)+k*32] = self.mp.Encode(i+1, j+1, 3, k, 0, 8, 8, 0, 0, True)
-						self.wordsDict[((i*4+j)*4+4)+k*32] = self.mp.Encode(i+1, j+1, 4, k, 0, 0, 0, 0, 0, True)
+						self.wordsDict[((i*4+j)*4+1)+k*32] = self.mp.encode(i + 1, j + 1, 1, k, 0, 8, 8, 0, 0, True)
+						self.wordsDict[((i*4+j)*4+2)+k*32] = self.mp.encode(i + 1, j + 1, 2, k, 0, 8, 8, 0, 0, True)
+						self.wordsDict[((i*4+j)*4+3)+k*32] = self.mp.encode(i + 1, j + 1, 3, k, 0, 8, 8, 0, 0, True)
+						self.wordsDict[((i*4+j)*4+4)+k*32] = self.mp.encode(i + 1, j + 1, 4, k, 0, 0, 0, 0, 0, True)
 		else:
 			for i in range(2):
 				for j in range(4):
-					self.wordsDict[(i*4+j)*4+1] = self.mp.Encode(i+1, j+1, 1, 1, 1, 8, 8, 0, 0)# 0x58 is 88 in decimal for lamp test
-					self.wordsDict[(i*4+j)*4+2] = self.mp.Encode(i+1, j+1, 2, 1, 1, 8, 8, 0, 0)
-					self.wordsDict[(i*4+j)*4+3] = self.mp.Encode(i+1, j+1, 3, 1, 1, 0, 8, 0, 0)
-					self.wordsDict[(i*4+j)*4+4] = self.mp.Encode(i+1, j+1, 4, 1, 1, 0, 8, 0, 0)
+					self.wordsDict[(i*4+j)*4+1] = self.mp.encode(i + 1, j + 1, 1, 1, 1, 8, 8, 0, 0)# 0x58 is 88 in decimal for lamp test
+					self.wordsDict[(i*4+j)*4+2] = self.mp.encode(i + 1, j + 1, 2, 1, 1, 8, 8, 0, 0)
+					self.wordsDict[(i*4+j)*4+3] = self.mp.encode(i + 1, j + 1, 3, 1, 1, 0, 8, 0, 0)
+					self.wordsDict[(i*4+j)*4+4] = self.mp.encode(i + 1, j + 1, 4, 1, 1, 0, 8, 0, 0)
 
 		self._adjustAllBanks()
 
-	def _blankMap(self):
+	def _blank_map(self):
 		pass
 
 	def _buildAddrMap(self):
@@ -1587,92 +1590,92 @@ class Lamptest_Mapping(Address_Mapping):
 
 	def _adjustAllBanks(self):
 		"""Sets all non-horn segments on per the sport."""
-		if self.sport=='MPBASEBALL1' or self.sport=='MMBASEBALL3' or self.sport=='MPLINESCORE5':
-			self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[4] = self.mp.Encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
-			#self.wordsDict[5] = self.mp.Encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
-			#self.wordsDict[6] = self.mp.Encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[8] = self.mp.Encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[12] = self.mp.Encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[16] = self.mp.Encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[20] = self.mp.Encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[28] = self.mp.Encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[32] = self.mp.Encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
+		if self.sport == 'MPBASEBALL1' or self.sport == 'MMBASEBALL3' or self.sport == 'MPLINESCORE5':
+			self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[2] = self.mp.encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[4] = self.mp.encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
+			#self.wordsDict[5] = self.mp.encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
+			#self.wordsDict[6] = self.mp.encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[8] = self.mp.encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[12] = self.mp.encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[16] = self.mp.encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[20] = self.mp.encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[21] = self.mp.encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[28] = self.mp.encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[32] = self.mp.encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
 
-		elif self.sport=='MPLINESCORE4':
-			#self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-			#self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[4] = self.mp.Encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
-			#self.wordsDict[5] = self.mp.Encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
-			#self.wordsDict[6] = self.mp.Encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[8] = self.mp.Encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[12] = self.mp.Encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[16] = self.mp.Encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[20] = self.mp.Encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[24] = self.mp.Encode(2, 2, 4, 1, 0, 8, 8, 0, 0)
-			self.wordsDict[28] = self.mp.Encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[32] = self.mp.Encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
+		elif self.sport == 'MPLINESCORE4':
+			#self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+			#self.wordsDict[2] = self.mp.encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[4] = self.mp.encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
+			#self.wordsDict[5] = self.mp.encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
+			#self.wordsDict[6] = self.mp.encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[8] = self.mp.encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[12] = self.mp.encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[16] = self.mp.encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[20] = self.mp.encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[21] = self.mp.encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[24] = self.mp.encode(2, 2, 4, 1, 0, 8, 8, 0, 0)
+			self.wordsDict[28] = self.mp.encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[32] = self.mp.encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
 
-		elif self.sport=='MPMP_15X1' or self.sport=='MPMP_14X1':
-			self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[4] = self.mp.Encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
-			#self.wordsDict[5] = self.mp.Encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
-			#self.wordsDict[6] = self.mp.Encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[8] = self.mp.Encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[12] = self.mp.Encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[16] = self.mp.Encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[20] = self.mp.Encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
-			#self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[24] = self.mp.Encode(2, 2, 4, 1, 0, 8, 8, 0, 0)
-			self.wordsDict[28] = self.mp.Encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[32] = self.mp.Encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
+		elif self.sport == 'MPMP_15X1' or self.sport == 'MPMP_14X1':
+			self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[2] = self.mp.encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[4] = self.mp.encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
+			#self.wordsDict[5] = self.mp.encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
+			#self.wordsDict[6] = self.mp.encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[8] = self.mp.encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[12] = self.mp.encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[16] = self.mp.encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[20] = self.mp.encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
+			#self.wordsDict[21] = self.mp.encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[24] = self.mp.encode(2, 2, 4, 1, 0, 8, 8, 0, 0)
+			self.wordsDict[28] = self.mp.encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[32] = self.mp.encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
 
-		elif self.sport=='MPMULTISPORT1-football' or self.sport=='MPLX3450-football' or self.sport=='MPMULTISPORT1-baseball' or self.sport=='MPLX3450-baseball':
-			if self.sport=='MPLX3450-football' or self.sport=='MPLX3450-baseball':
-				self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-				#self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
+		elif self.sport == 'MPMULTISPORT1-football' or self.sport == 'MPLX3450-football' or self.sport == 'MPMULTISPORT1-baseball' or self.sport == 'MPLX3450-baseball':
+			if self.sport == 'MPLX3450-football' or self.sport == 'MPLX3450-baseball':
+				self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+				#self.wordsDict[2] = self.mp.encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
 			else:
-				#self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-				self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
+				#self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+				self.wordsDict[2] = self.mp.encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
 
-			#self.wordsDict[4] = self.mp.Encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[5] = self.mp.Encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[6] = self.mp.Encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[8] = self.mp.Encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[12] = self.mp.Encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
-			#self.wordsDict[16] = self.mp.Encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[20] = self.mp.Encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[28] = self.mp.Encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[32] = self.mp.Encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
+			#self.wordsDict[4] = self.mp.encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[5] = self.mp.encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[6] = self.mp.encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[8] = self.mp.encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[12] = self.mp.encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
+			#self.wordsDict[16] = self.mp.encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[20] = self.mp.encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[21] = self.mp.encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[28] = self.mp.encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[32] = self.mp.encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
 
-		elif self.sport=='MPFOOTBALL1' or self.sport=='MMFOOTBALL4' or self.sport=='MMBASEBALL4'or self.sport=='MPBASKETBALL1':
-			self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[2] = self.mp.Encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[4] = self.mp.Encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[5] = self.mp.Encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[6] = self.mp.Encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
-			if  not self.sport=='MPBASKETBALL1':
-				self.wordsDict[8] = self.mp.Encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[12] = self.mp.Encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[16] = self.mp.Encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[20] = self.mp.Encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[28] = self.mp.Encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[32] = self.mp.Encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
+		elif self.sport == 'MPFOOTBALL1' or self.sport == 'MMFOOTBALL4' or self.sport == 'MMBASEBALL4'or self.sport == 'MPBASKETBALL1':
+			self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[2] = self.mp.encode(1, 1, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[4] = self.mp.encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[5] = self.mp.encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[6] = self.mp.encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
+			if  not self.sport == 'MPBASKETBALL1':
+				self.wordsDict[8] = self.mp.encode(1, 2, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[12] = self.mp.encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[16] = self.mp.encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[20] = self.mp.encode(2, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[21] = self.mp.encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[28] = self.mp.encode(2, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[32] = self.mp.encode(2, 4, 4, 1, 0, 0, 8, 0, 0)
 
-		elif self.sport=='MPHOCKEY_LX1':
-			self.wordsDict[1] = self.mp.Encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[4] = self.mp.Encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[5] = self.mp.Encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[6] = self.mp.Encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
-			self.wordsDict[12] = self.mp.Encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[16] = self.mp.Encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
-			self.wordsDict[21] = self.mp.Encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
+		elif self.sport == 'MPHOCKEY_LX1':
+			self.wordsDict[1] = self.mp.encode(1, 1, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[4] = self.mp.encode(1, 1, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[5] = self.mp.encode(1, 2, 1, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[6] = self.mp.encode(1, 2, 2, 0, 1, 8, 8, 0, 0)
+			self.wordsDict[12] = self.mp.encode(1, 3, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[16] = self.mp.encode(1, 4, 4, 1, 0, 0, 8, 0, 0)
+			self.wordsDict[21] = self.mp.encode(2, 2, 1, 0, 1, 8, 8, 0, 0)
 
 	def Map(self):
 		"""pass"""
@@ -1683,7 +1686,7 @@ class Lamptest_Mapping(Address_Mapping):
 		pass
 
 
-class Blanktest_Mapping(Address_Mapping):
+class Blanktest_Mapping(AddressMapping):
 	"""Map of all segements off."""
 	def __init__(self, sportType='Generic'):
 		super(Blanktest_Mapping, self).__init__(sportType, game=None)
@@ -1712,20 +1715,20 @@ def test():
 	sport = 'MPSTAT'
 	c.writeSport(sport)
 	game = functions.selectSportInstance(sport)
-	addrMap = Address_Mapping(game.gameData['sportType'], game=game)
+	addrMap = AddressMapping(game.gameData['sportType'], game=game)
 	functions.elapseTime(addrMap.Map, On=False, Timeit=False)
 
 	functions.printDictsExpanded(addrMap, True)
 	raw_input()
 
 	'''
-	LHword0 = addrMap.mp.Encode(1, 3, 1, 1, 0, 6, 9, 0, 0)
-	LHword1 = addrMap.mp.Encode(1, 3, 2, 0, 0, 5, 8, 0, 0)
-	LHword2 = addrMap.mp.Encode(1, 3, 3, 1, 0, 0, 5, 0, 0)
-	LHword3 = addrMap.mp.Encode(1, 3, 4, 0, 0, 0, 6, 0, 0)
-	#LHword4 = addrMap.mp.Encode(2, 3, 4, 1, 0, 0, 0, 0, 'abcd')
-	#LHword5 = addrMap.mp.Encode(2, 3, 1, 0, 0, 0, 1, 0, 0)
-	#LHword6 = addrMap.mp.Encode(2, 1, 1, 0, 0, 0, 1, 0, 0)
+	LHword0 = addrMap.mp.encode(1, 3, 1, 1, 0, 6, 9, 0, 0)
+	LHword1 = addrMap.mp.encode(1, 3, 2, 0, 0, 5, 8, 0, 0)
+	LHword2 = addrMap.mp.encode(1, 3, 3, 1, 0, 0, 5, 0, 0)
+	LHword3 = addrMap.mp.encode(1, 3, 4, 0, 0, 0, 6, 0, 0)
+	#LHword4 = addrMap.mp.encode(2, 3, 4, 1, 0, 0, 0, 0, 'abcd')
+	#LHword5 = addrMap.mp.encode(2, 3, 1, 0, 0, 0, 1, 0, 0)
+	#LHword6 = addrMap.mp.encode(2, 1, 1, 0, 0, 0, 1, 0, 0)
 	wordList=[LHword0, LHword1 , LHword2, LHword3]#, LHword4, LHword5, LHword6]
 	addrMap.UnMap(addressWordList=[9,10,11,12], wordList=wordList)
 	print addrMap.game.getTeamData(game.guest, 'TIMER1_PLAYER_NUMBERTens')
