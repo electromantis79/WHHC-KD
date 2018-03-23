@@ -69,6 +69,7 @@ class MpSerialHandler(object):
 	# PUBLIC methods
 
 	def serial_input(self):
+		"""Handles serial input."""
 		if self.serialInputType == 'MP':
 			"""Handles serial input."""
 
@@ -110,7 +111,7 @@ class MpSerialHandler(object):
 			try:
 				self.packet = self.ser.read(self.maxBytes)
 				string = ''
-				self.sp.version_i_d_byte(string, packet=self.packet, length_check=1)
+				self.sp.version_i_d_byte(string, packet=self.packet, length_check=True)
 				if self.sp.ETNFlag:
 					self.sp.ETNFlag = False
 					self.ETNpacketList.append(self.packet)

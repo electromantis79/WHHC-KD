@@ -13,7 +13,7 @@
 """
 
 
-# TODO: correct naming for public and private
+# TODO: correct naming conventions for local method variables
 
 class SerialPacket (object):
 	'''Creates serial packet object.'''
@@ -77,7 +77,7 @@ class SerialPacket (object):
 					print 'packet[-1]', self.decodePacket[-1], 'chr(0x04)', chr(0x04), 'packet[-1]!=chr(0x04)', pack_end
 					print 'self.checksumByte() returns', check
 					return 0
-			length_check = self.version_i_d_byte(string, packet=packet, length_check=1)
+			length_check = self.version_i_d_byte(string, packet=packet, length_check=True)
 			if length_check is None:
 				return 0
 
@@ -189,7 +189,12 @@ class SerialPacket (object):
 				print 'length', len(self.decodePacket)
 			return packet
 
-	def version_i_d_byte(self, string, packet=None, length_check=0):
+	def version_i_d_byte(self, string, packet=None, length_check=False):
+		"""
+		Adds sport ID and packet format version to string.
+		If length_check, it confirms length and checks for ETN injection.
+		"""
+
 		# Sport and version byte, 2
 		if self.ETNFlag:
 			sport = 'N'
@@ -837,23 +842,29 @@ class SerialPacket (object):
 					count += 1
 
 				playerTen = self._get_value(
-					'player'+number+'Tens', min_value_not_blanked=self.game.getTeamData(team, 'player' + number + 'Tens') > 9, team=team)
+					'player'+number+'Tens', min_value_not_blanked=self.game.getTeamData(
+						team, 'player' + number + 'Tens') > 9, team=team)
 				playerUnit = self._get_value(
-					'player'+number+'Units', min_value_not_blanked=self.game.getTeamData(team, 'player' + number + 'Units') > 9, team=team)
+					'player'+number+'Units', min_value_not_blanked=self.game.getTeamData(
+						team, 'player' + number + 'Units') > 9, team=team)
 				playerString = '%s%s' % (playerTen, playerUnit)
 				string += playerString
 
 				foulTen = self._get_value(
-					'foul'+number+'Tens', min_value_not_blanked=self.game.getTeamData(team, 'foul' + number + 'Tens') > 9, team=team)
+					'foul'+number+'Tens', min_value_not_blanked=self.game.getTeamData(
+						team, 'foul' + number + 'Tens') > 9, team=team)
 				foulUnit = self._get_value(
-					'foul'+number+'Units', min_value_not_blanked=self.game.getTeamData(team, 'foul' + number + 'Units') > 9, team=team)
+					'foul'+number+'Units', min_value_not_blanked=self.game.getTeamData(
+						team, 'foul' + number + 'Units') > 9, team=team)
 				foulString = '%s%s' % (foulTen, foulUnit)
 				string += foulString
 
 				pointsTen = self._get_value(
-					'points'+number+'Tens', min_value_not_blanked=self.game.getTeamData(team, 'points' + number + 'Tens') > 9, team=team)
+					'points'+number+'Tens', min_value_not_blanked=self.game.getTeamData(
+						team, 'points' + number + 'Tens') > 9, team=team)
 				pointsUnit = self._get_value(
-					'points'+number+'Units', min_value_not_blanked=self.game.getTeamData(team, 'points' + number + 'Units') > 9, team=team)
+					'points'+number+'Units', min_value_not_blanked=self.game.getTeamData(
+						team, 'points' + number + 'Units') > 9, team=team)
 				pointsString = '%s%s' % (pointsTen, pointsUnit)
 				string += pointsString
 				self.decodePacket = self._string_eater(
@@ -1027,7 +1038,8 @@ class SerialPacket (object):
 		pitchCountUnit = self._get_value('pitchCountUnits', min_value_not_blanked=0, team=team)
 		teamPitchCount = '%s%s%s' % (pitchCountHundred, pitchCountTen, pitchCountUnit)
 		string += teamPitchCount
-		self.decodePacket = self._string_eater(self.decodePacket, places=(len(teamHits) + len(errorsString) + len(teamPitchCount)))
+		self.decodePacket = self._string_eater(
+			self.decodePacket, places=(len(teamHits) + len(errorsString) + len(teamPitchCount)))
 		return string
 
 	def _team_shots_saves_kicks_string(self, string, team, packet=None):
@@ -1080,7 +1092,8 @@ class SerialPacket (object):
 			kicksUnit = self._get_value('kicksUnits', min_value_not_blanked=0, team=team)
 			kicksString = '%s%s' % (kicksTen, kicksUnit)
 			string += kicksString
-			self.decodePacket = self._string_eater(self.decodePacket, places=(len(shotsString) + len(savesString) + len(kicksString)))
+			self.decodePacket = self._string_eater(
+				self.decodePacket, places=(len(shotsString) + len(savesString) + len(kicksString)))
 		else:
 			self.decodePacket = self._string_eater(self.decodePacket, places=len(shotsString))
 		return string
@@ -1158,7 +1171,8 @@ class SerialPacket (object):
 					scoreInning = int(packet[inning])
 				self.game.setTeamData(team, 'scoreInn'+str(inning+1), scoreInning, 1)
 			scoreInn = self._get_value(
-				'scoreInn'+str(inning+1), min_value_not_blanked=self.game.getTeamData(team, 'scoreInn' + str(inning + 1)) > 9, team=team)
+				'scoreInn'+str(inning+1), min_value_not_blanked=self.game.getTeamData(
+					team, 'scoreInn' + str(inning + 1)) > 9, team=team)
 			string += str(scoreInn)
 		self.decodePacket = self._string_eater(self.decodePacket, places=len(range(15)))
 		return string
@@ -1210,10 +1224,12 @@ class SerialPacket (object):
 
 			timerPlayerNumberTens = self._get_value(
 				'TIMER'+str(clockNumber)+'_PLAYER_NUMBERTens',
-				min_value_not_blanked=self.game.getTeamData(team, 'TIMER' + str(clockNumber) + '_PLAYER_NUMBERTens') > 9, team=team)
+				min_value_not_blanked=self.game.getTeamData(
+					team, 'TIMER' + str(clockNumber) + '_PLAYER_NUMBERTens') > 9, team=team)
 			timerPlayerNumberUnits = self._get_value(
 				'TIMER'+str(clockNumber)+'_PLAYER_NUMBERUnits',
-				min_value_not_blanked=self.game.getTeamData(team, 'TIMER' + str(clockNumber) + '_PLAYER_NUMBERUnits') > 9, team=team)
+				min_value_not_blanked=self.game.getTeamData(
+					team, 'TIMER' + str(clockNumber) + '_PLAYER_NUMBERUnits') > 9, team=team)
 			timerPlayerNumber = '%s%s' % (timerPlayerNumberTens, timerPlayerNumberUnits)
 			string += timerPlayerNumber
 
@@ -1375,7 +1391,8 @@ class SerialPacket (object):
 			self.game.setGameData('playerFoulsTens', playerFoulsTens, 1)
 			self.game.setGameData('playerFoulsUnits', playerFoulsUnits, 1)
 
-		playerNumberTen = self._get_value('playerNumberTens', min_value_not_blanked=self.game.getGameData('playerNumberTens') > 9)
+		playerNumberTen = self._get_value(
+			'playerNumberTens', min_value_not_blanked=self.game.getGameData('playerNumberTens') > 9)
 		playerNumberUnit = self._get_value(
 			'playerNumberUnits', min_value_not_blanked=self.game.getGameData('playerNumberUnits') > 9)
 		playerFoulsTen = self._get_value('playerFoulsTens', min_value_not_blanked=1)
