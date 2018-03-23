@@ -16,12 +16,12 @@ import app.serial_IO.serial_packet
 import app.serial_IO.Platform
 
 
-class MP_Serial_Handler(object):
+class MpSerialHandler(object):
 	"""Creates a serial port object."""
 
-	def __init__(self, timeout=0, serialInputType='MP', verboseFlag=False, game=None):
-		self.serialInputType = serialInputType
-		self.verboseFlag = verboseFlag
+	def __init__(self, timeout=0, serial_input_type='MP', verbose_flag=False, game=None):
+		self.serialInputType = serial_input_type
+		self.verboseFlag = verbose_flag
 		self.game = game
 
 		# Variables
@@ -36,15 +36,15 @@ class MP_Serial_Handler(object):
 		self.sp.MPserial = True
 
 		# Mulit-platform support
-		PLATFORM = app.serial_IO.Platform.platform_detect()
-		if PLATFORM == 2:
+		platform = app.serial_IO.Platform.platform_detect()
+		if platform == 2:
 			import Adafruit_BBIO.UART as UART
 			import serial
 			UART.setup('UART1')
-			portName = '/dev/ttyO1'
-		elif PLATFORM == 1:
+			port_name = '/dev/ttyO1'
+		elif platform == 1:
 			import serial
-			portName = '/dev/ttyS0'
+			port_name = '/dev/ttyS0'
 		else:
 			print ("Don't work on windows yet")
 			return  # Needed to skip the rest of __init__
@@ -58,8 +58,8 @@ class MP_Serial_Handler(object):
 			self.maxBytes = 1024
 
 		# Setup serial port
-		print ('portName', portName)
-		self.ser = serial.Serial(port=portName, baudrate=38400, bytesize=8, timeout=timeout)
+		print ('port_name', port_name)
+		self.ser = serial.Serial(port=port_name, baudrate=38400, bytesize=8, timeout=timeout)
 
 		# TODO: Do I need these 3 lines?
 		self.ser.close()
@@ -68,7 +68,7 @@ class MP_Serial_Handler(object):
 
 	# PUBLIC methods
 
-	def serialInput(self):
+	def serial_input(self):
 		if self.serialInputType == 'MP':
 			"""Handles serial input."""
 
@@ -82,18 +82,18 @@ class MP_Serial_Handler(object):
 					print ('data_out', data_out)
 				for x, byte in enumerate(data_out):
 					if byte > 127:
-						byteType = 'high'
+						byte_type = 'high'
 						if self.previousLowByte is not None:
 							word = (self.previousLowByte << 8)+byte
 							self.receiveList.append(word)
 					else:
-						byteType = 'low'
+						byte_type = 'low'
 						self.previousLowByte = byte
 					if self.verboseFlag:
 						print (byte)
 
 				if self.verboseFlag and data_out:
-					print (byteType, byte)
+					print (byte_type, byte)
 					print ('self.receiveList', self.receiveList)
 					if self.ser.inWaiting():
 						print (self.ser.inWaiting(), 'bytes in buffer')
@@ -110,7 +110,7 @@ class MP_Serial_Handler(object):
 			try:
 				self.packet = self.ser.read(self.maxBytes)
 				string = ''
-				self.sp._version_i_d_byte(string, packet=self.packet, length_check=1)
+				self.sp.version_i_d_byte(string, packet=self.packet, length_check=1)
 				if self.sp.ETNFlag:
 					self.sp.ETNFlag = False
 					self.ETNpacketList.append(self.packet)
@@ -121,7 +121,7 @@ class MP_Serial_Handler(object):
 			if self.verboseFlag:
 				print (self.packet)
 
-	def serialOutput(self, data):
+	def serial_output(self, data):
 		"""Handles serial output."""
 		data_in = data
 		try:

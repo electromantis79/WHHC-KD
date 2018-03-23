@@ -126,8 +126,8 @@ class Console(object):
 			print 'Platform is', _platform
 			if self.serialInputFlag and not internalReset:
 				verbose(['\nSerial Input On'], self.verbose)
-				from serial_IO.MP_Serial import MP_Serial_Handler
-				self.s = MP_Serial_Handler(serialInputType=self.serialInputType, game=self.game)
+				import serial_IO.mp_serial
+				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
 				if self.serialInputType == 'ASCII':
 					self.serialInputRefreshFrequency = .1
 				self.refresherSerialInput = Thread(target=threadTimer, args=(self.serialInput, self.serialInputRefreshFrequency))
@@ -223,7 +223,7 @@ class Console(object):
 		"""Inputs serial packets."""
 		# tic = time.time()
 		# print 'serial Input', (tic-self.initTime)
-		self.s.serialInput()
+		self.s.serial_input()
 		# toc = time.time()
 		# print toc-tic
 
@@ -252,7 +252,7 @@ class Console(object):
 					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
 
 		try:
-			self.s.serialOutput(self.serialString)
+			self.s.serial_output(self.serialString)
 			if self.printTimesFlag or self.verboseDiagnostic or self.ETNSendListFlag:
 				pass  # print 'Serial Output', self.serialString
 		except:

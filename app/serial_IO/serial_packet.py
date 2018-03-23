@@ -77,14 +77,14 @@ class SerialPacket (object):
 					print 'packet[-1]', self.decodePacket[-1], 'chr(0x04)', chr(0x04), 'packet[-1]!=chr(0x04)', pack_end
 					print 'self.checksumByte() returns', check
 					return 0
-			length_check = self._version_i_d_byte(string, packet=packet, length_check=1)
+			length_check = self.version_i_d_byte(string, packet=packet, length_check=1)
 			if length_check is None:
 				return 0
 
 			# Remove start byte
 			self.decodePacket = self._string_eater(self.decodePacket)
 
-		string = self._version_i_d_byte(string, packet=self.decodePacket)
+		string = self.version_i_d_byte(string, packet=self.decodePacket)
 
 		if not (self.game.gameData['sportType'] == 'stat' or self.ETNFlag):
 			string = self._period_clock_string(string, packet=self.decodePacket)
@@ -189,6 +189,56 @@ class SerialPacket (object):
 				print 'length', len(self.decodePacket)
 			return packet
 
+	def version_i_d_byte(self, string, packet=None, length_check=0):
+		# Sport and version byte, 2
+		if self.ETNFlag:
+			sport = 'N'
+			version = '1'
+			packet_length = 60
+		elif self.game.gameData['sportType'] == 'football':
+			sport = 'F'
+			version = '1'
+			packet_length = 80
+		elif self.game.gameData['sportType'] == 'basketball':
+			sport = 'K'
+			version = '1'
+			packet_length = 100
+		elif self.game.gameData['sportType'] == 'baseball' or self.game.gameData['sportType'] == 'linescore':
+			sport = 'B'
+			version = '1'
+			packet_length = 160
+		elif self.game.gameData['sportType'] == 'soccer':
+			sport = 'S'
+			version = '1'
+			packet_length = 90
+		elif self.game.gameData['sportType'] == 'hockey':
+			sport = 'H'
+			version = '1'
+			packet_length = 110
+		elif self.game.gameData['sportType'] == 'stat':
+			sport = 'P'
+			version = '1'
+			packet_length = 90
+		partial_string = sport+version
+		string += partial_string
+
+		if length_check:
+			if len(packet) > 1 and packet[1] == 'N':
+				self.ETNFlag = True
+				packet_length = 60
+
+			if self.printCorruption and len(packet) != packet_length and not self.MPserial:
+				string = None
+				print 'Packet Length Error'
+				print 'len(packet), packet_length = ', len(packet), packet_length
+				print 'self.decodePacket "', self.decodePacket, '"END\n'
+				return string
+
+		else:
+			self.decodePacket = self._string_eater(self.decodePacket, places=len(partial_string))
+
+		return string
+
 	# END PUBLIC methods -----------------------------------------------------
 
 	def _get_value(self, value_name, min_value_not_blanked=1, team=None):
@@ -205,56 +255,6 @@ class SerialPacket (object):
 			else:
 				value = ' '
 		return value
-
-	def _version_i_d_byte(self, string, packet=None, length_check=0):
-		# Sport and version byte, 2
-		if self.ETNFlag:
-			sport = 'N'
-			version = '1'
-			packetLength = 60
-		elif self.game.gameData['sportType'] == 'football':
-			sport = 'F'
-			version = '1'
-			packetLength = 80
-		elif self.game.gameData['sportType'] == 'basketball':
-			sport = 'K'
-			version = '1'
-			packetLength = 100
-		elif self.game.gameData['sportType'] == 'baseball' or self.game.gameData['sportType'] == 'linescore':
-			sport = 'B'
-			version = '1'
-			packetLength = 160
-		elif self.game.gameData['sportType'] == 'soccer':
-			sport = 'S'
-			version = '1'
-			packetLength = 90
-		elif self.game.gameData['sportType'] == 'hockey':
-			sport = 'H'
-			version = '1'
-			packetLength = 110
-		elif self.game.gameData['sportType'] == 'stat':
-			sport = 'P'
-			version = '1'
-			packetLength = 90
-		partialString = sport+version
-		string += partialString
-		
-		if length_check:
-			if len(packet) > 1 and packet[1] == 'N':
-				self.ETNFlag = True
-				packetLength = 60
-				
-			if self.printCorruption and len(packet) != packetLength and not self.MPserial:
-				string = None
-				print 'Packet Length Error'
-				print 'len(packet), packetLength = ', len(packet), packetLength
-				print 'self.decodePacket "', self.decodePacket, '"END\n'
-				return string
-
-		else:
-			self.decodePacket = self._string_eater(self.decodePacket, places=len(partialString))
-			
-		return string
 
 	def _period_clock_string(self, string, packet=None):
 		"""Prepare all period clock bytes HH:MM:SS.xcm, 12"""
