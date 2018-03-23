@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-**COMPLETION** = 75%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
@@ -9,16 +8,14 @@
     This can be done in either direction (memory to MP word or MP word to memory)
 
     :Created Date: 3/16/2015
-    :Modified Date: 12/8/2017
     :Author: **Craig Gunter**
 
     .. warning:: This is *where the magic happens*.
 """
-import cProfile, pstats, StringIO
-import time
 
-from functions import *
-from MP_Data_Handler import MP_Data_Handler
+import functions
+from mp_data_handler import MpDataHandler
+
 
 class Address_Mapping(object):
 	"""
@@ -82,15 +79,15 @@ class Address_Mapping(object):
 			self.statFlag=False
 			self.wordListAddr = range(1,33)
 
-		self.mp = MP_Data_Handler()
+		self.mp = MpDataHandler()
 		self.wordsDict = dict.fromkeys(self.wordListAddr, 0)
 		self._blankMap()
 
-		self.configDict=readConfig()
+		self.configDict=functions.readConfig()
 		self.sport=self.configDict['sport']
 
 		self.addressMapDict={}
-		self.fullAddressMapDict = readAddressMap(self.sport, self.sportType, self.wordListAddr)
+		self.fullAddressMapDict = functions.readAddressMap(self.sport, self.sportType, self.wordListAddr)
 		self._buildAddrMap()
 		
 		self.periodClockUnMapKeysList=['hoursUnits', 'minutesTens', \
@@ -125,16 +122,16 @@ class Address_Mapping(object):
 			except:
 				print 'Error', address, self.addressMapDict
 
-	#startup methods end
+	# startup methods end
 
-	#callable methods and internal methods start -----
+	# callable methods and internal methods start -----
 
 	def setGame(self, game):
-		#PUBLIC
+		# PUBLIC method
 		self.game=game
 
 	def Map(self):
-		#PUBLIC
+		# PUBLIC method
 		"""
 		Updates the list of MP Formated data packs to be sent
 
@@ -143,37 +140,14 @@ class Address_Mapping(object):
 			_adjustAllBanks first calls _updateAddrWords
 			_updateAddrWords calls _loadFromAddDict
 			_loadFromAddDict calls mp.Encode
-				Current Dict of 32 words are up to date
-
-		.. note:: Map and UnMap are the only publically callable methods for this class.
+				wordsDict up to date
 		"""
-		if 0:
-			#This section is for testing time characteristics
-			
-			tic=time.time()
-			pr = cProfile.Profile()
-			pr.enable()
-			# ... do something ...
-			elapseTime(self._adjustAllBanks, On=True, Timeit=False)
-			pr.disable()
-			s = StringIO.StringIO()
-			sortby = 'cumulative'
-			ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-			ps.print_stats()
-			print s.getvalue()
-			toc=time.time()
-			elapse=toc-tic
-			print elapse
-			
-		else:
-			#Normal Operation
-			
-			self._adjustAllBanks()
+		self._adjustAllBanks()
 
-	#G1		B1=1,2,3,4		B2=5,6,7,8 		B3=9,10,11,12, 		B4=13,14,15,16
-	#G2		B1=17,18,19,20 	B2=21,22,23,24 	B3=25,26,27,28 		B4=29,30,31,32
+	# G1		B1=1,2,3,4		B2=5,6,7,8 		B3=9,10,11,12, 		B4=13,14,15,16
+	# G2		B1=17,18,19,20 	B2=21,22,23,24 	B3=25,26,27,28 		B4=29,30,31,32
 
-	#Map()'s main methods - "The _adjustAllBanks chain"
+	# Map()'s main methods - "The _adjustAllBanks chain"
 	def _adjustAllBanks(self):
 		"""
 		Checks states of flags per sport and creates a list of alternate mapping adressess and adds them to the standard addressMapDict.
@@ -181,7 +155,7 @@ class Address_Mapping(object):
 		Fetch the data, make any changes, and adjust the **wordsDict**.
 		"""
 
-		verbose('\n-------_adjustAllBanks-------\n', self.verbose)
+		functions.verbose('\n-------_adjustAllBanks-------\n', self.verbose)
 		Alts = []
 
 		#Freeze clock data
@@ -340,7 +314,7 @@ class Address_Mapping(object):
 		return List
 
 	def _updateAddrWords(self, Alts):
-		verbose(['Alts', Alts], self.verbose)
+		functions.verbose(['Alts', Alts], self.verbose)
 		#print self.addressMapDict
 		#print Alts
 
@@ -385,7 +359,7 @@ class Address_Mapping(object):
 			self.wordsDict[address]=self.mp.Encode(group, bank, word, iBit, hBit, highNibble, lowNibble, blankType, segmentData, statFlag=self.statFlag)
 
 	def _sortPlayers(self):
-		activePlayerList, team, teamName=activePlayerListSelect(self.game)
+		activePlayerList, team, teamName=functions.activePlayerListSelect(self.game)
 		activePlayerList.sort()
 
 		for x, playerNumber in enumerate(activePlayerList):
@@ -537,7 +511,7 @@ class Address_Mapping(object):
 		"""
 		Gets the current game data values with these names, formats them, and returns them.
 		"""
-		verbose(['\nNibble Format(before) - highNibbleName, lowNibbleName, blankType, word, addrWordNumber - \n', \
+		functions.verbose(['\nNibble Format(before) - highNibbleName, lowNibbleName, blankType, word, addrWordNumber - \n', \
 		highNibbleName, lowNibbleName, blankType, word, addrWordNumber], self.verbose)
 
 		#Handle nibble blanking
@@ -1068,25 +1042,25 @@ class Address_Mapping(object):
 				
 			if self._tunnelCheck(word, numericData):
 				#Tunneling data
-				verbose([ 'word', word], self.verboseTunnel)
+				functions.verbose([ 'word', word], self.verboseTunnel)
 				if word==1:
 					if numericData==0xbc:
-						verbose([ 'Quantum dimming tunnel open!!!!'], self.verboseTunnel)
+						functions.verbose([ 'Quantum dimming tunnel open!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel=1
 					elif numericData==0xad:
-						verbose([ 'Quantum ETN tunnel open!!!!'], self.verboseTunnel)
+						functions.verbose([ 'Quantum ETN tunnel open!!!!'], self.verboseTunnel)
 						self.quantumETNTunnel=1
 							
 			elif self.quantumDimmingTunnel or self.quantumETNTunnel:
-				verbose([ 'word', word], self.verboseTunnel)
+				functions.verbose([ 'word', word], self.verboseTunnel)
 				if word==1:
 					if not (numericData>=0xaa and numericData<0xf0):
-						verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
+						functions.verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel=0
 						self.quantumETNTunnel=0
 						
 				elif word==2:
-					verbose([ 'numericData', numericData], self.verboseTunnel)
+					functions.verbose([ 'numericData', numericData], self.verboseTunnel)
 					if self.quantumDimmingTunnel:
 						self.brightness=(numericData & 0x0f) + ((numericData & 0xf0) >> 4)*10
 					elif self.quantumETNTunnel:
@@ -1098,12 +1072,12 @@ class Address_Mapping(object):
 						else:
 							self.quantumETNTunnelTeam=self.game.guest
 							
-						verbose([ 'self.quantumETNTunnelTeam =', self.quantumETNTunnelTeam], self.verboseTunnel)
+						functions.verbose([ 'self.quantumETNTunnelTeam =', self.quantumETNTunnelTeam], self.verboseTunnel)
 
 						if numericData:
 							#address pair
 							self.fontJustifyControl=0
-							verbose([ 'address pair', numericData], self.verboseTunnel)
+							functions.verbose([ 'address pair', numericData], self.verboseTunnel)
 							self.addressPair=numericData
 						else:
 							#control for font-justify either team because of trimming
@@ -1112,7 +1086,7 @@ class Address_Mapping(object):
 				elif word==3:
 					if self.quantumETNTunnel and not self.fontJustifyControl:
 						self.leftETNByte=numericData
-						verbose([ 'leftETNByte', numericData], self.verboseTunnel)
+						functions.verbose([ 'leftETNByte', numericData], self.verboseTunnel)
 
 				elif word==4:
 					if self.quantumETNTunnel and self.fontJustifyControl:
@@ -1121,30 +1095,30 @@ class Address_Mapping(object):
 							
 						self.game.setTeamData(self.quantumETNTunnelTeam, 'font', font, 1)
 						self.game.setTeamData(self.quantumETNTunnelTeam, 'justify', justify, 1)
-						verbose([ 'font', font, 'justify', justify], self.verboseTunnel)
+						functions.verbose([ 'font', font, 'justify', justify], self.verboseTunnel)
 
-						verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
+						functions.verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel=0
 						self.quantumETNTunnel=0
 						self.quantumETNTunnelProcessed=True
 													
 					elif self.quantumETNTunnel:
 						self.rightETNByte=numericData
-						verbose([ 'rightETNByte', numericData], self.verboseTunnel)
+						functions.verbose([ 'rightETNByte', numericData], self.verboseTunnel)
 						if self.leftETNByte and self.rightETNByte:
 							name=self.game.getTeamData(self.quantumETNTunnelTeam, 'name')[:(self.addressPair-1)*2]+chr(self.leftETNByte)+chr(self.rightETNByte)
 						elif self.leftETNByte:
 							name=self.game.getTeamData(self.quantumETNTunnelTeam, 'name')[:(self.addressPair-1)*2]+chr(self.leftETNByte)
 						elif self.rightETNByte:
-							verbose([ 'ERROR - should not send 0 in word 3 and something in word 4', self.leftETNByte and self.rightETNByte], self.verboseTunnel)
+							functions.verbose([ 'ERROR - should not send 0 in word 3 and something in word 4', self.leftETNByte and self.rightETNByte], self.verboseTunnel)
 							name=''
 						else:
 							name=self.game.getTeamData(self.quantumETNTunnelTeam, 'name')
 								
 						self.game.setTeamData(self.quantumETNTunnelTeam, 'name', name, 1)
-						verbose([ 'name-', name, '-'], self.verboseTunnel)
+						functions.verbose([ 'name-', name, '-'], self.verboseTunnel)
 						
-						verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
+						functions.verbose([ 'Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel=0
 						self.quantumETNTunnel=0
 						self.quantumETNTunnelProcessed=True
@@ -1708,6 +1682,7 @@ class Lamptest_Mapping(Address_Mapping):
 		"""pass"""
 		pass
 
+
 class Blanktest_Mapping(Address_Mapping):
 	"""Map of all segements off."""
 	def __init__(self, sportType='Generic'):
@@ -1730,20 +1705,20 @@ class Blanktest_Mapping(Address_Mapping):
 		pass
 
 
+"""
 def test():
-	"""Test function if module ran independently."""
 	print "ON"
 	c = Config()
 	sport = 'MPSTAT'
 	c.writeSport(sport)
-	game = selectSportInstance(sport)
+	game = functions.selectSportInstance(sport)
 	addrMap = Address_Mapping(game.gameData['sportType'], game=game)
-	elapseTime(addrMap.Map, On=False, Timeit=False)
-	
-	printDictsExpanded(addrMap, True)
+	functions.elapseTime(addrMap.Map, On=False, Timeit=False)
+
+	functions.printDictsExpanded(addrMap, True)
 	raw_input()
 
-	"""
+	'''
 	LHword0 = addrMap.mp.Encode(1, 3, 1, 1, 0, 6, 9, 0, 0)
 	LHword1 = addrMap.mp.Encode(1, 3, 2, 0, 0, 5, 8, 0, 0)
 	LHword2 = addrMap.mp.Encode(1, 3, 3, 1, 0, 0, 5, 0, 0)
@@ -1760,10 +1735,6 @@ def test():
 	#addrDict=addrMap.__dict__
 	#printDict(addrDict)
 	#printDictsExpanded(addrMap, True)
-	"""
+	'''
 
-
-if __name__ == '__main__':
-	# from serial_packet_Class import Serial_Packet
-	from config_default_settings import Config
-	test()
+"""

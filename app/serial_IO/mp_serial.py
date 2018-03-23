@@ -153,9 +153,9 @@ if __name__ == '__main__':
 	from sys import platform as _platform
 	from threading import Thread
 	
-	from app.MP_Data_Handler import MP_Data_Handler
+	from app.MpDataHandler import MpDataHandler
 	s = MP_Serial_Handler(verbose=False)
-	mp = MP_Data_Handler()
+	mp = MpDataHandler()
 	serialInputRefreshFrequency = .001
 	refresherSerialInput = Thread(target=threadTimer, args=(test, serialInputRefreshFrequency))
 	#refresherSerialInput.daemon=True

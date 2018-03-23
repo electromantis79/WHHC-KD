@@ -44,10 +44,10 @@ app.Keypad_Mapping module
     :undoc-members:
     :show-inheritance:
 
-app.MP_Data_Handler module
+app.MpDataHandler module
 --------------------------
 
-.. automodule:: app.MP_Data_Handler
+.. automodule:: app.MpDataHandler
     :members:
     :undoc-members:
     :show-inheritance:

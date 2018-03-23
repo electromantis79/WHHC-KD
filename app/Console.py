@@ -84,7 +84,7 @@ class Console(object):
 		self.addrMap = Address_Mapping(self.game.gameData['sportType'], self.game)
 		self.lampTest = Lamptest_Mapping(self.game.gameData['sportType'])
 		self.blankTest = Blanktest_Mapping(self.game.gameData['sportType'])
-		self.mp = MP_Data_Handler()
+		self.mp = MpDataHandler()
 		self.addrMap.Map()
 
 		# Variables

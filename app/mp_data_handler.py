@@ -1,21 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
-**COMPLETION** = 100%  Sphinx Approved = **True**
+"""
 
 .. topic:: Overview
 
     This module manipulates MP style data.
 
     :Created Date: 3/12/2015
-    :Modified Date: 9/1/2016
     :Author: **Craig Gunter**
 
-'''
+"""
 
-class MP_Data_Handler(object):
-	'''Creates an object to manipulate MP style data.'''
+class MpDataHandler(object):
+	"""Creates an object to manipulate MP style data."""
 	def __init__ (self):
 		self.data = 0x0
 		self.addr = 0
@@ -37,18 +35,18 @@ class MP_Data_Handler(object):
 		self.bitwise_Flag=False
 
 	def GBW_to_MP_Address (self, group, bank, word): #Can be used externaly
-		'''Returns MP format address.'''
+		"""Returns MP format address."""
 		#print group, bank, word
 		self.addr = (((( (group-1) << 2) | (bank-1)) << 2) | (word-1))
 		#print 'addr', bin(self.addr)
 		return self.addr
 
 	def _GBWD_to_Segment_Address (self):#2
-		'''Builds the segment address from the group, bank, word, and data.'''
+		"""Builds the segment address from the group, bank, word, and data."""
 		self.seg_addr = (self.GBW_to_MP_Address(self.group, self.bank, self.word) << 9) | self.data
 
 	def _lowHigh_Protocol_Wrapper (self, seg_addr):#3
-		'''Converts the Low and High Byes into the LowHigh Word format. (0LLLLLLL 1HHHHHHH)'''
+		"""Converts the Low and High Byes into the LowHigh Word format. (0LLLLLLL 1HHHHHHH)"""
 		#print 'segaddr', bin(seg_addr)
 		self.highByte = ((seg_addr & 0x3f80) >> 7) | 0x80
 		#print bin(self.highByte)
@@ -141,7 +139,7 @@ class MP_Data_Handler(object):
 		return digit
 
 	def _valueRangeCheck (self):
-		'''Check if nibbles are out of range, if so print.'''
+		"""Check if nibbles are out of range, if so print."""
 		#Do we need to change the nibble values?
 		
 		Return=1
@@ -168,7 +166,7 @@ class MP_Data_Handler(object):
 		return Return
 
 	def _blank(self, value):
-		'''Blank value bitwise or BCD and set blankedFlag.'''
+		"""Blank value bitwise or BCD and set blankedFlag."""
 		self.blankedFlag=True
 		if self.bitwise_Flag:
 			value=0x0
@@ -181,7 +179,7 @@ class MP_Data_Handler(object):
 		return value
 
 	def _blankCheck(self):
-		'''Perform blanking based on selected blank type.'''
+		"""Perform blanking based on selected blank type."""
 		
 		#Always blank section
 		if self.blankType=='AlwaysHighLow':
@@ -253,7 +251,7 @@ class MP_Data_Handler(object):
 			self.H_Bit, self.lowNibble = self._checkNext(units=self.lowNibble, tens=None, hundredsFlag=self.H_Bit)
 
 	def _checkNext(self, units=None, tens=None, hundredsFlag=None, HL_unitsBlank=False):
-		'''Check higher place values and blank accordingly.'''
+		"""Check higher place values and blank accordingly."""
 		
 		if units is None:
 			raise error('You have to give me a units value to use this function!!!!')
@@ -296,7 +294,7 @@ class MP_Data_Handler(object):
 				
 				if units==0:
 					units=self._blank(units)
-				print 'Do I ever use this?, from MP_Data_Handler._checkNext'
+				print 'Do I ever use this?, from MpDataHandler._checkNext'
 					
 				#print hundredsFlag, units
 				return hundredsFlag, units
@@ -314,7 +312,7 @@ class MP_Data_Handler(object):
 		raise
 
 	def Encode (self, group, bank, word, I_Bit, H_Bit, highNibble, lowNibble, blankType, segmentData, statFlag=False, pass3_4Flag=False):
-		'''Encodes the input data into an MP protocol two byte word formated for its given blanking status.'''
+		"""Encodes the input data into an MP protocol two byte word formated for its given blanking status."""
 		self.group = group
 		self.bank = bank
 		self.word = word
@@ -459,7 +457,7 @@ class MP_Data_Handler(object):
 		return group, bank, word, data
 
 	def numericDataDecode(self, numericData): #Can be used externaly
-		'''Returns the decimal value of the 7 segment Character 0-9 and A-F.'''
+		"""Returns the decimal value of the 7 segment Character 0-9 and A-F."""
 		SegmentTable = [#        HGFEDCBA
 		0b00111111, # 0 = ABCDEF
 		0b00000110, # 1 =  BC
@@ -487,7 +485,7 @@ class MP_Data_Handler(object):
 		return numericData
 
 	def Decode(self, LH_Word):
-		'''Decodes a MP protocol word and returns the group, bank, word, I Bit, and segments A-G.'''
+		"""Decodes a MP protocol word and returns the group, bank, word, I Bit, and segments A-G."""
 		seg_addr = self._lowHigh_Protocol_UNWrapper(LH_Word)
 		group, bank, word, data = self._Segment_Address_to_GBWD(seg_addr)
 
@@ -500,11 +498,11 @@ class MP_Data_Handler(object):
 		return group, bank, word, I_Bit, numericData
 
 def test():
-	'''Test function if module ran independently.'''
+	"""Test function if module ran independently."""
 	print "Program Started\n"
-	mp=MP_Data_Handler()
+	mp=MpDataHandler()
 	choice=100
-	mpOUT=MP_Data_Handler()
+	mpOUT=MpDataHandler()
 
 	while choice:
 		if choice == 100:
@@ -713,13 +711,13 @@ def test():
 		else:
 			choice = 100
 
-'''
+"""
 		elif choice == 1:
 			data = int(float.fromhex(raw_input("Input 14-bit hex value to be converted: ")))
 			print "Group: %X, Bank: %X, Word: %X, Data: 0x%X" % mp._Segment_Address_to_GBWD(data)
 			choice = 100
-'''
-'''
+"""
+"""
 		elif choice == 4:
 			data = int(float.fromhex(raw_input("Input 14-bit hex value to be converted: ")))
 			#print "UN-Wrapped LowHigh Word: %X" % mp.lowHigh_Protocol_UNWrapper(data)
@@ -732,8 +730,8 @@ def test():
 			segment = raw_input("Input a character a to i to be toggled: ")
 			print "Data before: 0x%X, Data after: 0x%X" % (data, mp._toggle_segment(segment, data))
 			choice = 100
-'''
-'''
+"""
+"""
 		elif choice == 9:
 			data = int(float.fromhex(raw_input("Input 5-bit hex value to be converted: ")))
 			print "Group: %X, Bank: %X, Word: %X" % mp.MP_Address_to_GBW(data)
@@ -745,7 +743,7 @@ def test():
 			data3 = input("Input Word: ")
 			print "Segment Address: 0x%X" % mp._GBW_to_MP_Address(data1, data2, data3)
 			choice = 100
-'''
+"""
 
 if __name__ == '__main__':
 	test()
