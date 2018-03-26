@@ -28,16 +28,16 @@ SPORT_LIST = [
 	'MPCRICKET1', 'MPRACETRACK1', 'MPLX3450-baseball', 'MPLX3450-football', 'MPGENERIC',  'MPSTAT']
 
 
-def threadTimer(passed_function, period=.01, arg=None, alignTime=0.0):
+def threadTimer(passed_function, period=.01, arg=None, align_time=0.0):
 	nextCall = time.time()
 	startTime = time.time()
 	#print 'startTime', startTime
 	if _platform == "linux" or _platform == "linux2":
 		os.nice(-1)
-		if alignTime:
-			#print 'alignTime', alignTime
+		if align_time:
+			#print 'align_time', align_time
 			#print 'startTime', startTime
-			nextCall = alignTime
+			nextCall = align_time
 			count = 0
 			while (nextCall-startTime) < 0:
 				nextCall = nextCall+period
@@ -219,6 +219,9 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 	elif choice == 22:  # 'GENERIC'
 		from game.game import Game
 		game = Game(numberOfTeams)
+	else:
+		print 'sport not in list'
+		raise Exception
 	return game
 
 

@@ -28,18 +28,10 @@ app.config_default_settings module
     :undoc-members:
     :show-inheritance:
 
-app.console module
+app.Console module
 ------------------
 
-.. automodule:: app.console
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.keypad_mapping module
--------------------------
-
-.. automodule:: app.keypad_mapping
+.. automodule:: app.Console
     :members:
     :undoc-members:
     :show-inheritance:
@@ -48,14 +40,6 @@ app.mp_data_handler module
 --------------------------
 
 .. automodule:: app.mp_data_handler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.configobj module
---------------------
-
-.. automodule:: app.configobj
     :members:
     :undoc-members:
     :show-inheritance:
