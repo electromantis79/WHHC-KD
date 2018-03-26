@@ -1257,7 +1257,7 @@ class AddressMapping(object):
 					# Change sport
 					from config_default_settings import Config
 					c = Config()							
-					c.writeSport(sport)
+					c.write_sport(sport)
 					
 					# Tell console to reset
 					self.game.gameSettings['resetGameFlag'] = True

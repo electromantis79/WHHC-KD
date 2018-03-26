@@ -13,7 +13,7 @@
 """
 
 import time, os
-#import pkg_resources  # Not sure if i need this
+# import pkg_resources  # Not sure if i need this
 
 import app.functions
 import app.configobj
@@ -22,44 +22,44 @@ import app.configobj
 class GameDefaultSettings:
 	"""Writes the chosen file or reads it and builds a dictionary of it named gameDefaultSettings."""
 
-	def __init__(self, write=False, fileType='user'):
-		self.fileType = fileType
+	def __init__(self, write=False, file_type='user'):
+		self.fileType = file_type
 		self.write = write
-		self.tick = 0.0
-		self.tock = 0.0
+		self.tic = 0.0
+		self.toc = 0.0
 		self.gameDefaultSettings = {}
 		self.gameDefaultSettingsFile = {}
 		self.gameUserSettings = {}
-		self.Start()
+		self._process_selection()
 
-	def Start(self):
-		"""Choose read or write and default or user"""
+	def _process_selection(self):
+		# Choose read or write and default or user
 		
 		if self.fileType == 'default':
 			if self.write:
 				self.gameDefaultSettings = app.configobj.ConfigObj('game/gameDefaultSettings')
-				self.writeAll()
+				self._write_all()
 			else:
 				self.gameDefaultSettingsFile = app.configobj.ConfigObj('game/gameDefaultSettings', file_error=True)
 				if self.gameDefaultSettingsFile:
-					self.readAll()
+					self._read_all()
 				else:
 					print os.getcwd()
 		elif self.fileType == 'user':
 			if self.write:
 				self.gameDefaultSettings = app.configobj.ConfigObj('game/gameUserSettings')
-				self.writeAll()
+				self._write_all()
 			else:
-				fileName = 'game/gameUserSettings'
-				self.gameDefaultSettingsFile = app.configobj.ConfigObj(fileName, file_error=True)
+				file_name = 'game/gameUserSettings'
+				self.gameDefaultSettingsFile = app.configobj.ConfigObj(file_name, file_error=True)
 				if self.gameDefaultSettingsFile:
-					self.readAll()
+					self._read_all()
 				else:
-					print os.getcwd()+'+/'+fileName
+					print os.getcwd()+'+/'+file_name
 
-	def writeAll(self):
-		"""Write all configurations to object and file."""
-		self.tock = time.time()
+	def _write_all(self):
+		# Write all configurations to object and file.
+		self.toc = time.time()
 
 		# settings
 		self.gameDefaultSettings['brightness'] = 100
@@ -210,11 +210,11 @@ class GameDefaultSettings:
 		print "WROTE TO FILE"
 
 		self.gameDefaultSettings.write()  # Create 'config' file. Everything will be converted to strings
-		self.tick = time.time()
+		self.tic = time.time()
 
-	def readAll(self):
-		"""Read all configurations from file and store in object."""
-		self.tock = time.time()
+	def _read_all(self):
+		# Read all configurations from file and store in object
+		self.toc = time.time()
 		self.gameDefaultSettings = {}
 		for key in self.gameDefaultSettingsFile.keys():
 			if self.gameDefaultSettingsFile[key] == 'False' or self.gameDefaultSettingsFile[key] == 'True':
@@ -228,48 +228,47 @@ class GameDefaultSettings:
 			elif self.gameDefaultSettingsFile[key] == '':
 				self.gameDefaultSettings[key] = self.gameDefaultSettingsFile[key]
 			else:
-				print self.gameDefaultSettingsFile[key]
-				raise error('format not recognized')
-		self.tick = time.time()
+				print self.gameDefaultSettingsFile[key], 'format not recognized'
+				raise Exception
+		self.tic = time.time()
 
-	def getDict(self):
+	def get_dict(self):
 		"""Return **gameDefaultSettings** dictionary."""
 		return self.gameDefaultSettings
 
-	def userEqualsDefault(self):
+	def user_equals_default(self):
 		"""Update gameUserSettings file with gameDefaultSettings file values."""
 		self.gameUserSettings = app.configobj.ConfigObj('game/gameUserSettings')
 		self.fileType = 'default'
 		self.write = False
-		self.Start()
+		self._process_selection()
 		self.gameUserSettings.clear()
 		self.gameUserSettings.update(self.gameDefaultSettings)
 		self.gameUserSettings.write()
 
 
-def createSettingsFiles():
+def create_settings_files():
 	"""
 	Run this module with writeConfigFlag=True to create the gameDefaultSettings file.
 	Next press enter to copy it to the gameUserSettings file.
 	"""
 	print "ON"
-	writegameDefaultSettingsFlag = True
-	#writegameDefaultSettingsFlag = False
-	if writegameDefaultSettingsFlag:
+	write_game_default_settings_flag = True
+	if write_game_default_settings_flag:
 		app.functions.silentremove('game/gameDefaultSettings')
-	g = GameDefaultSettings(writegameDefaultSettingsFlag, 'default')
+	g = GameDefaultSettings(write_game_default_settings_flag, 'default')
 	app.functions.printDict(g.__dict__)
-	print "%f seconds to run 'gameSettings' file setup." % (g.tick-g.tock)
+	print "%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc)
 	raw_input()
 	app.functions.silentremove('game/gameUserSettings')
-	g.userEqualsDefault()
+	g.user_equals_default()
 	app.functions.printDict(g.__dict__)
 
-	print "%f seconds to run 'gameSettings' file setup." % (g.tick-g.tock)
+	print "%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc)
 
 
 if __name__ == '__main__':
 	os.chdir('..') 
 	"""Added this for csvOneRowRead to work with this structure, 
 	add this line for each level below project root"""
-	createSettingsFiles()
+	create_settings_files()

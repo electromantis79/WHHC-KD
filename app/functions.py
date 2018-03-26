@@ -177,7 +177,7 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 		sport = 'MPLX3450-baseball'
 	elif sport == 'MPMULTISPORT1-football' and MPLX3450Flag:
 		sport = 'MPLX3450-football'
-	c.writeSport(sport)
+	c.write_sport(sport)
 
 	choice = SPORT_LIST.index(sport) + 1
 
@@ -227,8 +227,8 @@ def readConfig():
 	Returns a dictionary of the userConfig file.
 	"""
 	import config_default_settings
-	c = config_default_settings.Config(write=False, fileType='user')
-	return c.getDict()
+	c = config_default_settings.Config(write=False, file_type='user')
+	return c.get_dict()
 
 
 def readGameDefaultSettings():
@@ -237,8 +237,8 @@ def readGameDefaultSettings():
 	"""
 	import app.game.game_default_settings
 	g = app.game.game_default_settings.GameDefaultSettings(
-		write=False, fileType='user')  # All values and keys are in string format
-	return g.getDict()
+		write=False, file_type='user')  # All values and keys are in string format
+	return g.get_dict()
 
 
 def readSegmentTimerSettings():
@@ -247,8 +247,8 @@ def readSegmentTimerSettings():
 	"""
 	import app.game.segment_timer_default_settings
 	g = app.game.segment_timer_default_settings.SegmentTimerSettings(
-		write=False, fileType='user')  # All values and keys are in string format
-	return g.getDict()
+		write=False, file_type='user')  # All values and keys are in string format
+	return g.get_dict()
 
 
 def readAddressMap(sport, sportType, wordListAddr):

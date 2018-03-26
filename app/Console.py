@@ -1084,8 +1084,8 @@ def test():
 	print "ON"
 	sport = 'MPBASKETBALL1'
 	c = Config()
-	c.writeSport(sport)
-	c.writeOptionJumpers('0000')
+	c.write_sport(sport)
+	c.write_option_jumpers('0000')
 	c = Console(
 		checkEventsFlag=True, serialInputFlag=True, serialInputType='MP',
 		serialOutputFlag=True, encodePacketFlag=True, serverThreadFlag=True)

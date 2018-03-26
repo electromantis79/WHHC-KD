@@ -13,7 +13,7 @@
 """
 
 import time, os
-#import pkg_resources  # Not sure if i need this
+# import pkg_resources  # Not sure if i need this
 
 import app.functions
 import app.configobj
@@ -22,36 +22,36 @@ import app.configobj
 class SegmentTimerSettings:
 	"""Writes the chosen file or reads it and builds a dictionary of it named segmentTimerDefaultSettings."""
 
-	def __init__(self, write=False, fileType='user'):
-		self.fileType = fileType
+	def __init__(self, write=False, file_type='user'):
+		self.fileType = file_type
 		self.write = write
-		self.tick = 0.0
-		self.tock = 0.0
+		self.tic = 0.0
+		self.toc = 0.0
 		self.segmentTimerSettings = {}
 		self.segmentTimerSettingsFile = {}
 		self.segmentTimerUserSettings = {}
-		self.Start()
+		self._process_selection()
 
-	def Start(self):
+	def _process_selection(self):
 		"""Choose read or write and default or user"""
 		if self.fileType == 'default':
 			if self.write:
 				self.segmentTimerSettings = app.configobj.ConfigObj('game/segmentTimerDefaultSettings')
-				self.writeAll()
+				self._write_all()
 			else:
 				self.segmentTimerSettingsFile = app.configobj.ConfigObj('game/segmentTimerDefaultSettings', file_error=True)
-				self.readAll()
+				self._read_all()
 		elif self.fileType == 'user':
 			if self.write:
 				self.segmentTimerSettings = app.configobj.ConfigObj('game/segmentTimerUserSettings')
-				self.writeAll()
+				self._write_all()
 			else:
 				self.segmentTimerSettingsFile = app.configobj.ConfigObj('game/segmentTimerUserSettings', file_error=True)
-				self.readAll()
+				self._read_all()
 
-	def writeAll(self):
+	def _write_all(self):
 		"""Write all configurations to object and file."""
-		self.tock = time.time()
+		self.toc = time.time()
 
 		# settings
 		self.segmentTimerSettings['programID'] = 1
@@ -78,11 +78,11 @@ class SegmentTimerSettings:
 		print "WROTE TO FILE"
 
 		self.segmentTimerSettings.write()  # Create 'config' file. Everything will be converted to strings
-		self.tick = time.time()
+		self.tic = time.time()
 
-	def readAll(self):
-		"""Read all configurations from file and store in object."""
-		self.tock = time.time()
+	def _read_all(self):
+		# Read all configurations from file and store in object
+		self.toc = time.time()
 		for key in self.segmentTimerSettingsFile.keys():
 			if self.segmentTimerSettingsFile[key] == 'False' or self.segmentTimerSettingsFile[key] == 'True':
 				self.segmentTimerSettings[key] = app.functions.tf(self.segmentTimerSettingsFile[key])
@@ -95,48 +95,47 @@ class SegmentTimerSettings:
 			elif self.segmentTimerSettingsFile[key] == '':
 				self.segmentTimerSettings[key] = self.segmentTimerSettingsFile[key]
 			else:
-				print self.segmentTimerSettingsFile[key]
-				raise error('format not recognized')
-		self.tick = time.time()
+				print self.segmentTimerSettingsFile[key], 'format not recognized'
+				raise Exception
+		self.tic = time.time()
 
-	def getDict(self):
+	def get_dict(self):
 		"""Return **segmentTimerSettings** dictionary."""
 		return self.segmentTimerSettings
 
-	def userEqualsDefault(self):
+	def user_equals_default(self):
 		"""Update segmentTimerUserSettings file with segmentTimerDefaultSettings file values."""
 		self.segmentTimerUserSettings = app.configobj.ConfigObj('game/segmentTimerUserSettings')
 		self.fileType = 'default'
 		self.write = False
-		self.Start()
+		self._process_selection()
 		self.segmentTimerUserSettings.clear()
 		self.segmentTimerUserSettings.update(self.segmentTimerSettings)
 		self.segmentTimerUserSettings.write()
 
 
-def createSettingsFiles():
+def create_settings_files():
 	"""
 	Run this module with writeConfigFlag=True to create the segmentTimerDefaultSettings file.
 	Next press enter to copy it to the segmentTimerUserSettings file.
 	"""
 	print "ON"
-	writeSegmentTimerSettingsFlag = True
-	#writeSegmentTimerSettingsFlag = False
-	if writeSegmentTimerSettingsFlag:
+	write_segment_timer_settings_flag = True
+	if write_segment_timer_settings_flag:
 		app.functions.silentremove('game/segmentTimerDefaultSettings')
-	g = SegmentTimerSettings(writeSegmentTimerSettingsFlag, 'default')
+	g = SegmentTimerSettings(write_segment_timer_settings_flag, 'default')
 	app.functions.printDict(g.__dict__)
-	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tick-g.tock)
+	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc)
 	raw_input()
 	app.functions.silentremove('game/segmentTimerUserSettings')
-	g.userEqualsDefault()
+	g.user_equals_default()
 	app.functions.printDict(g.__dict__)
 
-	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tick-g.tock)
+	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc)
 
 
 if __name__ == '__main__':
 	os.chdir('..') 
 	"""Added this for csvOneRowRead to work with this structure, 
 	add this line for each level below project root"""
-	createSettingsFiles()
+	create_settings_files()
