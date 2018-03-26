@@ -145,7 +145,7 @@ class MpDataHandler(object):
 		# Check if nibbles are out of range, if so print.
 		high_out = (self.highNibble > 15 or self.highNibble < 0)
 		low_out = (self.lowNibble > 15 or self.lowNibble < 0)
-		if not high_out or low_out:
+		if high_out or low_out:
 			print (
 				'addr:', self.gbw_to_mp_address(self.group, self.bank, self.word) + 1, 'I:', self.I_Bit,
 				'H:', self.H_Bit, 'highNibble:', self.highNibble, 'lowNibble:', self.lowNibble, 'blankType:',

@@ -76,10 +76,10 @@ class Console(object):
 
 		# Build address maps
 		self.addrMap = app.address_mapping.AddressMapping(self.game.gameData['sportType'], self.game)
-		self.lampTest = app.address_mapping.Lamptest_Mapping(self.game.gameData['sportType'])
-		self.blankTest = app.address_mapping.Blanktest_Mapping(self.game.gameData['sportType'])
+		self.lampTest = app.address_mapping.LamptestMapping(self.game.gameData['sportType'])
+		self.blankTest = app.address_mapping.BlanktestMapping(self.game.gameData['sportType'])
 		self.mp = app.mp_data_handler.MpDataHandler()
-		self.addrMap.Map()
+		self.addrMap.map()
 
 		# Variables
 		self.dirtyDict = {}
@@ -285,7 +285,7 @@ class Console(object):
 				elif self.serialInputType == 'MP':
 					# This area is called 10X faster than normal else area
 					
-					self.addrMap.UnMap(wordList = self.s.receiveList)
+					self.addrMap.un_map(word_list= self.s.receiveList)
 					
 					# This aligns the output to after the input receive gap starts
 					if self.previousByteCount and len(self.s.receiveList) == 0:
@@ -323,8 +323,8 @@ class Console(object):
 						# Handle byte pair
 						try:
 							# Received byte pair is in key map format
-							self.game, funcString = self.keyMap.Map(self.game, keyPressed)
-							self.game = self.lcd.Map(self.game, funcString)
+							self.game, funcString = self.keyMap.map(self.game, keyPressed)
+							self.game = self.lcd.map(self.game, funcString)
 							self.sendStateChangeOverNetwork(funcString)
 
 						except:
@@ -568,7 +568,7 @@ class Console(object):
 		if not self.game.gameSettings['multisportMenuFlag']:
 			self.game.gameSettings['resetGameFlag'] = True
 		else:
-			self.lcd.Map(self.game, funcString='Splash')
+			self.lcd.map(self.game, funcString='Splash')
 			self.lcd.menuTimerFlag = True
 
 	# ---------------------------------------------------------------
@@ -594,13 +594,13 @@ class Console(object):
 		# Select current map
 
 		if self.game.gameSettings['blankTestFlag']:
-			self.blankTest.Map()
+			self.blankTest.map()
 			self.MPWordDict = dict(self.blankTest.wordsDict)
 		elif self.game.gameSettings['lampTestFlag']:
-			self.lampTest.Map()
+			self.lampTest.map()
 			self.MPWordDict = dict(self.lampTest.wordsDict)
 		else:
-			self.addrMap.Map()
+			self.addrMap.map()
 			self.MPWordDict = dict(self.addrMap.wordsDict)
 
 		# Send data to drivers and graphics
