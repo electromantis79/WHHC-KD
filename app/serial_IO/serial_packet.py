@@ -1636,7 +1636,7 @@ def test():
 	'''Test function if module ran independently.'''
 	print "ON"
 	sport='MPFOOTBALL1'
-	game = selectSportInstance(sport)
+	game = select_sport_instance(sport)
 	var1='period'
 	var2='TIMER2_PLAYER_NUMBERTens'
 	game.setGameData(var1, 9, 1)
@@ -1659,7 +1659,7 @@ def test():
 if __name__  ==  '__main__':
 	import time
 	os.chdir('..') 
-	'''Added this for csvOneRowRead to work with this structure, 
+	'''Added this for csv_one_row_read to work with this structure, 
 	add this line for each level below project root'''
 	test()
 """

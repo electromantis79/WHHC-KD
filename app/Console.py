@@ -14,6 +14,7 @@
 
 import threading, time
 import app.functions
+import app.utils.reads
 import app.mp_data_handler
 import app.serial_IO.serial_packet
 import app.address_mapping
@@ -62,11 +63,11 @@ class Console(object):
 		app.functions.verbose(['\nConsole Reset'], self.verbose)
 
 		# Create Game object, attach keypad and LCD screen
-		self.configDict = app.functions.readConfig()
+		self.configDict = app.utils.reads.read_config()
 		if internal_reset:
 			self.game.KillClockThreads()
-		self.game = app.functions.selectSportInstance(
-			self.configDict['sport'], numberOfTeams=2, MPLX3450Flag=self.configDict['MPLX3450Flag'])
+		self.game = app.functions.select_sport_instance(
+			self.configDict['sport'], number_of_teams=2, mp_lx3450_flag=self.configDict['MPLX3450Flag'])
 
 		print 'sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']
 		if self.serialInputFlag and self.serialInputType == 'ASCII':
@@ -123,7 +124,7 @@ class Console(object):
 				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
 				if self.serialInputType == 'ASCII':
 					self.serialInputRefreshFrequency = .1
-				self.refresherSerialInput = threading.Thread(target=app.functions.threadTimer, args=(self.serialInput, self.serialInputRefreshFrequency))
+				self.refresherSerialInput = threading.Thread(target=app.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
 				self.alignTime = 0.0
 				self.previousByteCount = 0
@@ -135,7 +136,7 @@ class Console(object):
 				if self.serialInputType == 'ASCII':
 					pass  # time.sleep(0.2) #  This delay seems to cause packet corruption
 				self.refresherCheckEvents = threading.Thread(
-					target=app.functions.threadTimer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
+					target=app.functions.thread_timer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
 				self.refresherCheckEvents.daemon = True				
 				self.refresherCheckEvents.start()
 
@@ -149,7 +150,7 @@ class Console(object):
 					time.sleep(0.05)
 				
 				self.refresherSerialOutput = threading.Thread(
-					target=app.functions.threadTimer,
+					target=app.functions.thread_timer,
 					args=(self.serialOutput, self.serialOutputRefreshFrequency, None, self.alignTime))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
@@ -170,7 +171,7 @@ class Console(object):
 			if self.serialOutputFlag and not internal_reset:
 				app.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
 				self.refresherSerialOutput = threading.Thread(
-					target=app.functions.threadTimer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
+					target=app.functions.thread_timer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
 		

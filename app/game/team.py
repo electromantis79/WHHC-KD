@@ -12,36 +12,38 @@
 
 """
 
-import app.functions
+import app.utils.reads
 import app.game.player
 
 
 class Team(object):
 	"""Generic base class for all teams."""
 
-	def __init__(self, sportType='generic', numberOfPlayers=1):
-		self.sportType = sportType
-		self.numberOfPlayers = numberOfPlayers
+	def __init__(self, sport_type='generic', number_of_players=None):
+		self.sportType = sport_type
+		self.numberOfPlayers = number_of_players
 
 		# Build dictionary from file
-		self.teamData = app.functions.csvOneRowRead(fileName='Spreadsheets/teamDefaultValues.csv')
+		self.teamData = app.utils.reads.csv_one_row_read(file_name='Spreadsheets/teamDefaultValues.csv')
 
-		# Choose default number of players
-		if self.sportType == 'baseball':
-			self.numberOfPlayers = 25
-		elif self.sportType == 'football':
-			self.numberOfPlayers = 53
-			self.teamData['timeOutsLeft'] = self.teamData['TIME_OUTS_LEFT_FB']
-		elif self.sportType == 'soccer' or self.sportType == 'cricket':
-			self.numberOfPlayers = 11
-		elif self.sportType == 'hockey':
-			self.numberOfPlayers = 20
-		elif self.sportType == 'basketball':
-			self.numberOfPlayers = 12
-			self.teamData['timeOutsLeft'] = self.teamData['TIME_OUTS_LEFT_BASK']
-		elif self.sportType == 'stat':
-			self.numberOfPlayers = 32
-		# numberOfPlayers (generic , racetrack = 1)
+		# Choose default number of players if not given
+		if self.numberOfPlayers is None:
+			if self.sportType == 'baseball':
+				self.numberOfPlayers = 25
+			elif self.sportType == 'football':
+				self.numberOfPlayers = 53
+				self.teamData['timeOutsLeft'] = self.teamData['TIME_OUTS_LEFT_FB']
+			elif self.sportType == 'soccer' or self.sportType == 'cricket':
+				self.numberOfPlayers = 11
+			elif self.sportType == 'hockey':
+				self.numberOfPlayers = 20
+			elif self.sportType == 'basketball':
+				self.numberOfPlayers = 12
+				self.teamData['timeOutsLeft'] = self.teamData['TIME_OUTS_LEFT_BASK']
+			elif self.sportType == 'stat':
+				self.numberOfPlayers = 32
+			else:
+				self.numberOfPlayers = 1  # number_of_players (generic , racetrack = 1)
 
 		# Build player dictionary
 		self.playersDict = {}

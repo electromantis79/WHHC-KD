@@ -14,6 +14,7 @@
 """
 
 import app.functions
+import app.utils.reads
 import app.mp_data_handler
 
 
@@ -85,11 +86,11 @@ class AddressMapping(object):
 		self.wordsDict = dict.fromkeys(self.wordListAddr, 0)
 		self._blank_map()
 
-		self.configDict = app.functions.readConfig()
+		self.configDict = app.utils.reads.read_config()
 		self.sport = self.configDict['sport']
 
 		self.addressMapDict = {}
-		self.fullAddressMapDict = app.functions.readAddressMap(self.sport, self.sportType, self.wordListAddr)
+		self.fullAddressMapDict = app.utils.reads.read_address_map(self.sport, self.sportType, self.wordListAddr)
 		self._build_addr_map()
 
 		self.periodClockUnMapKeysList = [
@@ -1720,9 +1721,9 @@ def test():
 	c = Config()
 	sport = 'MPSTAT'
 	c.writeSport(sport)
-	game = app.functions.selectSportInstance(sport)
+	game = app.functions.select_sport_instance(sport)
 	addrMap = AddressMapping(game.gameData['sportType'], game=game)
-	app.functions.elapseTime(addrMap.Map, On=False, Timeit=False)
+	app.functions.elapse_time(addrMap.Map, On=False, Timeit=False)
 
 	app.functions.printDictsExpanded(addrMap, True)
 	raw_input()

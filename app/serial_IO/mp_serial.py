@@ -142,7 +142,7 @@ def test():
 	byte = s.ser.inWaiting()
 	if byte:
 		count += 1
-	elapseTime(s.serialInput, On=False)
+	elapse_time(s.serialInput, On=False)
 	toc = time.time()
 	elaps = toc-tic
 	print 'Test', byte, elaps, (tic-1446587172)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 	s = MP_Serial_Handler(verbose=False)
 	mp = MpDataHandler()
 	serialInputRefreshFrequency = .001
-	refresherSerialInput = Thread(target=threadTimer, args=(test, serialInputRefreshFrequency))
+	refresherSerialInput = Thread(target=thread_timer, args=(test, serialInputRefreshFrequency))
 	#refresherSerialInput.daemon=True
 	verbose(['\nSerial Input On'], 1)
 	refresherSerialInput.start()

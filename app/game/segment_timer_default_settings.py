@@ -136,6 +136,6 @@ def create_settings_files():
 
 if __name__ == '__main__':
 	os.chdir('..') 
-	"""Added this for csvOneRowRead to work with this structure, 
+	"""Added this for csv_one_row_read to work with this structure, 
 	add this line for each level below project root"""
 	create_settings_files()

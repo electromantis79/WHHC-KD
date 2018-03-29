@@ -12,9 +12,10 @@
 
 # All Functions
 
-import csv, time, os, timeit
+import time, os, timeit
 from sys import platform as _platform
 
+# thread_timer related
 if _platform == "linux" or _platform == "linux2":
 	try:
 		import prctl
@@ -28,22 +29,22 @@ SPORT_LIST = [
 	'MPCRICKET1', 'MPRACETRACK1', 'MPLX3450-baseball', 'MPLX3450-football', 'MPGENERIC',  'MPSTAT']
 
 
-def threadTimer(passed_function, period=.01, arg=None, align_time=0.0):
-	nextCall = time.time()
-	startTime = time.time()
-	#print 'startTime', startTime
+def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
+	next_call = time.time()
+	start_time = time.time()
+	#print 'start_time', start_time
 	if _platform == "linux" or _platform == "linux2":
 		os.nice(-1)
 		if align_time:
 			#print 'align_time', align_time
-			#print 'startTime', startTime
-			nextCall = align_time
+			#print 'start_time', start_time
+			next_call = align_time
 			count = 0
-			while (nextCall-startTime) < 0:
-				nextCall = nextCall+period
+			while (next_call-start_time) < 0:
+				next_call = next_call+period
 				count += 1
-			nextCall = nextCall+period*count
-			#print count, nextCall
+			next_call = next_call+period*count
+			#print count, next_call
 
 	stamp = 0
 	#name = threading.current_thread().getName()+str(passed_function)
@@ -54,78 +55,62 @@ def threadTimer(passed_function, period=.01, arg=None, align_time=0.0):
 			pass
 	while 1:
 		stamp += 1
-		#startTime=time.time()
-		#print name, 'stamp1', stamp, nextCall-1486587172
-		nextCall = nextCall+period
-		#print name, 'stamp2', stamp, nextCall-1486587172
+		#start_time=time.time()
+		#print name, 'stamp1', stamp, next_call-1486587172
+		next_call = next_call+period
+		#print name, 'stamp2', stamp, next_call-1486587172
 		if arg is not None:
 			passed_function(arg)
 		else:
 			passed_function()
 		#endTime=time.time()
-		#elapse=endTime-startTime
+		#elapse=endTime-start_time
 		count = 0
 
 		try:
 			now = time.time()
-			time.sleep(nextCall-now)
+			time.sleep(next_call-now)
 		except Exception as err:
-			#print name, 'threadTimer sleep error is', err, 'for', function
-			#print name, 'stamp3', stamp, nextCall-1486587172, 'nextCall-time.time()', nextCall-now
-			while (nextCall-now) < 0:
-				nextCall = nextCall+period
+			#print name, 'thread_timer sleep error is', err, 'for', function
+			#print name, 'stamp3', stamp, next_call-1486587172, 'next_call-time.time()', next_call-now
+			while (next_call-now) < 0:
+				next_call = next_call+period
 				count += 1
 			#print name, 'stamp4', stamp, 'count', count
-			#print name, 'stamp5', stamp, nextCall-1486587172
-			nextCall = nextCall+period*count
-			#print name, 'stamp6', stamp, nextCall-1486587172
-			#nextCall=nextCall+period*(count+1)
-			#print name, 'stamp7', stamp, 'count', count, nextCall-1486587172, nextCall-now
+			#print name, 'stamp5', stamp, next_call-1486587172
+			next_call = next_call+period*count
+			#print name, 'stamp6', stamp, next_call-1486587172
+			#next_call=next_call+period*(count+1)
+			#print name, 'stamp7', stamp, 'count', count, next_call-1486587172, next_call-now
 			try:
 				now = time.time()
-				time.sleep(nextCall-now)
+				time.sleep(next_call-now)
 			except:
-				#print name, 'stamp8', stamp, 'count', count, nextCall-1486587172, nextCall-now
-				#nextCall=nextCall+period*(count+3)
+				#print name, 'stamp8', stamp, 'count', count, next_call-1486587172, next_call-now
+				#next_call=next_call+period*(count+3)
 				time.sleep(period)
 
 
-def elapseTime(passed_function, lowerLimit=0, On=False, Timeit=False):
+def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
 	"""
 	Simple function to test execution time of the passed function.
 	Does not accept args.
 	"""
-	if On:
-		startTime = time.time()
+	if on:
+		start_time = time.time()
 		result = passed_function()
-		endTime = time.time()
-		total_time = (endTime-startTime)*1000
-		if total_time >= lowerLimit*1000:
-			print passed_function, 'took', total_time, 'ms, lower limit=', str(lowerLimit)
+		end_time = time.time()
+		total_time = (end_time-start_time)*1000
+		if total_time >= lower_limit*1000:
+			print passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit)
 	else:
 		result = passed_function()
 
-	if Timeit:
-		t = timeit.Timer(passed_function, "print 'Timeit'")
+	if time_it:
+		t = timeit.Timer(passed_function, "print 'time_it'")
 		print t.timeit(1)*1000, 'ms'
 
 	return result
-
-
-def broadcast(server_socket, sock, message, SOCKET_LIST):
-	# broadcast chat messages to all connected clients
-	for socket in SOCKET_LIST:
-		# send the message only to peer
-		if socket != server_socket:
-			try:
-				socket.send(message)
-			except:
-				# broken socket connection
-				socket.close()
-				# broken socket, remove it
-				if socket in SOCKET_LIST:
-					SOCKET_LIST.remove(socket)
-	return SOCKET_LIST
 
 
 def tf(string):
@@ -140,7 +125,7 @@ def tf(string):
 	return None
 
 
-def verbose(messages=[], enable=True):
+def verbose(messages, enable=True):
 	"""
 	Prints a list of items for debugging.
 	.. warning:: Only send list type messages.
@@ -154,28 +139,15 @@ def verbose(messages=[], enable=True):
 				print message,
 
 
-def toggle(data):
-	"""
-	Inverts a boolean value.
-	"""
-	if data == True:
-		data = False
-	elif data == False:
-		data = True
-	else:
-		raise ValueError('Only Boolean values allowed!!!!!')
-	return data
-
-
-def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
+def select_sport_instance(sport='GENERIC', number_of_teams=2, mp_lx3450_flag=False):
 	"""
 	Returns an object from the *Game* module based on the sport passed.
 	"""
 	import config_default_settings
 	c = config_default_settings.Config()
-	if sport == 'MPMULTISPORT1-baseball' and MPLX3450Flag:
+	if sport == 'MPMULTISPORT1-baseball' and mp_lx3450_flag:
 		sport = 'MPLX3450-baseball'
-	elif sport == 'MPMULTISPORT1-football' and MPLX3450Flag:
+	elif sport == 'MPMULTISPORT1-football' and mp_lx3450_flag:
 		sport = 'MPLX3450-football'
 	c.write_sport(sport)
 
@@ -186,409 +158,44 @@ def selectSportInstance(sport='GENERIC', numberOfTeams=2, MPLX3450Flag=False):
 	# 'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
 	if (1 <= choice <= 8) or choice == 20:
 		from game.game import Baseball
-		game = Baseball(numberOfTeams)
+		game = Baseball(number_of_teams)
 
 	# 'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
 	# 'MPSOCCER_LX1-football'#'MPLX3450-football'
 	elif (9 <= choice <= 11) or choice == 14 or choice == 21:
 		from game.game import Football
-		game = Football(numberOfTeams)
+		game = Football(number_of_teams)
 
 	elif choice == 12:  # 'MPBASKETBALL1'
 		from game.game import Basketball
-		game = Basketball(numberOfTeams)
+		game = Basketball(number_of_teams)
 
 	elif choice == 13 or choice == 15:  # 'MPSOCCER_LX1-soccer'#'MPSOCCER1'
 		from game.game import Soccer
-		game = Soccer(numberOfTeams)
+		game = Soccer(number_of_teams)
 
 	elif choice == 16 or choice == 17:  # 'MPHOCKEY_LX1'#'MPHOCKEY1'
 		from game.game import Hockey
-		game = Hockey(numberOfTeams)
+		game = Hockey(number_of_teams)
 
 	elif choice == 18:  # 'MPCRICKET1'
 		from game.game import Cricket
-		game = Cricket(numberOfTeams)
+		game = Cricket(number_of_teams)
 
 	elif choice == 19:  # 'MPRACETRACK1'
 		from game.game import Racetrack
-		game = Racetrack(numberOfTeams)
+		game = Racetrack(number_of_teams)
 	elif choice == 23:  # 'STAT'
 		from game.game import Stat
-		game = Stat(numberOfTeams)
+		game = Stat(number_of_teams)
 	elif choice == 22:  # 'GENERIC'
 		from game.game import Game
-		game = Game(numberOfTeams)
+		game = Game(number_of_teams)
 	else:
 		print 'sport not in list'
 		raise Exception
 	return game
 
-
-def readConfig():
-	"""
-	Returns a dictionary of the userConfig file.
-	"""
-	import config_default_settings
-	c = config_default_settings.Config(write=False, file_type='user')
-	return c.get_dict()
-
-
-def readGameDefaultSettings():
-	"""
-	Returns a dictionary of the gameUserSettings file.
-	"""
-	import app.game.game_default_settings
-	g = app.game.game_default_settings.GameDefaultSettings(
-		write=False, file_type='user')  # All values and keys are in string format
-	return g.get_dict()
-
-
-def readSegmentTimerSettings():
-	"""
-	Returns a dictionary of the segmentTimerUserSettings file.
-	"""
-	import app.game.segment_timer_default_settings
-	g = app.game.segment_timer_default_settings.SegmentTimerSettings(
-		write=False, file_type='user')  # All values and keys are in string format
-	return g.get_dict()
-
-
-def readAddressMap(sport, sportType, wordListAddr):
-	"""
-	Return an address map of the current sport with *all* alternates.
-
-	This is built with "Spreadsheets/AddressMap.csv"
-	"""
-	AddressMap = 'Spreadsheets/AddressMap.csv'
-	csvReader = csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
-	AltDict = {}
-	dictionary = dict.fromkeys(wordListAddr, 0)
-	for row in csvReader:
-		try:
-			sportRow = row['SPORT']
-			sportTypeRow = row['SPORT_TYPE']
-			if sportRow == sport and sportTypeRow == sportType:
-				addressWord = int(row['ADDRESS_WORD_NUMBER'])
-				ALT = int(row['ALT'])
-				#print '\nsport', sportRow,'\nsportType', sportTypeRow,'\naddressWord', addressWord,'\nALT', ALT
-				del row['SPORT']
-				del row['SPORT_TYPE']
-				del row['ADDRESS_WORD_NUMBER']
-				del row['ALT']
-
-				if addressWord in dictionary:
-					if dictionary[addressWord] == 0:
-						AltDict.clear()
-						AltDict[ALT] = row
-						copyDict = AltDict.copy()
-						dictionary[addressWord] = copyDict
-					elif ALT in dictionary[addressWord]:
-						AltDict.clear()
-						AltDict[ALT] = row
-						copyDict = AltDict.copy()
-						dictionary[addressWord] = copyDict
-					else:
-						AltDict[ALT] = row
-						copyDict = AltDict.copy()
-						dictionary[addressWord] = copyDict
-
-				#print '\nAltDict\n', AltDict, '\ndictionary\n', dictionary[addressWord]
-				#AltDict.clear()
-				#raw_input()
-			else:
-				#raw_input()
-				pass
-
-		except ValueError:
-			print '\npass\n'
-			raw_input()
-			pass
-	#print sport, sportType, dictionary
-	return dictionary
-
-
-def readLXJumperDefinition(driverType, driverName):
-	"""
-	Return a jumperDict and a sizeDict.
-
-	This is built with "Spreadsheets/ETN_Jumper_Definition.csv" or "Spreadsheets/LX_Jumper_Definition.csv"
-	"""
-
-	# Can't be used by base class because of driverType
-	if driverType == 'ETNDriver':
-		AddressMap = 'Spreadsheets/ETN_Jumper_Definition.csv'
-	else:
-		AddressMap = 'Spreadsheets/LX_Jumper_Definition.csv'
-
-	csvReader = csv.DictReader(open(AddressMap, 'rb'), delimiter=',', quotechar="'")
-	jumperDict = {}
-	sizeDict = {}
-	if driverName[-2] == '_':
-		dn = driverName[:-2]
-	else:
-		dn = driverName
-	for row in csvReader:
-		try:
-			driver = row['DRIVER']
-			del row['DRIVER']
-
-			if driver == '':
-				pass
-			elif driver == dn:
-				jumperDict = row
-			if driverType == 'ETNDriver':
-				sizeDict[driver] = dict(row)
-				del sizeDict[driver]['H9']
-				del sizeDict[driver]['H10']
-				del sizeDict[driver]['H11']
-				del sizeDict[driver]['H12']
-				del sizeDict[driver]['H13']
-				del sizeDict[driver]['H16']
-				del row['height']
-				del row['width']
-				del row['rows']
-		except ValueError:
-			pass
-
-	for jumper in jumperDict:
-		if jumperDict[jumper] == '':
-			jumperDict[jumper] = 0
-		else:
-			jumperDict[jumper] = 1
-
-	for driver in sizeDict:
-		for element in sizeDict[driver]:
-			sizeDict[driver][element] = int(sizeDict[driver][element])
-
-	return jumperDict, sizeDict
-
-
-def readMP_Keypad_Layouts():
-	"""
-	Uses Spreadsheets/MP_Keypad_Layouts.csv to build a dictionary of all keypads.
-	"""
-	# TODO: finish doing clean inspections from here
-	MP_Keypad_Layouts='Spreadsheets/MP_Keypad_Layouts.csv'
-	csvReader=csv.DictReader(open(MP_Keypad_Layouts, 'rb'), delimiter=',', quotechar="'")
-	keypad=[]
-	dictionary = {}
-	for count, row in enumerate(csvReader):
-		try:
-			#print 'row', row
-			values=row.values()
-			#print values
-			keypad.append(row['KEYPAD'])
-			keys=row.keys()
-			#print keys
-			del row['KEYPAD']
-			#print 'len-row', len(row)
-			for i in range(len(row)+1):
-				#raw_input('\nPress Enter to continue through loop\n')
-				#print 'i', i
-				#print values[i]
-				if values[i]=='':
-					#print '\nDeleting ', keys[i], ' because it is empty.\n'
-					del row[keys[i]]
-			#print row
-			if row:
-				dictionary[keypad[count]]=row
-		except ValueError:
-			print 'error, Check spreadsheet'
-
-	#print dictionary.keys()
-	return dictionary
-
-def readMasksPerModel(model):
-	"""
-	Read Spreadsheets/Masks_Per_Model.csv and build 3 dictionaries and 3 variables.
-	"""
-	masksPerModel='Spreadsheets/Masks_Per_Model.csv'
-	csvReader=csv.DictReader(open(masksPerModel, 'rb'), delimiter=',', quotechar="'")
-	partsDict={}
-	positionDict={}
-	heightDict={}
-	for count, row in enumerate(csvReader):
-		try:
-			modelRow=row['model']
-			if modelRow=='':
-				pass
-			elif modelRow==model:
-				del row['model']
-				mask_ID=row['mask_ID']
-				partsDict[modelRow]=row
-				heightDict[row['positionTopToBot']]=float(row['boardHeight'])
-				x=float(row['X'])
-				y=float(row['Y'])
-				coord=(x,y, row['positionTopToBot'])
-				positionDict[mask_ID]=coord
-				if row.has_key(''):
-					del row['']
-		except ValueError:
-			pass
-
-	boardWidth=float(partsDict[model]['boardWidth'])
-	boardHeight=float(partsDict[model]['boardHeight'])
-	return partsDict, positionDict, heightDict, boardWidth, boardHeight
-
-def readLED_Positions(pcbSize, pcbType):
-	"""
-	Uses Spreadsheets/LED_Positions.csv to build a few dictionaries.
-	"""
-	LED_Positions='Spreadsheets/LED_Positions.csv'
-	csvReader=csv.DictReader(open(LED_Positions, 'rb'), delimiter=',', quotechar="'")
-	positionDict={}
-	from collections import defaultdict
-	segmentDict=defaultdict(list)
-	segments={}
-	specs={}
-	for count, row in enumerate(csvReader):
-		try:
-			pcbSizeRow=row['pcbSize']
-			pcbTypeRow=row['pcbType']
-			if pcbSizeRow=='':
-				pass
-			elif pcbSizeRow==pcbSize:
-				if pcbTypeRow==pcbType:
-					designator=int(row['RefDes'])
-					segment=row['segment']
-					segments[segment]=0
-					x=float(row['X'])/1000
-					y=float(row['Y'])/-1000
-					boundingX=float(row['boundingX'])/1000
-					boundingY=float(row['boundingY'])/-1000
-					boundingWidth=float(row['boundingWidth'])/1000
-					boundingHeight=float(row['boundingHeight'])/-1000
-					specs['boundingX']=boundingX
-					specs['boundingY']=boundingY
-					specs['boundingWidth']=boundingWidth
-					specs['boundingHeight']=boundingHeight
-					coord=(x,y)
-					segmentDict[segment].append(designator)
-					positionDict[designator]=coord
-					#print self.positionDict, self.segmentDict
-					if row.has_key(''):
-						del row['']
-					#raw_input()
-		except ValueError:
-			pass
-	return positionDict, segmentDict, specs
-
-def readMaskParts(maskType):
-	"""
-	Uses Spreadsheets/Masks_Parts.csv to build a few dictionaries.
-	"""
-	maskParts='Spreadsheets/Mask_Parts.csv'
-	csvReader=csv.DictReader(open(maskParts, 'rb'), delimiter=',', quotechar="'")
-	partsDict={}
-	positionDict={}
-	for count, row in enumerate(csvReader):
-		try:
-			mType=row['maskType']
-			if mType=='':
-				pass
-			elif mType==maskType:
-				del row['maskType']
-				positionRtoL=row['positionRtoL']
-				partsDict[mType]=row
-				pcbSize=int(row['pcbSize'])
-				pcbType=row['pcbType']
-				x=float(row['X'])
-				y=float(row['Y'])
-				coord=(pcbSize, pcbType, x,y)
-				positionDict[positionRtoL]=coord
-				if row.has_key(''):
-					del row['']
-		except ValueError:
-			pass
-	#print self.positionDict
-	maskWidth=float(partsDict[maskType]['maskWidth'])
-	maskHeight=float(partsDict[maskType]['maskHeight'])
-	maskRadius=float(partsDict[maskType]['maskRadius'])
-	return partsDict, positionDict, maskWidth, maskHeight, maskRadius
-
-def readChassisParts(maskType):
-	"""
-	Uses Spreadsheets/Chassis_Parts.csv to build a few dictionaries.
-	"""
-	chassisParts='Spreadsheets/Chassis_Parts.csv'
-	csvReader=csv.DictReader(open(chassisParts, 'rb'), delimiter=',', quotechar="'")
-	partsDict={}
-	positionDict={}
-	for count, row in enumerate(csvReader):
-		try:
-			mType=row['maskType']
-			if mType=='':
-				pass
-			elif mType==maskType:
-				del row['maskType']
-				partsDict[mType]=row
-				x=float(row['X'])
-				y=float(row['Y'])
-				coord=(x,y)
-				positionDict[row['partType']+'_'+row['positionLtoR']]=coord
-				if row['']=='':
-					del row['']#This requires spreadsheet to have a note in a column with no row 1 value
-		except ValueError:
-			pass
-	return partsDict, positionDict
-
-def readLCDButtonMenus():
-	"""Builds self.Menu_LCD_Text[func+menuNum]=row from the Spreadsheets/MenuMap.csv file."""
-	MenuMap='Spreadsheets/MenuMap.csv'
-	csvReader=csv.DictReader(open(MenuMap, 'rb'), delimiter=',', quotechar="'")
-	Menu_LCD_Text={}
-	for row in csvReader:
-		try:
-			func=row['function']
-			menuNum=row['menuNumber']
-			if func=='':
-				pass
-			else:
-				if row['']=='':
-					del row['']#This requires spreadsheet to have a note in a column with no row 1 value
-				if row['varName']=='':
-					row['varName']=None
-				if row['varClock']=='':
-					row['varClock']=None
-				if row['team']=='':
-					row['team']=None
-				if row['gameSettingsFlag']=='':
-					row['gameSettingsFlag']=None
-				if row['blockNumList']=='':
-					row['blockNumList']=None
-				if row['places']=='':
-					row['places']=None
-				if row['col']=='':
-					row['col']=None
-				if row['row']=='':
-					row['row']=None
-				if row['startingMenuNumber']=='':
-					row['startingMenuNumber']=None
-				if row['endingMenuNumber']=='':
-					row['endingMenuNumber']=None
-				Menu_LCD_Text[func+menuNum]=row
-		except ValueError:
-			pass
-	return Menu_LCD_Text
-
-def readMP_Keypad_Button_Names():
-	"""
-	Uses Spreadsheets/MP_Keypad_Button_Names.csv to build a dictionary functions corresponding with the text on the button.
-	"""
-	MP_Keypad_Button_Names='Spreadsheets/MP_Keypad_Button_Names.csv'
-	csvReader=csv.DictReader(open(MP_Keypad_Button_Names, 'rb'), delimiter=',', quotechar="'")
-	dictionary = {}
-	for row in csvReader:
-		try:
-			function=row['FUNCTION']
-			buttonName=row['BUTTON_NAME']
-			if row:
-				dictionary[function]=buttonName
-		except ValueError:
-			print 'error'
-	#print dictionary
-	return dictionary
 
 def printDict(Dict, PrintDicts=True):
 	"""
@@ -622,6 +229,7 @@ def printDict(Dict, PrintDicts=True):
 
 	print len(Dict), 'Variables including Dictionaries'
 
+
 def printDictsExpanded(Dict, PrintDict=True):
 	"""
 	Prints an alphebetized display of a dictionaries contents for debugging then does again for each element in main dictionary.
@@ -639,47 +247,6 @@ def printDictsExpanded(Dict, PrintDict=True):
 			print data, vars(Dict)[data]
 		raw_input()
 
-def csvOneRowRead(fileName):
-	"""
-	Creates a dictionary from the csv data with only 1 row of keys and 1 row of values.
-
-	..warning: Path to fileName must be from app folder.
-	"""
-	fileMode='r' #read
-	binaryFile='b'
-	fileMode+=binaryFile
-	#print os.getcwd()
-	f=open(fileName, fileMode)
-	
-	csvReader=csv.DictReader(f, delimiter=',', quotechar="'")
-	for row in csvReader:
-		try:
-			#print 'row', row
-			values=row.values()
-			keys=row.keys()
-			#print 'len-row', len(row)
-			for i in range(len(row)):
-				#raw_input('\nPress Enter to continue through loop\n')
-				#print 'i', i
-				if values[i]=='':
-					#print '\nDeleting ', keys[i], ' because it is empty.\n'
-					del row[keys[i]]
-				elif values[i]=='True' or values[i]=='TRUE':
-					row[keys[i]]=True
-					#print '\nFound True or TRUE\n'
-				elif values[i]=='False' or values[i]=='FALSE':
-					row[keys[i]]=False
-					#print '\nFound False or FALSE\n'
-				else:
-					row[keys[i]]=int(values[i])
-					#print '\nFound Value\n'
-
-				#print 'row', row
-				#raw_input('\nPress Enter to continue through loop\n')
-		except ValueError:
-			pass
-	f.close()
-	return row
 
 def silentremove(filename):
 	"""
@@ -691,6 +258,7 @@ def silentremove(filename):
 	except OSError as e: # this would be "except OSError, e:" before Python 2.6
 		if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
 			raise # re-raise exception if a different error occured
+
 
 def save_obj(obj, name ):
 	"""
@@ -706,6 +274,7 @@ def save_obj(obj, name ):
 	except Exception as er:
 		print er
 
+
 def _load_obj(name ):
 	#broke
 	try:
@@ -715,6 +284,7 @@ def _load_obj(name ):
 		return obj
 	except Exception as er:
 		print er
+
 
 def activePlayerListSelect(game):
 	"""
@@ -737,11 +307,13 @@ def activePlayerListSelect(game):
 			pass
 	return activePlayerList, team, teamName
 
+
 def binar(bina):
 	"""
 	Function rename to avoid conflict with PyQt bin() function.
 	"""
 	return bin(bina)
+
 
 def _bitLen(int_type):
 	length = 0
@@ -749,6 +321,7 @@ def _bitLen(int_type):
 		int_type >>= 1
 		length += 1
 	return(length)
+
 
 def fontWidth(list_type, space=False, fontName=None):
 	"""
@@ -774,6 +347,7 @@ def fontWidth(list_type, space=False, fontName=None):
 			return max(maxWidth)
 		else:
 			return 0
+
 
 def fontTrim(fontList, shift=True, displayHeight=9):
 	"""

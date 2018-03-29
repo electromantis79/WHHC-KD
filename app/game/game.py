@@ -15,6 +15,7 @@
 import threading
 
 import app.functions
+import app.utils.reads
 import app.game.team
 import app.game.option_jumpers
 import app.game.clock
@@ -27,11 +28,11 @@ class Game(object):
 		self.numberOfTeams = numberOfTeams
 
 		# Build dictionaries from files
-		self.configDict = app.functions.readConfig()
-		self.gameSettings = app.functions.readGameDefaultSettings()
-		self.segmentTimerSettings = app.functions.readSegmentTimerSettings()
+		self.configDict = app.utils.reads.read_config()
+		self.gameSettings = app.utils.reads.read_game_default_settings()
+		self.segmentTimerSettings = app.utils.reads.read_segment_timer_settings()
 		self.gameSettings.update(self.segmentTimerSettings)  # Don't use the same names
-		self.gameData = app.functions.csvOneRowRead(fileName='Spreadsheets/gameDefaultValues.csv')
+		self.gameData = app.utils.reads.csv_one_row_read(file_name='Spreadsheets/gameDefaultValues.csv')
 
 		# Classes and attributes
 		self.gameData['sportType'] = "GENERIC"
@@ -74,7 +75,7 @@ class Game(object):
 		for team in range(self.numberOfTeams):
 			name = 'TEAM_'+str(team+1)
 			self.teamNamesList.append(name)
-			self.teamsDict[name] = app.game.team.Team(self.gameData['sportType'])
+			self.teamsDict[name] = app.game.team.Team(sport_type=self.gameData['sportType'])
 
 	def _addTeamNameData(self):
 		self.home = self.teamNamesList[self.gameSettings['home']]
@@ -265,7 +266,7 @@ class Game(object):
 			elif operator=='/':
 				playerData[dataName] = (playerData[dataName] / modValue) % modulusValue
 			elif operator=='toggle':
-				playerData[dataName] = app.functions.toggle(playerData[dataName])
+				playerData[dataName] = not playerData[dataName]
 				places=0
 			if places==3:
 				playerData[dataName+'Hundreds'] = playerData[dataName]/100
@@ -286,7 +287,7 @@ class Game(object):
 		elif operator=='/':
 			teamData[dataName] = (teamData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			teamData[dataName] = app.functions.toggle(teamData[dataName])
+			teamData[dataName] = not teamData[dataName]
 			places=0
 		if places==3:
 			teamData[dataName+'Hundreds'] = teamData[dataName]/100
@@ -306,7 +307,7 @@ class Game(object):
 		elif operator=='/':
 			self.gameData[dataName] = (self.gameData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			self.gameData[dataName] = app.functions.toggle(self.gameData[dataName])
+			self.gameData[dataName] = not self.gameData[dataName]
 			places=0
 		if places==3:
 			self.gameData[dataName+'Hundreds'] = self.gameData[dataName]/100
@@ -328,7 +329,7 @@ class Game(object):
 		elif operator=='/':
 			clockData[dataName] = (clockData[dataName] / modValue) % modulusValue
 		elif operator=='toggle':
-			clockData[dataName] = app.functions.toggle(clockData[dataName])
+			clockData[dataName] = not clockData[dataName]
 			places=0
 		if places==3:
 			clockData[dataName+'Hundreds'] = clockData[dataName]/100

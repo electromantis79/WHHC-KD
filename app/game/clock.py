@@ -380,7 +380,7 @@ elapse = toc-tic
 
 #periodClock=clock(countUp=direction, maxSeconds=length, resolution=0.01, hoursFlag=hours, clockName='generic', internalClock=False)
 periodClock=clock(maxSeconds=10, countUp=False, clockName='shotClock', resolution=0.01)
-#clockThread(threadTimer(periodClock.Update, 0.01), 0.01)
+#clockThread(thread_timer(periodClock.Update, 0.01), 0.01)
 
 #clocky = periodClock.Update()
 periodClock.Start()
@@ -406,7 +406,7 @@ tic = time.time()
 pr = cProfile.Profile()
 pr.enable()
 # ... do something ...
-elapseTime(periodClock.Update, On=True)
+elapse_time(periodClock.Update, On=True)
 pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'
