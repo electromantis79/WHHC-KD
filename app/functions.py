@@ -260,32 +260,6 @@ def silentremove(filename):
 			raise # re-raise exception if a different error occured
 
 
-def save_obj(obj, name ):
-	"""
-	Creates a .txt file with the objects name in obj folder.
-	"""
-	try:
-		output_file=open('obj/'+name+'.txt','w')
-		sortObj=obj.keys()
-		sortObj.sort(key=str.lower)
-		for element in sortObj:
-			output_file.write(element+' = '+str(obj[element])+'\n')
-		output_file.close()
-	except Exception as er:
-		print er
-
-
-def _load_obj(name ):
-	#broke
-	try:
-		input_file=open('obj/'+name+'.txt','r')
-		obj = eval(input_file.read())
-		input_file.close()
-		return obj
-	except Exception as er:
-		print er
-
-
 def activePlayerListSelect(game):
 	"""
 	Loads the current list of active players for the current team.
@@ -313,58 +287,6 @@ def binar(bina):
 	Function rename to avoid conflict with PyQt bin() function.
 	"""
 	return bin(bina)
-
-
-def _bitLen(int_type):
-	length = 0
-	while (int_type):
-		int_type >>= 1
-		length += 1
-	return(length)
-
-
-def fontWidth(list_type, space=False, fontName=None):
-	"""
-	Measures width of ETN character.
-	"""
-	#Use only after trim
-	if space:
-		if fontName is None:
-			return 4
-		elif fontName=='ETN14BoldCG':
-			return 2
-		elif fontName=='ETN14CondensedCG' or fontName=='ETN14RegularCG':
-			return 3
-		else:
-			return 4
-	else:
-		maxWidth=[]
-		#print 'list_type', list_type,
-		for x, element in enumerate(list_type):
-			maxWidth.append(_bitLen(list_type[x]))
-		#print max(maxWidth)
-		if len(maxWidth):
-			return max(maxWidth)
-		else:
-			return 0
-
-
-def fontTrim(fontList, shift=True, displayHeight=9):
-	"""
-	Trims the pixels around a ETN character. Standard font is in a 16 x 16 grid.
-	"""
-	if displayHeight==14:
-		x=2
-	else:
-		x=7
-	fontList.reverse()
-	while x:
-		fontList.pop()
-		x-=1
-	for x, element in enumerate(fontList):
-		if shift:
-			fontList[x]=element>>2
-	return fontList
 
 
 def saveObject2File(dictionary, dictionaryName):
