@@ -5,17 +5,18 @@
 
 .. topic:: Overview
 
-    This module reads, writes, or modifies the segmentTimerDefaultSettings and segmentTimerUserSettings files.
+	This module reads, writes, or modifies the segmentTimerDefaultSettings and segmentTimerUserSettings files.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
-import time, os
+import time
 # import pkg_resources  # Not sure if i need this
 
 import app.functions
+import app.utils.misc
 import app.configobj
 
 
@@ -122,20 +123,21 @@ def create_settings_files():
 	print "ON"
 	write_segment_timer_settings_flag = True
 	if write_segment_timer_settings_flag:
-		app.functions.silentremove('game/segmentTimerDefaultSettings')
+		app.utils.misc.silent_remove('game/segmentTimerDefaultSettings')
 	g = SegmentTimerSettings(write_segment_timer_settings_flag, 'default')
-	app.functions.printDict(g.__dict__)
+	app.utils.misc.print_dict(g.__dict__)
 	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc)
 	raw_input()
-	app.functions.silentremove('game/segmentTimerUserSettings')
+	app.utils.misc.silent_remove('game/segmentTimerUserSettings')
 	g.user_equals_default()
-	app.functions.printDict(g.__dict__)
+	app.utils.misc.print_dict(g.__dict__)
 
 	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc)
 
 
 if __name__ == '__main__':
-	os.chdir('..') 
+	import os
+	os.chdir('..')
 	"""Added this for csv_one_row_read to work with this structure, 
 	add this line for each level below project root"""
 	create_settings_files()

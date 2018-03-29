@@ -1642,7 +1642,7 @@ def test():
 	game.setGameData(var1, 9, 1)
 	game.setTeamData(game.home, var2, 7)
 
-	#printDict(self.game.__dict__)
+	#app.utils.misc.print_dict(self.game.__dict__)
 	time.sleep(1)
 	sp=Serial_Packet()
 	print "\nCreate ASCII string"

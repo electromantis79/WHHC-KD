@@ -5,17 +5,18 @@
 
 .. topic:: Overview
 
-    This module reads, writes, or modifies the gameDefaultSettings and gameUserSettings files.
+	This module reads, writes, or modifies the gameDefaultSettings and gameUserSettings files.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
-import time, os
+import time
 # import pkg_resources  # Not sure if i need this
 
 import app.functions
+import app.utils.misc
 import app.configobj
 
 
@@ -255,19 +256,20 @@ def create_settings_files():
 	print "ON"
 	write_game_default_settings_flag = True
 	if write_game_default_settings_flag:
-		app.functions.silentremove('game/gameDefaultSettings')
+		app.utils.misc.silent_remove('game/gameDefaultSettings')
 	g = GameDefaultSettings(write_game_default_settings_flag, 'default')
-	app.functions.printDict(g.__dict__)
+	app.utils.misc.print_dict(g.__dict__)
 	print "%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc)
 	raw_input()
-	app.functions.silentremove('game/gameUserSettings')
+	app.utils.misc.silent_remove('game/gameUserSettings')
 	g.user_equals_default()
-	app.functions.printDict(g.__dict__)
+	app.utils.misc.print_dict(g.__dict__)
 
 	print "%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc)
 
 
 if __name__ == '__main__':
+	import os
 	os.chdir('..') 
 	"""Added this for csv_one_row_read to work with this structure, 
 	add this line for each level below project root"""

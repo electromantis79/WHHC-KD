@@ -1016,7 +1016,7 @@ class Game(object):
 	#STAT FUNCTIONS----------------------------------------
 
 	def fouls_digsMinusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='-')
@@ -1025,7 +1025,7 @@ class Game(object):
 		return
 
 	def fouls_digsPlusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='+')
@@ -1047,7 +1047,7 @@ class Game(object):
 		return
 
 	def points_killsMinusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='-')
@@ -1056,7 +1056,7 @@ class Game(object):
 		return
 
 	def points_killsPlusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='+')
@@ -1065,7 +1065,7 @@ class Game(object):
 		return
 
 	def nextPlayer(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
 		notActiveList=[]
 		for playerID in self.teamsDict[team].playersDict.keys():
 			playerNumber=self.getPlayerData(team, 'playerNumber', playerID=playerID)
@@ -1152,7 +1152,7 @@ class Game(object):
 		return
 
 	def previousPlayer(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
+		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
 
 		index=self.statNumberList.index(self.gameSettings['statNumber'])
 		if len(activePlayerList):

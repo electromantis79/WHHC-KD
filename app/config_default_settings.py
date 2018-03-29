@@ -5,10 +5,10 @@
 
 .. topic:: Overview
 
-    This module reads, writes, or modifies the defaultConfig and userConfig files.
+	This module reads, writes, or modifies the defaultConfig and userConfig files.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
@@ -16,6 +16,7 @@ import time
 # import pkg_resources  # Not sure if i need this
 
 import app.functions
+import app.utils.misc
 import app.configobj
 
 
@@ -175,15 +176,15 @@ def create_config_files():
 	print "ON"
 	write_config_flag = True
 	if write_config_flag:
-		app.functions.silentremove('defaultConfig')
+		app.utils.misc.silent_remove('defaultConfig')
 	c = Config(write_config_flag, 'default')
-	app.functions.printDict(c.__dict__)
+	app.utils.misc.print_dict(c.__dict__)
 	print "%f seconds to run config file setup." % (c.tic - c.toc)
 	raw_input()
 
-	app.functions.silentremove('userConfig')
+	app.utils.misc.silent_remove('userConfig')
 	c.user_equals_default()
-	app.functions.printDict(c.__dict__)
+	app.utils.misc.print_dict(c.__dict__)
 	print "%f seconds to run config file setup." % (c.tic - c.toc)
 
 

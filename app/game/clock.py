@@ -399,7 +399,7 @@ time.sleep(.2)
 
 while 1:
 	pass
-printDict(periodClock.__dict__)
+app.utils.misc.print_dict(periodClock.__dict__)
 
 import cProfile, pstats, StringIO
 tic = time.time()

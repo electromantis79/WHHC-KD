@@ -197,111 +197,23 @@ def select_sport_instance(sport='GENERIC', number_of_teams=2, mp_lx3450_flag=Fal
 	return game
 
 
-def printDict(Dict, PrintDicts=True):
-	"""
-	Prints an alphebetized display of a dictionaries contents for debugging.
-	"""
-	keys = Dict.keys()
-	values = []
-	keys.sort(key=str.lower)
-	for x in range(len(Dict)):
-		valuex=Dict[keys[x]]
-		values.append(valuex)
-	count=0
-	print
-	if PrintDicts:
-		for x in range(len(Dict)):
-			if keys[x]=='addrFuncDict' or keys[x]=='funcDict' or keys[x]=='functionDict' or keys[x]=='Menu_LCD_Text' or keys[x]=='fontDict' or keys[x]=='gameFuncDict':
-				print keys[x], ' = a huge dictionary...'
-				print
-			else:
-				print keys[x], ' = ', values[x]
-				print
-		print
-	else:
-		for x in range(len(Dict)):
-			try:
-				values[x].values()
-			except:
-				print keys[x], ' = ', values[x]
-				count += 1
-		print '\n', count, 'Individual Variables'
-
-	print len(Dict), 'Variables including Dictionaries'
-
-
-def printDictsExpanded(Dict, PrintDict=True):
-	"""
-	Prints an alphebetized display of a dictionaries contents for debugging then does again for each element in main dictionary.
-	"""
-	printDict(Dict.__dict__, PrintDict)
-	print 'Main Dictionary'
-	raw_input()
-	for data in Dict.__dict__:
-		print('-----------------------------------')
-		try:
-			Dict2 = vars(Dict)[data]
-			printDict(Dict2, PrintDict)
-			print 'Dictionary', data
-		except:
-			print data, vars(Dict)[data]
-		raw_input()
-
-
-def silentremove(filename):
-	"""
-	Deletes a file but doesn't care if it is not there to begin with.
-	"""
-	import os, errno
-	try:
-		os.remove(filename)
-	except OSError as e: # this would be "except OSError, e:" before Python 2.6
-		if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
-			raise # re-raise exception if a different error occured
-
-
-def activePlayerListSelect(game):
+def active_player_list_select(game):  # Used for Stat game methods
 	"""
 	Loads the current list of active players for the current team.
 	"""
-	activePlayerList=None
+	active_player_list = None
 	if game.gameSettings['currentTeamGuest']:
-		teamName='GUEST'
-		team=game.guest
+		team_name = 'GUEST'
+		team = game.guest
 		try:
-			activePlayerList=game.activeGuestPlayerList
+			active_player_list = game.activeGuestPlayerList
 		except:
 			pass
 	else:
-		teamName=' HOME'
-		team=game.home
+		team_name = ' HOME'
+		team = game.home
 		try:
-			activePlayerList=game.activeHomePlayerList
+			active_player_list = game.activeHomePlayerList
 		except:
 			pass
-	return activePlayerList, team, teamName
-
-
-def binar(bina):
-	"""
-	Function rename to avoid conflict with PyQt bin() function.
-	"""
-	return bin(bina)
-
-
-def saveObject2File(dictionary, dictionaryName):
-	import app.configobj
-	try:
-		configObj = app.configobj.ConfigObj(dictionaryName)
-		silentremove(dictionaryName)
-	except:
-		print 'Object does not exist!'
-		raise
-
-	try:
-		configObj.clear()
-		configObj.update(dictionary)
-		configObj.write()
-	except:
-		print 'Saving Object Failed!'
-		raise
+	return active_player_list, team, team_name

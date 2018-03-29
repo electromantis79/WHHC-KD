@@ -61,3 +61,10 @@ def font_trim(font_list, shift=True, display_height=9):
 		if shift:
 			font_list[x] = element >> 2
 	return font_list
+
+
+def binar(bina):
+	"""
+	Function rename to avoid conflict with PyQt bin() function.
+	"""
+	return bin(bina)

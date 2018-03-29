@@ -362,7 +362,7 @@ class AddressMapping(object):
 				high_nibble, low_nibble, blank_type, segment_data, stat_flag=self.statFlag)
 
 	def _sort_players(self):
-		active_player_list, team, team_name = app.functions.activePlayerListSelect(self.game)
+		active_player_list, team, team_name = app.functions.active_player_list_select(self.game)
 		active_player_list.sort()
 
 		for x, playerNumber in enumerate(active_player_list):
@@ -1725,7 +1725,7 @@ def test():
 	addrMap = AddressMapping(game.gameData['sportType'], game=game)
 	app.functions.elapse_time(addrMap.Map, On=False, Timeit=False)
 
-	app.functions.printDictsExpanded(addrMap, True)
+	app.utils.misc.print_dicts_expanded(addrMap, True)
 	raw_input()
 
 	'''
@@ -1743,8 +1743,8 @@ def test():
 	#raw_input()
 	print
 	#addrDict=addrMap.__dict__
-	#printDict(addrDict)
-	#printDictsExpanded(addrMap, True)
+	#app.utils.misc.print_dict(addrDict)
+	#app.utils.misc.print_dicts_expanded(addrMap, True)
 	'''
 
 """
