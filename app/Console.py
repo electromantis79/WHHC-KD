@@ -439,20 +439,20 @@ class Console(object):
 				self.game.delayOfGameHorn()
 		if self.game.clockDict['timeOutTimer'].autoStop:
 			self.game.gameSettings['timeOutTimerEnable'] = False
-			self.game.clockDict['timeOutTimer'].Reset()
+			self.game.clockDict['timeOutTimer'].reset_()
 			temp = self.game.gameSettings['endOfPeriodHornEnable']
 			self.game.gameSettings['endOfPeriodHornEnable'] = False
 			self.game.Horn()
 			self.game.gameSettings['endOfPeriodHornEnable'] = temp
 
-		# If a shot clock sport and period clock is on then start the shot clock
+		# If a shot clock sport and period Clock is on then start the shot Clock
 		if (
 				self.shotClockSportsFlag
 				and self.game.clockDict['periodClock'].running
 				and not self.game.clockDict['shotClock'].running
 				and self.game.clockDict['shotClock'].timeUnitsDict['currentTime'] > 0
 		):
-			self.game.clockDict['shotClock'].Start()
+			self.game.clockDict['shotClock'].start_()
 
 		# Start team name number pad timer
 		if self.lcd.teamNameNumpadFlag:

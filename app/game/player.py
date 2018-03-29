@@ -4,10 +4,10 @@
 """
 .. topic:: Overview
 
-    This module simulates a player for all sports.
+	This module simulates a player for all sports.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 """
 
 import app.utils.reads

@@ -16,8 +16,6 @@ import time
 
 from sys import platform as _platform
 
-import app.utils.functions
-
 # thread_timer related
 if _platform == "linux" or _platform == "linux2":
 	try:
@@ -26,20 +24,20 @@ if _platform == "linux" or _platform == "linux2":
 		pass
 
 
-class clock(object):
+class Clock(object):
 	"""
 	Implements a clock.
 	"""
 	def __init__(
-			self, countUp=False, maxSeconds=86399.999, resolution=0.01,
-			hoursFlag=False, clockName='generic', internalClock=False):
-		self.countUp = countUp
-		self.maxSeconds = maxSeconds  # must be in seconds
+			self, count_up=False, max_seconds=86399.999, resolution=0.01,
+			hours_flag=False, clock_name='generic', internal_clock=False):
+		self.countUp = count_up
+		self.maxSeconds = max_seconds  # must be in seconds
 		self.resolution = resolution
-		self.hoursFlag = hoursFlag
-		self.clockName = clockName
-		self.internalClock = internalClock
-		if (_platform == "linux" or _platform == "linux2") and (clockName == 'periodClock' or clockName == 'shotClock'):
+		self.hoursFlag = hours_flag
+		self.clockName = clock_name
+		self.internalClock = internal_clock
+		if (_platform == "linux" or _platform == "linux2") and (clock_name == 'periodClock' or clock_name == 'shotClock'):
 			os.nice(-1)
 
 		# Flags
@@ -75,17 +73,15 @@ class clock(object):
 		if self.clockName == 'timeOfDayClock':
 			self.currentTime = self.maxSeconds
 
-		self.Update()
+		self._update()
 
-		self.refresher = clockThread(self.Update, self.resolution, name=self.clockName)
+		self.refresher = ClockThread(self._update, self.resolution, name=self.clockName)
 		self.refresher.start()
 
-	def Update(self):
+	def _update(self):
 		"""
 		Updates the current time.
 		"""
-		#print 'Update', time.time()-self.initStart
-
 		if self.clockName == 'timeOfDayClock':
 
 			# Select local time or user value for time
@@ -102,7 +98,7 @@ class clock(object):
 
 				# If user time is outside of clock time cancel
 				if self.currentTime > 86399.999:
-					self.Reset(0)
+					self.reset_(0)
 					return
 
 				self.currentTime = self.maxSeconds + elapse_time
@@ -232,23 +228,23 @@ class clock(object):
 			self.timeUnitsDict['blinky'] = False
 		return self.timeUnitsDict
 
-	def gameDataUpdate(self, gameData, name='periodClock'):
+	def game_data_update(self, game_data, name='periodClock'):
 		"""
 		Used to store UnMapped data in the game object. (Scoreboard data received from another console)
 		"""
 		for each in self.timeListNames:
-			gameData[name+'_'+each] = self.timeUnitsDict[each]
-		return gameData
+			game_data[name + '_' + each] = self.timeUnitsDict[each]
+		return game_data
 
-	def changeSeconds(self, change):
+	def change_seconds(self, change):
 		"""
 		Changes the time while retaining the maximum time.
 		"""
 		self.changeTime += change
 		self.currentTime += change
-		self.Update()
+		self._update()
 
-	def Start(self):
+	def start_(self):
 		"""
 		Starts the clock if stopped.
 		"""
@@ -259,7 +255,7 @@ class clock(object):
 			self.autoStop2 = False
 			self.refresher.resume()
 
-	def Stop(self):
+	def stop_(self):
 		"""
 		Stops the clock if running.
 		"""
@@ -268,22 +264,22 @@ class clock(object):
 			self.running = False
 			self.refresher.pause()
 
-	def Reset(self, resetValueSeconds=None):
+	def reset_(self, reset_value_seconds=None):
 		"""
 		Resets the clock to passed value.
 		"""
 		if self.clockName == 'timeOfDayClock' and not self.internalClock:
-			if resetValueSeconds is not None:
+			if reset_value_seconds is not None:
 				self.currentTime = self.maxSeconds
-				self.maxSeconds = resetValueSeconds
+				self.maxSeconds = reset_value_seconds
 			if self.currentTime > 46799.999:
 				self.PM = True
 			else:
 				self.PM = False
 			self._start = time.time()
 		else:
-			if resetValueSeconds is not None:
-				self.maxSeconds = resetValueSeconds
+			if reset_value_seconds is not None:
+				self.maxSeconds = reset_value_seconds
 			self.running = False
 			self.autoStop = False
 			self.autoStop2 = False
@@ -295,9 +291,9 @@ class clock(object):
 				self.currentTime = 0.0
 			else:
 				self.currentTime = self.maxSeconds
-		self.Update()
+		self._update()
 
-	def Kill(self):
+	def kill_(self):
 		"""Kills update thread"""
 		if (_platform == "linux" or _platform == "linux2") and (
 				self.clockName == 'periodClock' or self.clockName == 'shotClock'):
@@ -306,11 +302,11 @@ class clock(object):
 		self.refresher.kill()
 
 
-class clockThread(threading.Thread):
+class ClockThread(threading.Thread):
 	"""Pausable thread for clock"""
-	def __init__(self, function, period, name='Generic'):
+	def __init__(self, passed_function, period, name='Generic'):
 		threading.Thread.__init__(self)
-		self.function = function
+		self.function = passed_function
 		self.period = period
 		self.clockName = name
 		if _platform == "linux" or _platform == "linux2":
@@ -318,7 +314,7 @@ class clockThread(threading.Thread):
 				prctl.set_name(name)  # Used on BBB to show name of process in htop
 			except:
 				pass
-		#self.daemon=True TODO: check this
+		# self.daemon=True TODO: check this
 		self.nextCall = 0.0
 		self.paused = True
 		self._stopevent = threading.Event()
@@ -326,7 +322,6 @@ class clockThread(threading.Thread):
 
 	def run(self):
 		self.nextCall = time.time()
-
 		stamp = 0
 		name = self.clockName, threading.current_thread().getName()
 		while not self._stopevent.isSet():
@@ -335,7 +330,6 @@ class clockThread(threading.Thread):
 					self.state.wait()
 
 			stamp += 1
-
 			self.nextCall = self.nextCall+self.period
 			self.function()
 
@@ -343,14 +337,13 @@ class clockThread(threading.Thread):
 			try:
 				now = time.time()
 				time.sleep(self.nextCall-now)
-			except Exception as err:
+			except:
 
 				while (self.nextCall-now) < 0:
 					self.nextCall = self.nextCall+self.period
 					count += 1
 
 				self.nextCall = self.nextCall+self.period*count
-
 				try:
 					now = time.time()
 					time.sleep(self.nextCall-now)
@@ -387,12 +380,13 @@ elapse = toc-tic
 #length=input("Input Max time until stop in seconds: ")
 #hours=input("Input '1' for Hours mode or '0' for Minutes Mode: ")
 
-#periodClock=clock(countUp=direction, maxSeconds=length, resolution=0.01, hoursFlag=hours, clockName='generic', internalClock=False)
-periodClock=clock(maxSeconds=10, countUp=False, clockName='shotClock', resolution=0.01)
-#clockThread(thread_timer(periodClock.Update, 0.01), 0.01)
+#periodClock=Clock(
+		countUp=direction, maxSeconds=length, resolution=0.01, hoursFlag=hours, clockName='generic', internalClock=False)
+periodClock=Clock(maxSeconds=10, countUp=False, clockName='shotClock', resolution=0.01)
+#ClockThread(thread_timer(periodClock._update, 0.01), 0.01)
 
-#clocky = periodClock.Update()
-periodClock.Start()
+#clocky = periodClock._update()
+periodClock.start_()
 while periodClock.running:
 	#periodClock.updateValues()
 	print (
@@ -401,9 +395,9 @@ while periodClock.running:
 		periodClock.timeUnitsDict['tenthsUnits'], periodClock.timeUnitsDict['hundredthsUnits'])
 	time.sleep(0.01)
 	if periodClock.timeUnitsDict['secondsUnits']<=5:
-		periodClock.Kill()
+		periodClock.kill_()
 		break
-periodClock.Stop()
+periodClock.stop_()
 time.sleep(.2)
 
 while 1:
@@ -415,7 +409,7 @@ tic = time.time()
 pr = cProfile.Profile()
 pr.enable()
 # ... do something ...
-elapse_time(periodClock.Update, On=True)
+elapse_time(periodClock._update, On=True)
 pr.disable()
 s = StringIO.StringIO()
 sortby = 'cumulative'

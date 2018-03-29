@@ -5,10 +5,10 @@
 
 .. topic:: Overview
 
-    This module simulates a console's option jumpers.
+	This module simulates a console's option jumpers.
 
-    :Created Date: 3/13/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/13/2015
+	:Author: **Craig Gunter**
 
 """
 
@@ -22,22 +22,22 @@ class OptionJumpers(object):
 	"""
 	This class builds a dictionary of jumper options.
 	The jumper string from the config file sets the special states for each sport.
-	Call getOptions to update the gameSettingsDict.
+	Call get_options to update the gameSettingsDict.
 	"""
 
 	# constructor
-	def __init__(self, sport, sportList, jumperString='OOOO'):
+	def __init__(self, sport, sport_list, jumper_string='OOOO'):
 		self.sport = sport
-		self.sportList = sportList
-		self.jumperString = jumperString
+		self.sportList = sport_list
+		self.jumperString = jumper_string
 		self.optionsDict = {}
 
 		if self.jumperString == 'OOOO':
 			pass
 		else:
-			self._setOptions()
+			self._set_options()
 
-	def _setOptions(self):
+	def _set_options(self):
 		# Baseball
 		if self.sport == 'MMBASEBALL3' or self.sport == 'MPBASEBALL1':
 			if self.jumperString[0] == 'B':
@@ -46,15 +46,15 @@ class OptionJumpers(object):
 				self.optionsDict['2D_Clock'] = True
 			if self.jumperString[2] == 'D':
 				self.optionsDict['hoursFlagJumper'] = True
-			self._E_BSO_433()
+			self._e_bso_433()
 
 		if self.sport == 'MMBASEBALL4' or self.sport == 'MPMP-15X1':
-			self._E_BSO_433()
+			self._e_bso_433()
 
 		if self.sport == 'MPLINESCORE4' or self.sport == 'MPMP-14X1':
 			if self.jumperString[1] == 'C':
 				self.optionsDict['pitchCountFlag'] = True
-			self._E_BSO_433()
+			self._e_bso_433()
 
 		if self.sport == 'MPLINESCORE5':
 			if self.jumperString[0] == 'B':
@@ -63,7 +63,7 @@ class OptionJumpers(object):
 				self.optionsDict['clock_3D_or_less_Flag'] = True
 			if self.jumperString[2] == 'D':
 				self.optionsDict['doublePitchCountFlag'] = True
-			self._E_BSO_433()
+			self._e_bso_433()
 
 		# Football
 		if self.sport == 'MPFOOTBALL1':
@@ -92,7 +92,7 @@ class OptionJumpers(object):
 				self.optionsDict['clock_3D_or_less_Flag'] = True
 			if self.jumperString[2] == 'D':
 				self.optionsDict['MP320Flag'] = True
-			self._E_BSO_433()
+			self._e_bso_433()
 
 		# Basketball
 		if self.sport == 'MPBASKETBALL1':
@@ -134,7 +134,7 @@ class OptionJumpers(object):
 			if self.jumperString[3] == 'E':
 				self.optionsDict['trackClockEnable'] = True
 
-	def _E_BSO_433(self):
+	def _e_bso_433(self):
 		if self.jumperString[3] == 'E':
 			self.optionsDict['ballsMax'] = 4
 			self.optionsDict['strikesMax'] = 3
@@ -142,7 +142,7 @@ class OptionJumpers(object):
 
 	# PUBLIC method
 
-	def getOptions(self, gameSettings):
-		"""Update **gameSettings** with the current **optionsDict**."""
-		gameSettings.update(self.optionsDict)
-		return gameSettings
+	def get_options(self, game_settings):
+		"""Update **game_settings** with the current **optionsDict**."""
+		game_settings.update(self.optionsDict)
+		return game_settings

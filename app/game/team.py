@@ -5,10 +5,10 @@
 
 .. topic:: Overview
 
-    This module simulates a team for all sports.
+	This module simulates a team for all sports.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
@@ -55,65 +55,65 @@ class Team(object):
 
 		# All sports
 		self.teamData['teamType'] = self.sportType
-		self._setData('score', self.teamData['score'], places=3)
+		self._set_data('score', self.teamData['score'], places=3)
 
 		# Baseball
-		self._setData('pitchCount', self.teamData['pitchCount'], places=3)
-		self._setData('hits', self.teamData['hits'], places=3)
-		self._setData('errors', self.teamData['errors'])
+		self._set_data('pitchCount', self.teamData['pitchCount'], places=3)
+		self._set_data('hits', self.teamData['hits'], places=3)
+		self._set_data('errors', self.teamData['errors'])
 
 		# Football
 		# None
 
 		# Soccer
-		self._setData('shots', self.teamData['shots'])
-		self._setData('kicks', self.teamData['kicks'])
-		self._setData('saves', self.teamData['saves'])
+		self._set_data('shots', self.teamData['shots'])
+		self._set_data('kicks', self.teamData['kicks'])
+		self._set_data('saves', self.teamData['saves'])
 
 		# Hockey
-		self._setData('TIMER1_PLAYER_NUMBER', self.teamData['TIMER1_PLAYER_NUMBER'])
-		self._setData('TIMER2_PLAYER_NUMBER', self.teamData['TIMER2_PLAYER_NUMBER'])
+		self._set_data('TIMER1_PLAYER_NUMBER', self.teamData['TIMER1_PLAYER_NUMBER'])
+		self._set_data('TIMER2_PLAYER_NUMBER', self.teamData['TIMER2_PLAYER_NUMBER'])
 
 		# Basketball
-		self._setData('fouls', self.teamData['fouls'])
+		self._set_data('fouls', self.teamData['fouls'])
 		self.teamData['timeOutsLeft'] = self.teamData['TIME_OUTS_LEFT_BASK']
 
 		# Stat
-		self._setData('playerOne', self.teamData['playerOne'])
-		self._setData('playerTwo', self.teamData['playerTwo'])
-		self._setData('playerThree', self.teamData['playerThree'])
-		self._setData('playerFour', self.teamData['playerFour'])
-		self._setData('playerFive', self.teamData['playerFive'])
-		self._setData('playerSix', self.teamData['playerSix'])
+		self._set_data('playerOne', self.teamData['playerOne'])
+		self._set_data('playerTwo', self.teamData['playerTwo'])
+		self._set_data('playerThree', self.teamData['playerThree'])
+		self._set_data('playerFour', self.teamData['playerFour'])
+		self._set_data('playerFive', self.teamData['playerFive'])
+		self._set_data('playerSix', self.teamData['playerSix'])
 
-		self._setData('foulOne', self.teamData['foulOne'])
-		self._setData('foulTwo', self.teamData['foulTwo'])
-		self._setData('foulThree', self.teamData['foulThree'])
-		self._setData('foulFour', self.teamData['foulFour'])
-		self._setData('foulFive', self.teamData['foulFive'])
-		self._setData('foulSix', self.teamData['foulSix'])
+		self._set_data('foulOne', self.teamData['foulOne'])
+		self._set_data('foulTwo', self.teamData['foulTwo'])
+		self._set_data('foulThree', self.teamData['foulThree'])
+		self._set_data('foulFour', self.teamData['foulFour'])
+		self._set_data('foulFive', self.teamData['foulFive'])
+		self._set_data('foulSix', self.teamData['foulSix'])
 
-		self._setData('pointsOne', self.teamData['pointsOne'])
-		self._setData('pointsTwo', self.teamData['pointsTwo'])
-		self._setData('pointsThree', self.teamData['pointsThree'])
-		self._setData('pointsFour', self.teamData['pointsFour'])
-		self._setData('pointsFive', self.teamData['pointsFive'])
-		self._setData('pointsSix', self.teamData['pointsSix'])
+		self._set_data('pointsOne', self.teamData['pointsOne'])
+		self._set_data('pointsTwo', self.teamData['pointsTwo'])
+		self._set_data('pointsThree', self.teamData['pointsThree'])
+		self._set_data('pointsFour', self.teamData['pointsFour'])
+		self._set_data('pointsFive', self.teamData['pointsFive'])
+		self._set_data('pointsSix', self.teamData['pointsSix'])
 
-	def _setData(self, dataName, value, places=2):
+	def _set_data(self, data_name, value, places=2):
 		if places == 3:
-			self.teamData[dataName+'Hundreds'] = value/100
-			self.teamData[dataName+'Tens'] = value/10 % 10
-			self.teamData[dataName+'Units'] = value % 10
-			self.teamData[dataName] = value
+			self.teamData[data_name + 'Hundreds'] = value / 100
+			self.teamData[data_name + 'Tens'] = value / 10 % 10
+			self.teamData[data_name + 'Units'] = value % 10
+			self.teamData[data_name] = value
 		elif places == 2:
 			if value == 255:
-				self.teamData[dataName+'Tens'] = 15
-				self.teamData[dataName+'Units'] = 15
-				self.teamData[dataName] = value
+				self.teamData[data_name + 'Tens'] = 15
+				self.teamData[data_name + 'Units'] = 15
+				self.teamData[data_name] = value
 			else:
-				self.teamData[dataName+'Tens'] = value/10
-				self.teamData[dataName+'Units'] = value % 10
-				self.teamData[dataName] = value
+				self.teamData[data_name + 'Tens'] = value / 10
+				self.teamData[data_name + 'Units'] = value % 10
+				self.teamData[data_name] = value
 		else:
-			print 'Failed to set %s value of %d.' % (dataName, value)
+			print 'Failed to set %s value of %d.' % (data_name, value)

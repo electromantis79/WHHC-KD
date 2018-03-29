@@ -42,8 +42,8 @@ class Game(object):
 		self.gameData['Version'] = self.configDict['Version']
 		
 		# Handle option jumpers
-		self.optionJumpers = app.game.option_jumpers.OptionJumpers(self.sport, app.utils.functions.SPORT_LIST, jumperString=self.gameData['optionJumpers'])
-		self.gameSettings = self.optionJumpers.getOptions(self.gameSettings)
+		self.optionJumpers = app.game.option_jumpers.OptionJumpers(self.sport, app.utils.functions.SPORT_LIST, jumper_string=self.gameData['optionJumpers'])
+		self.gameSettings = self.optionJumpers.get_options(self.gameSettings)
 		
 		self.decimalIndicator = not self.gameData['colonIndicator']
 
@@ -89,33 +89,33 @@ class Game(object):
 
 	def _createClockDict(self):
 		# class object instantiation
-		self.clockDict['timeOutTimer'] = app.game.clock.clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clockName='timeOutTimer')
-		self.gameData = self.clockDict['timeOutTimer'].gameDataUpdate(self.gameData, name='timeOutTimer')
+		self.clockDict['timeOutTimer'] = app.game.clock.Clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clock_name='timeOutTimer')
+		self.gameData = self.clockDict['timeOutTimer'].game_data_update(self.gameData, name='timeOutTimer')
 
-		self.clockDict['timeOfDayClock'] = app.game.clock.clock(
-			True, maxSeconds=self.gameSettings['timeOfDayClockMaxSeconds'],
-			resolution=0.1, hoursFlag=True, clockName='timeOfDayClock')
-		self.gameData = self.clockDict['timeOfDayClock'].gameDataUpdate(self.gameData, name='timeOfDayClock')
+		self.clockDict['timeOfDayClock'] = app.game.clock.Clock(
+			True, max_seconds=self.gameSettings['timeOfDayClockMaxSeconds'],
+			resolution=0.1, hours_flag=True, clock_name='timeOfDayClock')
+		self.gameData = self.clockDict['timeOfDayClock'].game_data_update(self.gameData, name='timeOfDayClock')
 
-		self.clockDict['segmentTimer'] = app.game.clock.clock(
-			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clockName='segmentTimer')
-		self.gameData = self.clockDict['segmentTimer'].gameDataUpdate(self.gameData, name='segmentTimer')
+		self.clockDict['segmentTimer'] = app.game.clock.Clock(
+			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clock_name='segmentTimer')
+		self.gameData = self.clockDict['segmentTimer'].game_data_update(self.gameData, name='segmentTimer')
 
-		self.clockDict['flashTimer'] = app.game.clock.clock(False, self.gameSettings['flashTimerMaxSeconds'], clockName='flashTimer')
+		self.clockDict['flashTimer'] = app.game.clock.Clock(False, self.gameSettings['flashTimerMaxSeconds'], clock_name='flashTimer')
 
-		self.clockDict['intervalTimer'] = app.game.clock.clock(
-			False, self.gameSettings['intervalTimerMaxSeconds'], clockName='intervalTimer')
+		self.clockDict['intervalTimer'] = app.game.clock.Clock(
+			False, self.gameSettings['intervalTimerMaxSeconds'], clock_name='intervalTimer')
 
-		self.clockDict['periodHornFlashTimer'] = app.game.clock.clock(
-			False, self.gameSettings['periodHornFlashDuration'], clockName='periodHornFlashTimer')
+		self.clockDict['periodHornFlashTimer'] = app.game.clock.Clock(
+			False, self.gameSettings['periodHornFlashDuration'], clock_name='periodHornFlashTimer')
 
-		self.clockDict['periodBlinkyFlashTimer'] = app.game.clock.clock(False, .5, clockName='periodBlinkyFlashTimer')
+		self.clockDict['periodBlinkyFlashTimer'] = app.game.clock.Clock(False, .5, clock_name='periodBlinkyFlashTimer')
 
 		if self.gameData['sport'] == "MPGENERIC":
-			self.clockDict['periodClock'] = app.game.clock.clock(self.gameSettings['periodClockCountUp'], 15*60, clockName='periodClock')
-			self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
+			self.clockDict['periodClock'] = app.game.clock.Clock(self.gameSettings['periodClockCountUp'], 15 * 60, clock_name='periodClock')
+			self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, name='periodClock')
 
-		# gameDataUpdate adds values to the gameData dictionary
+		# game_data_update adds values to the gameData dictionary
 
 	def _reverseHomeAndGuest(self):
 		# method never used
@@ -127,7 +127,7 @@ class Game(object):
 
 	def KillClockThreads(self):
 		for clock in self.clockDict:
-			self.clockDict[clock].Kill()
+			self.clockDict[clock].kill_()
 
 	def getPlayerData(self, team, dataName, playerID=None, playerNumber=None):
 		if playerID is None and playerNumber is None:
@@ -344,16 +344,16 @@ class Game(object):
 	#GENERIC FUNCTIONS----------------------------------------
 
 	def handheldButton1(self):
-		self.clockDict['delayOfGameClock'].Reset(self.gameSettings['delayOfGameMaxSeconds1'])
+		self.clockDict['delayOfGameClock'].reset_(self.gameSettings['delayOfGameMaxSeconds1'])
 
 	def handheldButton2(self):
-		self.clockDict['delayOfGameClock'].Reset(self.gameSettings['delayOfGameMaxSeconds2'])
+		self.clockDict['delayOfGameClock'].reset_(self.gameSettings['delayOfGameMaxSeconds2'])
 
 	def handheldButton3(self):
 		if self.clockDict['delayOfGameClock'].running:
-			self.clockDict['delayOfGameClock'].Stop()
+			self.clockDict['delayOfGameClock'].stop_()
 		else:
-			self.clockDict['delayOfGameClock'].Start()
+			self.clockDict['delayOfGameClock'].start_()
 
 	def guestScorePlusTen(self):
 		team=self.guest
@@ -442,8 +442,8 @@ class Game(object):
 		elif self.gameSettings['timeOutTimerEnable']:
 			self.gameSettings['timeOutTimerEnable']=False
 			clockName='timeOutTimer'
-			self.clockDict[clockName].Stop()
-			self.clockDict[clockName].Reset()
+			self.clockDict[clockName].stop_()
+			self.clockDict[clockName].reset_()
 			clockName='periodClock'
 		else:
 			clockName='periodClock'
@@ -454,39 +454,39 @@ class Game(object):
 
 		else:
 			if not self.clockDict[clockName].running:
-				self.clockDict[clockName].Start()
+				self.clockDict[clockName].start_()
 				if self.gameData['sport']=='MPBASKETBALL1' or self.gameData['sportType']=='hockey':
-					self.clockDict['shotClock'].Start()
+					self.clockDict['shotClock'].start_()
 					if self.gameData['sportType']=='hockey':
 						for clockName in self.clockDict.keys():
 							if clockName[:7]=='penalty':
-								self.clockDict[clockName].Start()
+								self.clockDict[clockName].start_()
 			else:
-				self.clockDict[clockName].Stop()
+				self.clockDict[clockName].stop_()
 				if self.gameData['sport']=='MPBASKETBALL1' or self.gameData['sportType']=='hockey':
-					self.clockDict['shotClock'].Stop()
+					self.clockDict['shotClock'].stop_()
 					if self.gameData['sportType']=='hockey':
 							for clockName in self.clockDict.keys():
 								if clockName[:7]=='penalty':
-									self.clockDict[clockName].Stop()
+									self.clockDict[clockName].stop_()
 
 	def minutesMinusOne(self):
 		if not self.clockDict['periodClock'].running:
 			if self.clockDict['periodClock'].currentTime<=60: # don't allow negative time
-				self.clockDict['periodClock'].changeSeconds(-self.clockDict['periodClock'].currentTime)
+				self.clockDict['periodClock'].change_seconds(-self.clockDict['periodClock'].currentTime)
 			else:
-				self.clockDict['periodClock'].changeSeconds(-60)
+				self.clockDict['periodClock'].change_seconds(-60)
 
 	def secondsMinusOne(self):
 		if not self.clockDict['periodClock'].running:
 			if self.clockDict['periodClock'].currentTime<=1: # don't allow negative time
-				self.clockDict['periodClock'].changeSeconds(-self.clockDict['periodClock'].currentTime)
+				self.clockDict['periodClock'].change_seconds(-self.clockDict['periodClock'].currentTime)
 			else:
-				self.clockDict['periodClock'].changeSeconds(-1)
+				self.clockDict['periodClock'].change_seconds(-1)
 
 	def secondsPlusOne(self):
 		if not self.clockDict['periodClock'].running:
-			self.clockDict['periodClock'].changeSeconds(1)
+			self.clockDict['periodClock'].change_seconds(1)
 
 	def quartersPlusOne(self):
 		modulusValue=(self.gameSettings['quarterMax']+1)
@@ -1225,13 +1225,13 @@ class Baseball(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
-		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')
-		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
-		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, 'delayOfGameClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['baseballPeriodClockMaxSeconds'], \
-		self.gameSettings['periodClockResolution'], self.gameSettings['hoursFlag'], clockName='periodClock')	
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)	
+		self.clockDict['shotClock']=app.game.clock.Clock(False, self.gameSettings['shotClockMaxSeconds1'], clock_name='shotClock')
+		self.gameData = self.clockDict['shotClock'].game_data_update(self.gameData, 'shotClock')
+		self.clockDict['delayOfGameClock']=app.game.clock.Clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clock_name='delayOfGameClock')
+		self.gameData = self.clockDict['delayOfGameClock'].game_data_update(self.gameData, 'delayOfGameClock')
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.gameSettings['baseballPeriodClockMaxSeconds'], \
+														   self.gameSettings['periodClockResolution'], self.gameSettings['hoursFlag'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData)
 		self.clockList=self.clockDict.keys()
 
 	def periodClockReset(self):
@@ -1240,17 +1240,17 @@ class Baseball(Game):
 				self.gameSettings['periodClockResetFlag']=True
 				perMax=self.gameSettings['baseballPeriodClockMaxSeconds']
 				if self.clockDict['periodClock'].currentTime>=(90*60):
-					self.clockDict['periodClock'].Reset(perMax)
+					self.clockDict['periodClock'].reset_(perMax)
 				elif self.clockDict['periodClock'].currentTime>=(60*60):
-					self.clockDict['periodClock'].Reset(90*60)
+					self.clockDict['periodClock'].reset_(90 * 60)
 				elif self.clockDict['periodClock'].currentTime>=(30*60):
-					self.clockDict['periodClock'].Reset(60*60)
+					self.clockDict['periodClock'].reset_(60 * 60)
 				elif self.clockDict['periodClock'].currentTime>=(15*60):
-					self.clockDict['periodClock'].Reset(30*60)
+					self.clockDict['periodClock'].reset_(30 * 60)
 				elif self.clockDict['periodClock'].currentTime>=perMax:
-					self.clockDict['periodClock'].Reset(15*60)
+					self.clockDict['periodClock'].reset_(15 * 60)
 				elif self.clockDict['periodClock'].currentTime<perMax:
-					self.clockDict['periodClock'].Reset(perMax)
+					self.clockDict['periodClock'].reset_(perMax)
 
 class Football(Game):
 	def __init__(self, numberOfTeams=2):
@@ -1275,10 +1275,10 @@ class Football(Game):
 
 		self._addTeamNameData()
 		
-		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
-		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, name='delayOfGameClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['footballPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
+		self.clockDict['delayOfGameClock']=app.game.clock.Clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clock_name='delayOfGameClock')
+		self.gameData = self.clockDict['delayOfGameClock'].game_data_update(self.gameData, name='delayOfGameClock')
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.gameSettings['footballPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, name='periodClock')
 		self.clockList=self.clockDict.keys()
 
 	def periodClockReset(self):
@@ -1287,17 +1287,17 @@ class Football(Game):
 				self.gameSettings['periodClockResetFlag']=True
 				perMax=self.gameSettings['footballPeriodClockMaxSeconds']
 				if self.clockDict['periodClock'].currentTime>=(90*60):
-					self.clockDict['periodClock'].Reset(perMax)
+					self.clockDict['periodClock'].reset_(perMax)
 				elif self.clockDict['periodClock'].currentTime>=(60*60):
-					self.clockDict['periodClock'].Reset(90*60)
+					self.clockDict['periodClock'].reset_(90 * 60)
 				elif self.clockDict['periodClock'].currentTime>=(30*60):
-					self.clockDict['periodClock'].Reset(60*60)
+					self.clockDict['periodClock'].reset_(60 * 60)
 				elif self.clockDict['periodClock'].currentTime>=(15*60):
-					self.clockDict['periodClock'].Reset(30*60)
+					self.clockDict['periodClock'].reset_(30 * 60)
 				elif self.clockDict['periodClock'].currentTime>=perMax:
-					self.clockDict['periodClock'].Reset(15*60)
+					self.clockDict['periodClock'].reset_(15 * 60)
 				elif self.clockDict['periodClock'].currentTime<perMax:
-					self.clockDict['periodClock'].Reset(perMax)
+					self.clockDict['periodClock'].reset_(perMax)
 
 	def guestTimeOutsMinusOne(self):
 		team=self.guest
@@ -1319,10 +1319,10 @@ class Soccer(Game):
 
 		self._addTeamNameData()
 		
-		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='periodClock')
-		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, 'delayOfGameClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_soccerPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')
+		self.clockDict['delayOfGameClock']=app.game.clock.Clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clock_name='periodClock')
+		self.gameData = self.clockDict['delayOfGameClock'].game_data_update(self.gameData, 'delayOfGameClock')
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_soccerPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, 'periodClock')
 
 		self.clockList=self.clockDict.keys()
 
@@ -1336,35 +1336,35 @@ class Hockey(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['penalty1_teamOne']=app.game.clock.clock(False, 0, clockName='penalty1_teamOne')
-		self.gameData = self.clockDict['penalty1_teamOne'].gameDataUpdate(self.gameData, 'penalty1_teamOne')
-		self.clockDict['penalty1_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty1_teamTwo')
-		self.gameData = self.clockDict['penalty1_teamTwo'].gameDataUpdate(self.gameData, 'penalty1_teamTwo')
-		self.clockDict['penalty2_teamOne']=app.game.clock.clock(False, 0, clockName='penalty2_teamOne')
-		self.gameData = self.clockDict['penalty2_teamOne'].gameDataUpdate(self.gameData, 'penalty2_teamOne')
-		self.clockDict['penalty2_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty2_teamTwo')
-		self.gameData = self.clockDict['penalty2_teamTwo'].gameDataUpdate(self.gameData, 'penalty2_teamTwo')
-		self.clockDict['penalty3_teamOne']=app.game.clock.clock(False, 0, clockName='penalty3_teamOne')
-		self.gameData = self.clockDict['penalty3_teamOne'].gameDataUpdate(self.gameData, 'penalty3_teamOne')
-		self.clockDict['penalty3_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty3_teamTwo')
-		self.gameData = self.clockDict['penalty3_teamTwo'].gameDataUpdate(self.gameData, 'penalty3_teamTwo')
-		self.clockDict['penalty4_teamOne']=app.game.clock.clock(False, 0, clockName='penalty4_teamOne')
-		self.gameData = self.clockDict['penalty4_teamOne'].gameDataUpdate(self.gameData, 'penalty4_teamOne')
-		self.clockDict['penalty4_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty4_teamTwo')
-		self.gameData = self.clockDict['penalty4_teamTwo'].gameDataUpdate(self.gameData, 'penalty4_teamTwo')
-		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
-		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')		
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_hockeyPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')		
+		self.clockDict['penalty1_teamOne']=app.game.clock.Clock(False, 0, clock_name='penalty1_teamOne')
+		self.gameData = self.clockDict['penalty1_teamOne'].game_data_update(self.gameData, 'penalty1_teamOne')
+		self.clockDict['penalty1_teamTwo']=app.game.clock.Clock(False, 0, clock_name='penalty1_teamTwo')
+		self.gameData = self.clockDict['penalty1_teamTwo'].game_data_update(self.gameData, 'penalty1_teamTwo')
+		self.clockDict['penalty2_teamOne']=app.game.clock.Clock(False, 0, clock_name='penalty2_teamOne')
+		self.gameData = self.clockDict['penalty2_teamOne'].game_data_update(self.gameData, 'penalty2_teamOne')
+		self.clockDict['penalty2_teamTwo']=app.game.clock.Clock(False, 0, clock_name='penalty2_teamTwo')
+		self.gameData = self.clockDict['penalty2_teamTwo'].game_data_update(self.gameData, 'penalty2_teamTwo')
+		self.clockDict['penalty3_teamOne']=app.game.clock.Clock(False, 0, clock_name='penalty3_teamOne')
+		self.gameData = self.clockDict['penalty3_teamOne'].game_data_update(self.gameData, 'penalty3_teamOne')
+		self.clockDict['penalty3_teamTwo']=app.game.clock.Clock(False, 0, clock_name='penalty3_teamTwo')
+		self.gameData = self.clockDict['penalty3_teamTwo'].game_data_update(self.gameData, 'penalty3_teamTwo')
+		self.clockDict['penalty4_teamOne']=app.game.clock.Clock(False, 0, clock_name='penalty4_teamOne')
+		self.gameData = self.clockDict['penalty4_teamOne'].game_data_update(self.gameData, 'penalty4_teamOne')
+		self.clockDict['penalty4_teamTwo']=app.game.clock.Clock(False, 0, clock_name='penalty4_teamTwo')
+		self.gameData = self.clockDict['penalty4_teamTwo'].game_data_update(self.gameData, 'penalty4_teamTwo')
+		self.clockDict['shotClock']=app.game.clock.Clock(False, self.gameSettings['shotClockMaxSeconds1'], clock_name='shotClock')
+		self.gameData = self.clockDict['shotClock'].game_data_update(self.gameData, 'shotClock')
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_hockeyPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, 'periodClock')
 		self.clockList=self.clockDict.keys()
 
 	def handheldButton1(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds1'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds1'])
 		self.gameSettings['shotClockBlankEnable'] = False
 		self.gameSettings['shotClockHornEnable']=True
 
 	def handheldButton2(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds2'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds2'])
 		self.gameSettings['shotClockBlankEnable'] = False
 		self.gameSettings['shotClockHornEnable']=True
 
@@ -1375,7 +1375,7 @@ class Hockey(Game):
 			self.gameSettings['shotClockBlankEnable'] = True
 		if self.clockDict['shotClock'].currentTime:
 			self.gameSettings['shotClockHornEnable']=False
-			self.clockDict['shotClock'].Reset(0)
+			self.clockDict['shotClock'].reset_(0)
 
 class Basketball(Game):
 	def __init__(self, numberOfTeams=2):
@@ -1398,20 +1398,20 @@ class Basketball(Game):
 		self.setGameData('playerFouls', self.gameData['playerFouls'])
 		
 		#Order of thread creation sets priority when init same class, last is highest
-		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
-		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.basketballPeriodClockMaxSeconds, self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')
+		self.clockDict['shotClock']=app.game.clock.Clock(False, self.gameSettings['shotClockMaxSeconds1'], clock_name='shotClock')
+		self.gameData = self.clockDict['shotClock'].game_data_update(self.gameData, 'shotClock')
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.basketballPeriodClockMaxSeconds, self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, 'periodClock')
 
 		self.clockList=self.clockDict.keys()
 
 	def handheldButton1(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds1'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds1'])
 		self.gameSettings['shotClockBlankEnable'] = False
 		self.gameSettings['shotClockHornEnable']=True
 
 	def handheldButton2(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds2'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds2'])
 		self.gameSettings['shotClockBlankEnable'] = False
 		self.gameSettings['shotClockHornEnable']=True
 
@@ -1422,7 +1422,7 @@ class Basketball(Game):
 			self.gameSettings['shotClockBlankEnable'] = True
 		if self.clockDict['shotClock'].currentTime:
 			self.gameSettings['shotClockHornEnable']=False
-			self.clockDict['shotClock'].Reset(0)
+			self.clockDict['shotClock'].reset_(0)
 
 	def periodClockReset(self):
 		if not self.gameSettings['menuFlag']:
@@ -1430,17 +1430,17 @@ class Basketball(Game):
 				self.gameSettings['periodClockResetFlag']=True
 				perMax=self.basketballPeriodClockMaxSeconds
 				if self.clockDict['periodClock'].currentTime>=(90*60):
-					self.clockDict['periodClock'].Reset(perMax)
+					self.clockDict['periodClock'].reset_(perMax)
 				elif self.clockDict['periodClock'].currentTime>=(60*60):
-					self.clockDict['periodClock'].Reset(90*60)
+					self.clockDict['periodClock'].reset_(90 * 60)
 				elif self.clockDict['periodClock'].currentTime>=(30*60):
-					self.clockDict['periodClock'].Reset(60*60)
+					self.clockDict['periodClock'].reset_(60 * 60)
 				elif self.clockDict['periodClock'].currentTime>=(15*60):
-					self.clockDict['periodClock'].Reset(30*60)
+					self.clockDict['periodClock'].reset_(30 * 60)
 				elif self.clockDict['periodClock'].currentTime>=perMax:
-					self.clockDict['periodClock'].Reset(15*60)
+					self.clockDict['periodClock'].reset_(15 * 60)
 				elif self.clockDict['periodClock'].currentTime<perMax:
-					self.clockDict['periodClock'].Reset(perMax)
+					self.clockDict['periodClock'].reset_(perMax)
 
 	def guestTimeOutsMinusOne(self):
 		team=self.guest
@@ -1466,8 +1466,8 @@ class Cricket(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_cricketPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_cricketPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData)
 		self.clockList=self.clockDict.keys()
 
 class Racetrack(Game):
@@ -1482,8 +1482,8 @@ class Racetrack(Game):
 
 		self._addTeamNameData()
 
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_racetrackPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)
+		self.clockDict['periodClock']=app.game.clock.Clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_racetrackPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData)
 		self.clockList=self.clockDict.keys()
 
 class Stat(Game):
