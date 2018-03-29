@@ -14,7 +14,7 @@
 
 import threading
 
-import app.functions
+import app.utils.functions
 import app.utils.reads
 import app.game.team
 import app.game.option_jumpers
@@ -42,7 +42,7 @@ class Game(object):
 		self.gameData['Version'] = self.configDict['Version']
 		
 		# Handle option jumpers
-		self.optionJumpers = app.game.option_jumpers.OptionJumpers(self.sport, app.functions.SPORT_LIST, jumperString=self.gameData['optionJumpers'])
+		self.optionJumpers = app.game.option_jumpers.OptionJumpers(self.sport, app.utils.functions.SPORT_LIST, jumperString=self.gameData['optionJumpers'])
 		self.gameSettings = self.optionJumpers.getOptions(self.gameSettings)
 		
 		self.decimalIndicator = not self.gameData['colonIndicator']
@@ -1009,14 +1009,14 @@ class Game(object):
 	def set1eInnings(self):
 		return
 
-	#END OF CRICKET FUNCTIONS-----------
-	#RACETRACK FUNCTIONS----------------------------------------
+	# END OF CRICKET FUNCTIONS-----------
+	# RACETRACK FUNCTIONS----------------------------------------
 
-	#END OF RACETRACK FUNCTIONS-----------
-	#STAT FUNCTIONS----------------------------------------
+	# END OF RACETRACK FUNCTIONS-----------
+	# STAT FUNCTIONS----------------------------------------
 
 	def fouls_digsMinusOne(self):
-		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
+		activePlayerList, team, teamName= app.utils.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='-')
@@ -1025,7 +1025,7 @@ class Game(object):
 		return
 
 	def fouls_digsPlusOne(self):
-		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
+		activePlayerList, team, teamName= app.utils.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'fouls', operator='+')
@@ -1047,7 +1047,7 @@ class Game(object):
 		return
 
 	def points_killsMinusOne(self):
-		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
+		activePlayerList, team, teamName= app.utils.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='-')
@@ -1056,7 +1056,7 @@ class Game(object):
 		return
 
 	def points_killsPlusOne(self):
-		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
+		activePlayerList, team, teamName= app.utils.functions.active_player_list_select(self)
 		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
 			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
 			self.modPlayerData(team, playerID, 'points', operator='+')
@@ -1065,7 +1065,7 @@ class Game(object):
 		return
 
 	def nextPlayer(self):
-		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
+		activePlayerList, team, teamName= app.utils.functions.active_player_list_select(self)
 		notActiveList=[]
 		for playerID in self.teamsDict[team].playersDict.keys():
 			playerNumber=self.getPlayerData(team, 'playerNumber', playerID=playerID)
@@ -1152,7 +1152,7 @@ class Game(object):
 		return
 
 	def previousPlayer(self):
-		activePlayerList, team, teamName=app.functions.active_player_list_select(self)
+		activePlayerList, team, teamName= app.utils.functions.active_player_list_select(self)
 
 		index=self.statNumberList.index(self.gameSettings['statNumber'])
 		if len(activePlayerList):

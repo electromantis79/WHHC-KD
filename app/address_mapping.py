@@ -13,7 +13,7 @@
 	.. warning:: This is *where the magic happens*.
 """
 
-import app.functions
+import app.utils.functions
 import app.utils.reads
 import app.mp_data_handler
 
@@ -152,7 +152,7 @@ class AddressMapping(object):
 
 		# Fetch the data, make any changes, and adjust the **wordsDict**.
 
-		app.functions.verbose('\n-------_adjust_all_banks-------\n', self.verbose)
+		app.utils.functions.verbose('\n-------_adjust_all_banks-------\n', self.verbose)
 		alts = []
 		under_minute = False
 
@@ -316,7 +316,7 @@ class AddressMapping(object):
 		return list_
 
 	def _update_addr_words(self, alts):
-		app.functions.verbose(['alts', alts], self.verbose)
+		app.utils.functions.verbose(['alts', alts], self.verbose)
 
 		# Method for blanking others in time of day clock mode
 		if self.game.gameSettings['timeOfDayClockBlankingEnable']:
@@ -362,7 +362,7 @@ class AddressMapping(object):
 				high_nibble, low_nibble, blank_type, segment_data, stat_flag=self.statFlag)
 
 	def _sort_players(self):
-		active_player_list, team, team_name = app.functions.active_player_list_select(self.game)
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self.game)
 		active_player_list.sort()
 
 		for x, playerNumber in enumerate(active_player_list):
@@ -513,7 +513,7 @@ class AddressMapping(object):
 	def _nibble_format(self, high_nibble_name, low_nibble_name, blank_type, word, addr_word_number):
 		# Gets the current game data values with these names, formats them, and returns them.
 
-		app.functions.verbose([
+		app.utils.functions.verbose([
 			'\n_nibble_format(before) - high_nibble_name, low_nibble_name, blank_type, word, addr_word_number - \n',
 			high_nibble_name, low_nibble_name, blank_type, word, addr_word_number], self.verbose)
 
@@ -1012,25 +1012,25 @@ class AddressMapping(object):
 
 			if self._tunnel_check(word, numeric_data):
 				# Tunneling data
-				app.functions.verbose(['word', word], self.verboseTunnel)
+				app.utils.functions.verbose(['word', word], self.verboseTunnel)
 				if word == 1:
 					if numeric_data == 0xbc:
-						app.functions.verbose(['Quantum dimming tunnel open!!!!'], self.verboseTunnel)
+						app.utils.functions.verbose(['Quantum dimming tunnel open!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel = 1
 					elif numeric_data == 0xad:
-						app.functions.verbose(['Quantum ETN tunnel open!!!!'], self.verboseTunnel)
+						app.utils.functions.verbose(['Quantum ETN tunnel open!!!!'], self.verboseTunnel)
 						self.quantumETNTunnel = 1
 
 			elif self.quantumDimmingTunnel or self.quantumETNTunnel:
-				app.functions.verbose(['word', word], self.verboseTunnel)
+				app.utils.functions.verbose(['word', word], self.verboseTunnel)
 				if word == 1:
 					if not (0xaa <= numeric_data < 0xf0):
-						app.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
+						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel = 0
 						self.quantumETNTunnel = 0
 
 				elif word == 2:
-					app.functions.verbose(['numeric_data', numeric_data], self.verboseTunnel)
+					app.utils.functions.verbose(['numeric_data', numeric_data], self.verboseTunnel)
 					if self.quantumDimmingTunnel:
 						self.brightness = (numeric_data & 0x0f) + ((numeric_data & 0xf0) >> 4)*10
 					elif self.quantumETNTunnel:
@@ -1042,12 +1042,12 @@ class AddressMapping(object):
 						else:
 							self.quantumETNTunnelTeam = self.game.guest
 
-						app.functions.verbose(['self.quantumETNTunnelTeam =', self.quantumETNTunnelTeam], self.verboseTunnel)
+							app.utils.functions.verbose(['self.quantumETNTunnelTeam =', self.quantumETNTunnelTeam], self.verboseTunnel)
 
 						if numeric_data:
 							# Address pair
 							self.fontJustifyControl = 0
-							app.functions.verbose(['address pair', numeric_data], self.verboseTunnel)
+							app.utils.functions.verbose(['address pair', numeric_data], self.verboseTunnel)
 							self.addressPair = numeric_data
 						else:
 							# Control for font-justify either team because of trimming
@@ -1056,7 +1056,7 @@ class AddressMapping(object):
 				elif word == 3:
 					if self.quantumETNTunnel and not self.fontJustifyControl:
 						self.leftETNByte = numeric_data
-						app.functions.verbose(['leftETNByte', numeric_data], self.verboseTunnel)
+						app.utils.functions.verbose(['leftETNByte', numeric_data], self.verboseTunnel)
 
 				elif word == 4:
 					if self.quantumETNTunnel and self.fontJustifyControl:
@@ -1065,16 +1065,16 @@ class AddressMapping(object):
 
 						self.game.setTeamData(self.quantumETNTunnelTeam, 'font', font, 1)
 						self.game.setTeamData(self.quantumETNTunnelTeam, 'justify', justify, 1)
-						app.functions.verbose(['font', font, 'justify', justify], self.verboseTunnel)
+						app.utils.functions.verbose(['font', font, 'justify', justify], self.verboseTunnel)
 
-						app.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
+						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel = 0
 						self.quantumETNTunnel = 0
 						self.quantumETNTunnelProcessed = True
 
 					elif self.quantumETNTunnel:
 						self.rightETNByte = numeric_data
-						app.functions.verbose(['rightETNByte', numeric_data], self.verboseTunnel)
+						app.utils.functions.verbose(['rightETNByte', numeric_data], self.verboseTunnel)
 						if self.leftETNByte and self.rightETNByte:
 							name = self.game.getTeamData(
 								self.quantumETNTunnelTeam, 'name'
@@ -1084,7 +1084,7 @@ class AddressMapping(object):
 								self.quantumETNTunnelTeam, 'name'
 							)[:(self.addressPair-1)*2]+chr(self.leftETNByte)
 						elif self.rightETNByte:
-							app.functions.verbose([
+							app.utils.functions.verbose([
 								'ERROR - should not send 0 in word 3 and something in word 4',
 								self.leftETNByte and self.rightETNByte], self.verboseTunnel)
 							name = ''
@@ -1092,9 +1092,9 @@ class AddressMapping(object):
 							name = self.game.getTeamData(self.quantumETNTunnelTeam, 'name')
 
 						self.game.setTeamData(self.quantumETNTunnelTeam, 'name', name, 1)
-						app.functions.verbose(['name-', name, '-'], self.verboseTunnel)
+						app.utils.functions.verbose(['name-', name, '-'], self.verboseTunnel)
 
-						app.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
+						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel = 0
 						self.quantumETNTunnel = 0
 						self.quantumETNTunnelProcessed = True

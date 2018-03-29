@@ -4,17 +4,26 @@
 """
 .. topic:: Overview
 
-    This clock module is used for all scoreboard timers.
+	This clock module is used for all scoreboard timers.
 
-    :Created Date: 3/11/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/11/2015
+	:Author: **Craig Gunter**
 """
 
 import threading
+import os
+import time
 
 from sys import platform as _platform
 
-from app.functions import *
+import app.utils.functions
+
+# thread_timer related
+if _platform == "linux" or _platform == "linux2":
+	try:
+		import prctl
+	except:
+		pass
 
 
 class clock(object):

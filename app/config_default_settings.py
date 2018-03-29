@@ -15,7 +15,7 @@
 import time
 # import pkg_resources  # Not sure if i need this
 
-import app.functions
+import app.utils.functions
 import app.utils.misc
 import app.configobj
 
@@ -138,7 +138,7 @@ class Config:
 
 		for key in self.configFile.keys():
 			if self.configFile[key] == 'False' or self.configFile[key] == 'True':
-				self.configDict[key] = app.functions.tf(self.configFile[key])
+				self.configDict[key] = app.utils.functions.tf(self.configFile[key])
 			elif (
 					key == 'HOST' or key == 'sport' or key == 'model' or key == 'optionJumpers'
 					or key == 'boardColor' or key == 'captionColor' or key == 'stripeColor'):

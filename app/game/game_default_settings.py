@@ -15,7 +15,7 @@
 import time
 # import pkg_resources  # Not sure if i need this
 
-import app.functions
+import app.utils.functions
 import app.utils.misc
 import app.configobj
 
@@ -219,7 +219,7 @@ class GameDefaultSettings:
 		self.gameDefaultSettings = {}
 		for key in self.gameDefaultSettingsFile.keys():
 			if self.gameDefaultSettingsFile[key] == 'False' or self.gameDefaultSettingsFile[key] == 'True':
-				self.gameDefaultSettings[key] = app.functions.tf(self.gameDefaultSettingsFile[key])
+				self.gameDefaultSettings[key] = app.utils.functions.tf(self.gameDefaultSettingsFile[key])
 			elif self.gameDefaultSettingsFile[key].find('.') != -1:
 				self.gameDefaultSettings[key] = float(self.gameDefaultSettingsFile[key])
 			elif unicode(self.gameDefaultSettingsFile[key]).isdigit():

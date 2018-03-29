@@ -5,15 +5,16 @@
 
 .. topic:: Overview
 
-    This module simulates a console.
+	This module simulates a console.
 
-    :Created Date: 3/11/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/11/2015
+	:Author: **Craig Gunter**
 
 """
 
-import threading, time
-import app.functions
+import threading
+import time
+import app.utils.functions
 import app.utils.reads
 import app.mp_data_handler
 import app.serial_IO.serial_packet
@@ -44,7 +45,7 @@ class Console(object):
 		self.verbose = self.vboseList[0]  # Method Name or arguments
 		self.verboseMore = self.vboseList[1]  # Deeper loop information in methods
 		self.verboseMost = self.vboseList[2]  # Crazy Deep Stuff
-		app.functions.verbose(['\nCreating Console object'], self.verbose)
+		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
 		self.MP_StreamRefreshFlag = True
 		self.printTimesFlag = False
 		self.checkEventsActiveFlag = False
@@ -60,13 +61,13 @@ class Console(object):
 
 	def Reset(self, internal_reset=0):
 		"""Resets the console to a new game."""
-		app.functions.verbose(['\nConsole Reset'], self.verbose)
+		app.utils.functions.verbose(['\nConsole Reset'], self.verbose)
 
 		# Create Game object, attach keypad and LCD screen
 		self.configDict = app.utils.reads.read_config()
 		if internal_reset:
 			self.game.KillClockThreads()
-		self.game = app.functions.select_sport_instance(
+		self.game = app.utils.functions.select_sport_instance(
 			self.configDict['sport'], number_of_teams=2, mp_lx3450_flag=self.configDict['MPLX3450Flag'])
 
 		print 'sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']
@@ -119,12 +120,12 @@ class Console(object):
 		if _platform == "linux" or _platform == "linux2":
 			print 'Platform is', _platform
 			if self.serialInputFlag and not internal_reset:
-				app.functions.verbose(['\nSerial Input On'], self.verbose)
+				app.utils.functions.verbose(['\nSerial Input On'], self.verbose)
 				import serial_IO.mp_serial
 				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
 				if self.serialInputType == 'ASCII':
 					self.serialInputRefreshFrequency = .1
-				self.refresherSerialInput = threading.Thread(target=app.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
+				self.refresherSerialInput = threading.Thread(target=app.utils.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
 				self.alignTime = 0.0
 				self.previousByteCount = 0
@@ -136,12 +137,12 @@ class Console(object):
 				if self.serialInputType == 'ASCII':
 					pass  # time.sleep(0.2) #  This delay seems to cause packet corruption
 				self.refresherCheckEvents = threading.Thread(
-					target=app.functions.thread_timer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
+					target=app.utils.functions.thread_timer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
 				self.refresherCheckEvents.daemon = True				
 				self.refresherCheckEvents.start()
 
 			if self.serialOutputFlag and not internal_reset:
-				app.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
+				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
 				
 				# Wait till we have an alignTime stamped from checkEvents
 				if self.serialInputType == 'MP':
@@ -150,7 +151,7 @@ class Console(object):
 					time.sleep(0.05)
 				
 				self.refresherSerialOutput = threading.Thread(
-					target=app.functions.thread_timer,
+					target=app.utils.functions.thread_timer,
 					args=(self.serialOutput, self.serialOutputRefreshFrequency, None, self.alignTime))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
@@ -169,9 +170,9 @@ class Console(object):
 				threading.Timer(.1, self.checkEvents).start()
 				
 			if self.serialOutputFlag and not internal_reset:
-				app.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
+				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
 				self.refresherSerialOutput = threading.Thread(
-					target=app.functions.thread_timer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
+					target=app.utils.functions.thread_timer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
 		
@@ -541,7 +542,7 @@ class Console(object):
 	def defaultScreen(self):
 		"""Displays the default screen on the LCD."""
 		if self.lcd.menuFlag:
-			app.functions.verbose(['\nDEFAULT SCREEN'], self.verbose)
+			app.utils.functions.verbose(['\nDEFAULT SCREEN'], self.verbose)
 			self.lcd.exitMenu(self.game)
 		else:
 			self.cancelMenuTimer()

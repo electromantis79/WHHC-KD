@@ -2,17 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """
+
 .. topic:: Overview
 
-    This module holds all of the global functions.
+	This module holds the main functions.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
+
 """
 
 # All Functions
 
-import time, os, timeit
+import time
+import os
+import timeit
 from sys import platform as _platform
 
 # thread_timer related

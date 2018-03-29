@@ -15,7 +15,7 @@
 import time
 # import pkg_resources  # Not sure if i need this
 
-import app.functions
+import app.utils.functions
 import app.utils.misc
 import app.configobj
 
@@ -86,7 +86,7 @@ class SegmentTimerSettings:
 		self.toc = time.time()
 		for key in self.segmentTimerSettingsFile.keys():
 			if self.segmentTimerSettingsFile[key] == 'False' or self.segmentTimerSettingsFile[key] == 'True':
-				self.segmentTimerSettings[key] = app.functions.tf(self.segmentTimerSettingsFile[key])
+				self.segmentTimerSettings[key] = app.utils.functions.tf(self.segmentTimerSettingsFile[key])
 			elif self.segmentTimerSettingsFile[key].find('.') != -1:
 				self.segmentTimerSettings[key] = float(self.segmentTimerSettingsFile[key])
 			elif unicode(self.segmentTimerSettingsFile[key]).isdigit():
