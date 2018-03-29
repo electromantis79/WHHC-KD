@@ -17,7 +17,7 @@ import time
 
 import app.utils.functions
 import app.utils.misc
-import app.configobj
+import app.utils.configobj
 
 
 class GameDefaultSettings:
@@ -38,21 +38,21 @@ class GameDefaultSettings:
 		
 		if self.fileType == 'default':
 			if self.write:
-				self.gameDefaultSettings = app.configobj.ConfigObj('game/gameDefaultSettings')
+				self.gameDefaultSettings = app.utils.configobj.ConfigObj('game/gameDefaultSettings')
 				self._write_all()
 			else:
-				self.gameDefaultSettingsFile = app.configobj.ConfigObj('game/gameDefaultSettings', file_error=True)
+				self.gameDefaultSettingsFile = app.utils.configobj.ConfigObj('game/gameDefaultSettings', file_error=True)
 				if self.gameDefaultSettingsFile:
 					self._read_all()
 				else:
 					print os.getcwd()
 		elif self.fileType == 'user':
 			if self.write:
-				self.gameDefaultSettings = app.configobj.ConfigObj('game/gameUserSettings')
+				self.gameDefaultSettings = app.utils.configobj.ConfigObj('game/gameUserSettings')
 				self._write_all()
 			else:
 				file_name = 'game/gameUserSettings'
-				self.gameDefaultSettingsFile = app.configobj.ConfigObj(file_name, file_error=True)
+				self.gameDefaultSettingsFile = app.utils.configobj.ConfigObj(file_name, file_error=True)
 				if self.gameDefaultSettingsFile:
 					self._read_all()
 				else:
@@ -239,7 +239,7 @@ class GameDefaultSettings:
 
 	def user_equals_default(self):
 		"""Update gameUserSettings file with gameDefaultSettings file values."""
-		self.gameUserSettings = app.configobj.ConfigObj('game/gameUserSettings')
+		self.gameUserSettings = app.utils.configobj.ConfigObj('game/gameUserSettings')
 		self.fileType = 'default'
 		self.write = False
 		self._process_selection()

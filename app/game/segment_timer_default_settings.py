@@ -17,7 +17,7 @@ import time
 
 import app.utils.functions
 import app.utils.misc
-import app.configobj
+import app.utils.configobj
 
 
 class SegmentTimerSettings:
@@ -37,17 +37,17 @@ class SegmentTimerSettings:
 		"""Choose read or write and default or user"""
 		if self.fileType == 'default':
 			if self.write:
-				self.segmentTimerSettings = app.configobj.ConfigObj('game/segmentTimerDefaultSettings')
+				self.segmentTimerSettings = app.utils.configobj.ConfigObj('game/segmentTimerDefaultSettings')
 				self._write_all()
 			else:
-				self.segmentTimerSettingsFile = app.configobj.ConfigObj('game/segmentTimerDefaultSettings', file_error=True)
+				self.segmentTimerSettingsFile = app.utils.configobj.ConfigObj('game/segmentTimerDefaultSettings', file_error=True)
 				self._read_all()
 		elif self.fileType == 'user':
 			if self.write:
-				self.segmentTimerSettings = app.configobj.ConfigObj('game/segmentTimerUserSettings')
+				self.segmentTimerSettings = app.utils.configobj.ConfigObj('game/segmentTimerUserSettings')
 				self._write_all()
 			else:
-				self.segmentTimerSettingsFile = app.configobj.ConfigObj('game/segmentTimerUserSettings', file_error=True)
+				self.segmentTimerSettingsFile = app.utils.configobj.ConfigObj('game/segmentTimerUserSettings', file_error=True)
 				self._read_all()
 
 	def _write_all(self):
@@ -106,7 +106,7 @@ class SegmentTimerSettings:
 
 	def user_equals_default(self):
 		"""Update segmentTimerUserSettings file with segmentTimerDefaultSettings file values."""
-		self.segmentTimerUserSettings = app.configobj.ConfigObj('game/segmentTimerUserSettings')
+		self.segmentTimerUserSettings = app.utils.configobj.ConfigObj('game/segmentTimerUserSettings')
 		self.fileType = 'default'
 		self.write = False
 		self._process_selection()

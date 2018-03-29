@@ -82,9 +82,9 @@ def silent_remove(filename):
 
 
 def save_object_to_file(dictionary, dictionary_name):
-	import app.configobj
+	import app.utils.configobj
 	try:
-		config_obj = app.configobj.ConfigObj(dictionary_name)
+		config_obj = app.utils.configobj.ConfigObj(dictionary_name)
 		silent_remove(dictionary_name)
 	except:
 		print 'Object does not exist!'

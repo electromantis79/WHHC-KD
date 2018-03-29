@@ -17,7 +17,7 @@ import time
 
 import app.utils.functions
 import app.utils.misc
-import app.configobj
+import app.utils.configobj
 
 
 class Config:
@@ -37,26 +37,26 @@ class Config:
 	def _process_selection(self):
 		# Choose read or write and default or use
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 			if self.write:
 				self._write_all()
 			else:
-				self.configFile = app.configobj.ConfigObj('defaultConfig')  # All values and keys are in string format
+				self.configFile = app.utils.configobj.ConfigObj('defaultConfig')  # All values and keys are in string format
 				self._read_all()
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')
 			if self.write:
 				self._write_all()
 			else:
-				self.configFile = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+				self.configFile = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 				self._read_all()
 
 	def write_option_jumpers(self, option_jumpers):
 		"""Update optionJumpers in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['optionJumpers'] = option_jumpers
 		if (
 				option_jumpers[0] == 'B'
@@ -71,9 +71,9 @@ class Config:
 	def write_sport(self, sport):
 		"""Update sport in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['sport'] = sport
 		self.keypadType = sport[0:2]
 		self.configDict['keypadType'] = self.keypadType
@@ -82,18 +82,18 @@ class Config:
 	def write_server(self, server):
 		"""Update SERVER in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['SERVER'] = server
 		self.configDict.write()
 
 	def write_ui(self, model, board_color, caption_color, stripe_color, led_color):
 		"""Update UI variables in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['model'] = model
 		self.configDict['boardColor'] = board_color
 		self.configDict['captionColor'] = caption_color
@@ -160,7 +160,7 @@ class Config:
 
 	def user_equals_default(self):
 		"""Update userConfig file with defaultConfig file values."""
-		self.userConfigDict = app.configobj.ConfigObj('userConfig')
+		self.userConfigDict = app.utils.configobj.ConfigObj('userConfig')
 		self.fileType = 'default'
 		self.write = False
 		self._process_selection()
