@@ -1284,86 +1284,90 @@ class AddressMapping(object):
 		return i_bit, h_bit, high_nibble, low_nibble, segment_data
 
 	def _save_data(self, decode_data, data_names):
-		addr, group, bank, word, I_Bit, numeric_data = decode_data
-		iBit, hBit, highNibble, lowNibble, segmentData = data_names
+		addr, group, bank, word, i_bit, numeric_data = decode_data
+		i_bit_name, h_bit_name, high_nibble_name, low_nibble_name, segment_data = data_names
 		if not self.statFlag and (word == 3 or word == 4):
 			# Word 3 and 4 Section
 
-			highData = 0
-			lowData = numeric_data & 0x7f
-			lowData = self.mp.numeric_data_decode(lowData)
-			H_Bit = (numeric_data & 0x80) >> 7
-			if segmentData == '':
-				hTeam = self._team_extract(hBit)
-				iTeam = self._team_extract(iBit)
-				# highTeam = self._team_extract(highNibble)  # may not need
-				lowTeam = self._team_extract(lowNibble)
+			high_data = 0
+			low_data = numeric_data & 0x7f
+			low_data = self.mp.numeric_data_decode(low_data)
+			h_bit = (numeric_data & 0x80) >> 7
+			if segment_data == '':
+				h_bit_team = self._team_extract(h_bit_name)
+				i_bit_team = self._team_extract(i_bit_name)
+				# high_nibble_team = self._team_extract(high_nibble_name)  # may not need
+				low_nibble_team = self._team_extract(low_nibble_name)
 
-				data_names = self._check_period_clock_state(decode_data, data_names, highData, lowData, H_Bit)
-				iBit, hBit, highNibble, lowNibble, segmentData = data_names
+				data_names = self._check_period_clock_state(decode_data, data_names, high_data, low_data, h_bit=h_bit)
+				i_bit_name, h_bit_name, high_nibble_name, low_nibble_name, segment_data = data_names
 
-				self._set_period_clock_un_map_dict(iBit, I_Bit)
-				self._set_period_clock_un_map_dict(hBit, H_Bit)
-				self._set_period_clock_un_map_dict(highNibble, highData)
-				self._set_period_clock_un_map_dict(lowNibble, lowData)
+				self._set_period_clock_un_map_dict(i_bit_name, i_bit)
+				self._set_period_clock_un_map_dict(h_bit_name, h_bit)
+				self._set_period_clock_un_map_dict(high_nibble_name, high_data)
+				self._set_period_clock_un_map_dict(low_nibble_name, low_data)
 
 				# Special cases not to save I Bit --------------------
 				if 0:
 					# Don't save duplicates
 					pass
 				else:
-					self._set_data(iBit, I_Bit, iTeam)
+					self._set_data(i_bit_name, i_bit, i_bit_team)
 					if self.verbose:
-						print 'iBit', iBit, 'saved'
+						print 'i_bit_name', i_bit_name, 'saved'
 
 				# Special cases not to save H Bit --------------------
-				HOCK_27_28 = (addr == 27 or addr == 28) and self.game.gameData['sport'] == 'MPHOCKEY_LX1'
-				SOC_soc_32 = addr == 32 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
-				BB4_11 = addr == 11 and self.game.gameData['sport'] == 'MMBASEBALL4'
+				hockey_27_28 = (addr == 27 or addr == 28) and self.game.gameData['sport'] == 'MPHOCKEY_LX1'
+				soc_soc_32 = addr == 32 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
+				bb4_11 = addr == 11 and self.game.gameData['sport'] == 'MMBASEBALL4'
 
-				if HOCK_27_28 or BB4_11 or SOC_soc_32:
+				if hockey_27_28 or bb4_11 or soc_soc_32:
 					# Don't save duplicates
 					pass
 				else:
-					self._set_data(hBit, H_Bit, hTeam)
+					self._set_data(h_bit_name, h_bit, h_bit_team)
 					if self.verbose:
-						print 'hBit', hBit, 'saved'
+						print 'h_bit_name', h_bit_name, 'saved'
 
 				# Special cases not to save High Nibble -------------------
 				# Not used
 
 				# Special cases not to save Low Nibble --------------------
-				self._set_data(lowNibble, lowData, lowTeam)
+				self._set_data(low_nibble_name, low_data, low_nibble_team)
 				if self.verbose:
-					print 'lowNibble', lowNibble, 'saved'
+					print 'low_nibble_name', low_nibble_name, 'saved'
 
 				if self.verbose:
-					print ('addr', addr, 'iTeam', iTeam, 'iBit', iBit, I_Bit, 'hTeam', hTeam, 'hBit', hBit, H_Bit)
-					print ('highNibble', highNibble, highData, 'lowTeam', lowTeam, 'lowNibble', lowNibble, lowData)
+					print (
+						'addr', addr, 'i_bit_team', i_bit_team, 'i_bit_name', i_bit_name, i_bit,
+						'h_bit_team', h_bit_team, 'h_bit_name', h_bit_name, h_bit)
+					print (
+						'high_nibble_team', high_nibble_team, 'high_nibble_name', high_nibble_name, high_data,
+						'low_nibble_team', low_nibble_team, 'low_nibble_name', low_nibble_name, low_data)
 			else:
 				# Decode segment data's storage value
 				if self.verbose:
-					print 'segmentData', segmentData
-				hTeam = self._team_extract(hBit)
+					print 'segment_data', segment_data
+				h_bit_team = self._team_extract(h_bit_name)
 
-				data_names = self._check_period_clock_state(decode_data, data_names, highData, lowData, H_Bit)
-				iBit, hBit, highNibble, lowNibble, segmentData = data_names
+				data_names = self._check_period_clock_state(decode_data, data_names, high_data, low_data, h_bit=h_bit)
+				i_bit_name, h_bit_name, high_nibble_name, low_nibble_name, segment_data = data_names
 
-				self._set_period_clock_un_map_dict(hBit, H_Bit)
+				self._set_period_clock_un_map_dict(h_bit_name, h_bit)
 
 				# Special cases not to save H Bit --------------------
-				SOC_soc_31 = addr == 31 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
-				if SOC_soc_31:
+				soc_soc_31 = addr == 31 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
+				if soc_soc_31:
 					# Don't save duplicates
 					pass
 				else:
-					self._set_data(hBit, H_Bit, hTeam)
+					self._set_data(h_bit_name, h_bit, h_bit_team)
 					if self.verbose:
-						print 'hBit', hBit, 'saved'
+						print 'h_bit_name', h_bit_name, 'saved'
 
 				# Area for all custom decoding, try to use data from a better location if possible
 				if self.game.gameData['sportType'] == 'basketball':
-					if segmentData == 'home_ace_PossBonus':
+					if segment_data == 'home_ace_PossBonus':
 						if self.verbose:
 							print bin(numeric_data), bin(0b00010000 & numeric_data), 0b00000001 & numeric_data
 						if 0b00000001 & numeric_data:
@@ -1376,7 +1380,7 @@ class AddressMapping(object):
 							self._set_data('teamTwoBonus', 1, self.game.home)
 						elif 0b00010000 & numeric_data == 0 or 0b00000100 & numeric_data == 0:
 							self._set_data('teamTwoBonus', 0, self.game.home)
-					if segmentData == 'guest_ace_PossBonus':
+					if segment_data == 'guest_ace_PossBonus':
 						if self.verbose:
 							print bin(numeric_data), 0b00000000 & numeric_data, 0b00000001 & numeric_data
 						if 0b00000001 & numeric_data:
@@ -1390,19 +1394,19 @@ class AddressMapping(object):
 						elif 0b00010000 & numeric_data == 0 or 0b00000100 & numeric_data == 0:
 							self._set_data('teamOneBonus', 0, self.game.guest)
 				elif self.game.gameData['sport'] == 'MPMULTISPORT1-football' or self.game.gameData['sport'] == 'MPLX3450-football':
-					if segmentData == 'Down_Quarter':
+					if segment_data == 'Down_Quarter':
 						if 0b00010000 & numeric_data:
-							self.game.gameData['segmentQuarterFlag']=True
+							self.game.gameData['segmentQuarterFlag'] = True
 						elif 0b00010000 & numeric_data == 0:
-							self.game.gameData['segmentQuarterFlag']=False
+							self.game.gameData['segmentQuarterFlag'] = False
 				elif self.game.gameData['sport'] == 'MPMULTISPORT1-baseball' or self.game.gameData['sport'] == 'MPLX3450-baseball':
-					if segmentData == 'bc_strike' or segmentData == 'period_efg':
+					if segment_data == 'bc_strike' or segment_data == 'period_efg':
 						if 0b00010000 & numeric_data:
-							self.game.gameData['segmentQuarterFlag']=True
+							self.game.gameData['segmentQuarterFlag'] = True
 						elif 0b00010000 & numeric_data == 0:
-							self.game.gameData['segmentQuarterFlag']=False
+							self.game.gameData['segmentQuarterFlag'] = False
 				elif self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer':
-					if segmentData == 'bc_detect':
+					if segment_data == 'bc_detect':
 						if 0b00000110 & numeric_data:
 							self.game.gameData['bcDetectFlag'] = True
 						elif 0b00000110 & numeric_data == 0:
@@ -1411,97 +1415,97 @@ class AddressMapping(object):
 		else:
 			# Word 1 and 2 Section
 
-			highData = (numeric_data & 0xf0) >> 4
-			lowData = numeric_data & 0x0f
+			high_data = (numeric_data & 0xf0) >> 4
+			low_data = numeric_data & 0x0f
 
-			iTeam = self._team_extract(iBit)
-			highTeam = self._team_extract(highNibble)
-			lowTeam = self._team_extract(lowNibble)
+			i_bit_team = self._team_extract(i_bit_name)
+			high_nibble_team = self._team_extract(high_nibble_name)
+			low_nibble_team = self._team_extract(low_nibble_name)
 
-			data_names = self._check_period_clock_state(decode_data, data_names, highData, lowData)
-			iBit, hBit, highNibble, lowNibble, segmentData = data_names
+			data_names = self._check_period_clock_state(decode_data, data_names, high_data, low_data)
+			i_bit_name, h_bit_name, high_nibble_name, low_nibble_name, segment_data = data_names
 
-			self._set_period_clock_un_map_dict(iBit, I_Bit)
-			self._set_period_clock_un_map_dict(highNibble, highData)
-			self._set_period_clock_un_map_dict(lowNibble, lowData)
+			self._set_period_clock_un_map_dict(i_bit_name, i_bit)
+			self._set_period_clock_un_map_dict(high_nibble_name, high_data)
+			self._set_period_clock_un_map_dict(low_nibble_name, low_data)
 
 			# Special cases not to save I Bit --------------------
-			SOC_soc_18 = addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
-			MULTIbase3450base = (
+			soc_soc_18 = addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
+			multibase3450base = (
 					self.game.gameData['sport'] == 'MPMULTISPORT1-baseball'
 					or self.game.gameData['sport'] == 'MPLX3450-baseball')
-			LINE5_17_18 = (addr == 17 or addr == 18) and self.game.gameData['sport'] == 'MPLINESCORE5'
+			line5_17_18 = (addr == 17 or addr == 18) and self.game.gameData['sport'] == 'MPLINESCORE5'
 
-			BASE1orBASE3 = self.game.gameData['sport'] == 'MPBASEBALL1' or self.game.gameData['sport'] == 'MMBASEBALL3'
+			base1_or_base3 = self.game.gameData['sport'] == 'MPBASEBALL1' or self.game.gameData['sport'] == 'MMBASEBALL3'
 			_13or14 = addr == 13 or addr == 14
 			# Together
-			BB13and13_14 = BASE1orBASE3 and _13or14
-			BB134and13_14 = (BASE1orBASE3 or self.game.gameData['sport'] == 'MMBASEBALL4') and _13or14
-			MULTIbase3450baseAnd13_14 = MULTIbase3450base and _13or14
+			bb13_and_13_14 = base1_or_base3 and _13or14
+			bb134_and_13_14 = (base1_or_base3 or self.game.gameData['sport'] == 'MMBASEBALL4') and _13or14
+			multibase3450base_and_13_14 = multibase3450base and _13or14
 
-			if SOC_soc_18 or LINE5_17_18 or BB13and13_14:
+			if soc_soc_18 or line5_17_18 or bb13_and_13_14:
 				# Don't save duplicates
 				pass
 			else:
-				self._set_data(iBit, I_Bit, iTeam)
+				self._set_data(i_bit_name, i_bit, i_bit_team)
 				if self.verbose:
-					print 'iBit', iBit, 'saved'
+					print 'i_bit_name', i_bit_name, 'saved'
 
 			# Special cases not to save High Nibble ----------------
-			SOC_soc_18 = addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
-			notEjumper = not('E' in self.game.gameData['optionJumpers'])
+			soc_soc_18 = addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
+			not_e_jumper = not('E' in self.game.gameData['optionJumpers'])
 			# Together
-			SOC_soc_18and_notEjumper = SOC_soc_18 and notEjumper
+			soc_soc_18_and_not_e_jumper = soc_soc_18 and not_e_jumper
 
-			if SOC_soc_18and_notEjumper:
+			if soc_soc_18_and_not_e_jumper:
 				# Don't save duplicates
 				pass
 			else:
-				self._set_data(highNibble, highData, highTeam)
+				self._set_data(high_nibble_name, high_data, high_nibble_team)
 				if self.verbose:
-					print 'highNibble', highNibble, 'saved'
+					print 'high_nibble_name', high_nibble_name, 'saved'
 
 			# Special cases not to save Low Nibble ------------------
-			# SOC_soc_18and_notEjumper is above
-			# BB134and13_14 is above
-			if SOC_soc_18and_notEjumper or BB134and13_14 or MULTIbase3450baseAnd13_14:
+			# soc_soc_18_and_not_e_jumper is above
+			# bb134_and_13_14 is above
+			if soc_soc_18_and_not_e_jumper or bb134_and_13_14 or multibase3450base_and_13_14:
 				# Don't save duplicates
 				pass
 			else:
-				self._set_data(lowNibble, lowData, lowTeam)
+				self._set_data(low_nibble_name, low_data, low_nibble_team)
 				if self.verbose:
-					print 'lowNibble', lowNibble, 'saved'
+					print 'low_nibble_name', low_nibble_name, 'saved'
 
 			if self.verbose:
-				print 'addr', addr, 'iTeam', iTeam, 'iBit', iBit, I_Bit
+				print 'addr', addr, 'i_bit_team', i_bit_team, 'i_bit_name', i_bit_name, i_bit
 				print (
-					'highTeam', highTeam, 'highNibble', highNibble, highData,
-					'lowTeam', lowTeam, 'lowNibble', lowNibble, lowData)
+					'high_nibble_team', high_nibble_team, 'high_nibble_name', high_nibble_name, high_data,
+					'low_nibble_team', low_nibble_team, 'low_nibble_name', low_nibble_name, low_data)
 
 	def _set_period_clock_un_map_dict(self, name, value):
 		if name in self.periodClockUnMapDict:
 			self.periodClockUnMapDict[name] = value
 
-	def _check_period_clock_state(self, decode_data, data_names, highData, lowData, H_Bit=None):
-		addr, group, bank, word, I_Bit, numericData = decode_data
-		iBit, hBit, highNibble, lowNibble, segmentData = data_names
-		LINE5andCjumper = self.game.gameData['sport'] == 'MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
-		MULTIbaseOr3450baseCjumper = (
+	def _check_period_clock_state(self, decode_data, data_names, high_data, low_data, h_bit=None):
+		addr, group, bank, word, i_bit, numeric_data = decode_data
+		i_bit_name, h_bit_name, high_nibble_name, low_nibble_name, segment_data = data_names
+		line5_and_c_jumper = self.game.gameData['sport'] == 'MPLINESCORE5' and 'C' in self.game.gameData['optionJumpers']
+		multibase_or_3450base_c_jumper = (
 				(
 						self.game.gameData['sport'] == 'MPMULTISPORT1-baseball'
 						or self.game.gameData['sport'] == 'MPLX3450-baseball'
 				) and 'C' in self.game.gameData['optionJumpers'])
 
 		# Minutes received
-		if highNibble == 'minutesTens':
+		if high_nibble_name == 'minutesTens':
 			pass
 
 		# Seconds received
-		elif highNibble == 'secondsTens':
+		elif high_nibble_name == 'secondsTens':
 			if (
-					lowData == 15
+					low_data == 15
 					or (self.periodClockUnMapDict['secondsTens'] == 0 and self.periodClockUnMapDict['secondsUnits'] == 0
-						and highData >= 6 and lowData == 0)
+						and high_data >= 6 and low_data == 0)
 			):
 				self.tenthsTransitionFlag = True
 				data_names = self._get_dict_info(addr, alt=2)
@@ -1509,33 +1513,33 @@ class AddressMapping(object):
 				self._set_data('minutesUnits', 0)
 				if self.verbose:
 					print 'self.tenthsTransitionFlag=True and set minutes to zero'
-					print '\naddr', addr, 'iBit', iBit, I_Bit, 'hBit', hBit, H_Bit
-					print 'highNibble', highNibble, highData, 'lowNibble', lowNibble, lowData
+					print '\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit
+					print 'high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data
 
 			elif (
-					(LINE5andCjumper or MULTIbaseOr3450baseCjumper)
-					and (0 <= lowData < 10) and self.tenthsTransitionFlag
+					(line5_and_c_jumper or multibase_or_3450base_c_jumper)
+					and (0 <= low_data < 10) and self.tenthsTransitionFlag
 			):
 				self.tenthsTransitionFlag = False
 				self._set_data('tenthsUnits', 0)
 				if self.verbose:
 					print 'self.tenthsTransitionFlag=False and set tenthsUnits to zero'
-					print '\naddr', addr, 'iBit', iBit, I_Bit, 'hBit', hBit, H_Bit
-					print 'highNibble', highNibble, highData, 'lowNibble', lowNibble, lowData
+					print '\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit
+					print 'high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data
 
 		# Tenths received
-		elif highNibble == 'tenthsUnits':
+		elif high_nibble_name == 'tenthsUnits':
 			pass
 
 		# Colon received
-		elif hBit == 'colonIndicator':
-			if self.periodClockUnMapDict['colonIndicator'] == 0 and H_Bit == 1:
+		elif h_bit_name == 'colonIndicator':
+			if self.periodClockUnMapDict['colonIndicator'] == 0 and h_bit == 1:
 				self.tenthsTransitionFlag = False
 				self._set_data('tenthsUnits', 0)
 				if self.verbose:
 					print 'self.tenthsTransitionFlag=False and set tenthsUnits to zero'
-					print '\naddr', addr, 'iBit', iBit, I_Bit, 'hBit', hBit, H_Bit
-					print 'highNibble', highNibble, highData, 'lowNibble', lowNibble, lowData
+					print '\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit
+					print 'high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data
 
 		return data_names
 
@@ -1685,7 +1689,7 @@ class LamptestMapping(AddressMapping):
 		"""Overrides to be empty."""
 		pass
 
-	def un_map(self, word_list=[]):
+	def un_map(self, word_list):
 		"""Overrides to be empty."""
 		pass
 
@@ -1705,7 +1709,7 @@ class BlanktestMapping(AddressMapping):
 		"""Overrides to be empty."""
 		pass
 
-	def un_map(self, word_list=[]):
+	def un_map(self, word_list):
 		"""Overrides to be empty."""
 		pass
 
