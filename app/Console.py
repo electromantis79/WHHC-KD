@@ -5,7 +5,7 @@
 
 .. topic:: Overview
 
-	This module simulates a console.
+	This module simulates a console with limited functionality of interpreting MP data.
 
 	:Created Date: 3/11/2015
 	:Author: **Craig Gunter**
@@ -14,6 +14,7 @@
 
 import threading
 import time
+
 import app.utils.functions
 import app.utils.reads
 import app.mp_data_handler
@@ -45,7 +46,7 @@ class Console(object):
 		self.verbose = self.vboseList[0]  # Method Name or arguments
 		self.verboseMore = self.vboseList[1]  # Deeper loop information in methods
 		self.verboseMost = self.vboseList[2]  # Crazy Deep Stuff
-		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
+
 		self.MP_StreamRefreshFlag = True
 		self.printTimesFlag = False
 		self.checkEventsActiveFlag = False
@@ -55,6 +56,7 @@ class Console(object):
 		self.verboseDiagnostic = False
 		self.initTime = time.time()
 
+		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
 		self.Reset()
 
 	# INIT Functions
@@ -125,7 +127,8 @@ class Console(object):
 				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
 				if self.serialInputType == 'ASCII':
 					self.serialInputRefreshFrequency = .1
-				self.refresherSerialInput = threading.Thread(target=app.utils.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
+				self.refresherSerialInput = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
 				self.alignTime = 0.0
 				self.previousByteCount = 0
@@ -239,12 +242,12 @@ class Console(object):
 				
 				if self.addrMap.quantumETNTunnelProcessed:
 					self.addrMap.quantumETNTunnelProcessed = False
-					ETNFlag = True
-					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
+					e_t_n_flag = True
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=e_t_n_flag, packet=packet)
 				else:
-					ETNFlag = False
+					e_t_n_flag = False
 				
-					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=e_t_n_flag, packet=packet)
 
 		try:
 			self.s.serial_output(self.serialString)
@@ -305,50 +308,12 @@ class Console(object):
 					):
 						time.sleep(.05)
 						self.Reset(internal_reset=1)
-						if self.className == 'scoreboard':
-							print 'Scoreboard Graphics Reset'
-							self.resetGraphicsFlag = True
-							# self.boardReset()
 						self.switchKeypadFlag = True
 
 			if not self.serialInputFlag or self.serialInputType == 'ASCII':
-				"""Area for internally generated game data"""
-				# Handle a key press
-				if self.keyPressedFlag:
-					self.keyPressedFlag = False
-					print 'checkEvents key pressed'
-
-					# Handle multiple incoming button presses
-					for keyPressed in self.quickKeysPressedList:
-						print 'keyPressed = ', keyPressed
-
-						# Handle byte pair
-						try:
-							# Received byte pair is in key map format
-							self.game, funcString = self.keyMap.map(self.game, keyPressed)
-							self.game = self.lcd.map(self.game, funcString)
-							self.sendStateChangeOverNetwork(funcString)
-
-						except:
-							# Non-keyMap data received
-							if keyPressed == '@':
-								# If received the resend symbol resend
-								self.sendStateChangeOverNetwork()
-							else:
-								# This are handles all other cases of data received
-								try:
-									# Special display of rssi for testing
-									self.command = int(keyPressed)
-									self.commandFlag = True
-									self.addrMap.rssi = self.command
-									self.addrMap.rssiFlag = self.commandFlag
-								except:
-									pass
-
-					# Clear keys pressed list
-					self.quickKeysPressedList = []
-
+				# Area for internally generated game data
 				# Handle all events, update MP data, and form sendString
+
 				if self.serialInputType != 'ASCII':
 					self.timeEvents()
 
@@ -363,42 +328,12 @@ class Console(object):
 			elapse = (toc-tic)
 			if elapse > self.checkEventsRefreshFrequency and 0:  # For testing only
 			
-				print 'checkEvents elapse',elapse*1000, ' ms'
+				print 'checkEvents elapse', elapse*1000, ' ms'
 				print
 				self.checkEventsOverPeriodFlag = True
 			self.checkEventsActiveFlag = False
 			
 		# End Check Events --------------------------------------------------------------------
-
-	def sendStateChangeOverNetwork(self, funcString=None):
-		# if funcString == 'periodClockOnOff':
-		if self.game.clockDict['periodClock'].running:
-			self.broadcastString += 'P1'
-		else:
-			self.broadcastString += 'P0'
-		# elif funcString == 'handheldButton3':
-		if 'delayOfGameClock' in self.game.clockDict:
-			if self.game.clockDict['delayOfGameClock'].running:
-				self.broadcastString += 'D1'
-			else:
-				self.broadcastString += 'D0'
-		if 'segmentTimer' in self.game.clockDict:
-			if self.game.clockDict['segmentTimer'].running:
-				self.broadcastString += 'T1'
-			else:
-				self.broadcastString += 'T0'
-		if 'shotClock' in self.game.clockDict:
-			if self.game.clockDict['shotClock'].running:
-				self.broadcastString += 'S1'
-			else:
-				self.broadcastString += 'S0'
-		if self.game.gameSettings['inningBot']:
-			self.broadcastString += 'IB'
-		else:
-			self.broadcastString += 'IT'
-		if funcString is None:
-			self.broadcastString += '@'
-		self.broadcastFlag = True
 
 	def timeEvents(self):
 		"""Checks time related events."""
@@ -486,16 +421,16 @@ class Console(object):
 			self.switchKeypadFlag = True
 
 	def _vboseLCDSave(self):
-		vboseList = [self.lcd.verbose, self.lcd.verboseMore, self.lcd.verboseMost]
+		vbose_list = [self.lcd.verbose, self.lcd.verboseMore, self.lcd.verboseMost]
 		self.lcd.verbose = 0  # Method Name or arguments
 		self.lcd.verboseMore = 0  # Deeper loop information in methods
 		self.lcd.verboseMost = 0  # Crazy Deep Stuff
-		return vboseList
+		return vbose_list
 
-	def _vboseLCDLoad(self, vboseList):
-		self.lcd.verbose = vboseList[0]  # Method Name or arguments
-		self.lcd.verboseMore = vboseList[1]  # Deeper loop information in methods
-		self.lcd.verboseMost = vboseList[2]  # Crazy Deep Stuff
+	def _vboseLCDLoad(self, vbose_list):
+		self.lcd.verbose = vbose_list[0]  # Method Name or arguments
+		self.lcd.verboseMore = vbose_list[1]  # Deeper loop information in methods
+		self.lcd.verboseMost = vbose_list[2]  # Crazy Deep Stuff
 
 	def colonDecimal(self):
 		"""Updates the colon and decimal."""
@@ -733,7 +668,7 @@ class Console(object):
 							rightETNByte = name[address*2+1]
 							pairsList.append((leftETNByte, rightETNByte))
 							
-						if length%2:
+						if length % 2:
 							# Odd Length Ending Section
 							leftETNByte = name[-1]
 							rightETNByte = 0
@@ -1046,12 +981,12 @@ class Console(object):
 
 		# Create string for transport
 
-		serialString = ''
+		serial_string = ''
 		for word in self.sendList:
-			firstByte = chr((word & 0xFF00) >> 8)
-			secondByte = chr((word & 0xFF))
-			serialString += firstByte+secondByte
-		self.serialString = serialString
+			first_byte = chr((word & 0xFF00) >> 8)
+			second_byte = chr((word & 0xFF))
+			serial_string += first_byte+second_byte
+		self.serialString = serial_string
 
 		if self.showOutputString:
 			print self.serialString

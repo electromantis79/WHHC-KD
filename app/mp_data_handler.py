@@ -5,10 +5,10 @@
 
 .. topic:: Overview
 
-    This module manipulates MP style data.
+	This module manipulates MP style data.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
