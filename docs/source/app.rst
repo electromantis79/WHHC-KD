@@ -8,30 +8,23 @@ Subpackages
 
     app.game
     app.serial_IO
+    app.utils
 
 Submodules
 ----------
-
-app.address_mapping module
---------------------------
-
-.. automodule:: app.address_mapping
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.config_default_settings module
-----------------------------------
-
-.. automodule:: app.config_default_settings
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 app.Console module
 ------------------
 
 .. automodule:: app.Console
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+app.address_mapping module
+--------------------------
+
+.. automodule:: app.address_mapping
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,10 +37,10 @@ app.mp_data_handler module
     :undoc-members:
     :show-inheritance:
 
-app.functions module
---------------------
+app.config_default_settings module
+----------------------------------
 
-.. automodule:: app.functions
+.. automodule:: app.config_default_settings
     :members:
     :undoc-members:
     :show-inheritance:
