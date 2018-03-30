@@ -5,10 +5,10 @@
 
 .. topic:: Overview
 
-    This module handles encoding game data in to the packet format.
+	This module handles encoding game data in to the packet format.
 
-    :Created Date: 3/16/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/16/2015
+	:Author: **Craig Gunter**
 
 """
 
@@ -16,7 +16,7 @@
 # TODO: correct naming conventions for local method variables
 
 class SerialPacket (object):
-	'''Creates serial packet object.'''
+	"""Creates serial packet object."""
 
 	def __init__(self, game):
 		self.game = game

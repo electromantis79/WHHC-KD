@@ -5,15 +5,15 @@
 
 .. topic:: Overview
 
-    This module handles MP style communication on the native serial ports.
+	This module handles MP style communication on the native serial ports.
 
-    :Created Date: 3/16/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/16/2015
+	:Author: **Craig Gunter**
 
 """
 
 import app.serial_IO.serial_packet
-import app.serial_IO.Platform
+import app.utils.Platform
 
 
 class MpSerialHandler(object):
@@ -36,7 +36,7 @@ class MpSerialHandler(object):
 		self.sp.MPserial = True
 
 		# Mulit-platform support
-		platform = app.serial_IO.Platform.platform_detect()
+		platform = app.utils.Platform.platform_detect()
 		if platform == 2:
 			import Adafruit_BBIO.UART as UART
 			import serial
