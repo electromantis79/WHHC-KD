@@ -365,18 +365,18 @@ class AddressMapping(object):
 		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self.game)
 		active_player_list.sort()
 
-		for x, playerNumber in enumerate(active_player_list):
-			player_i_d = self.game.getPlayerData(team, 'playerNumber', playerNumber=playerNumber)
-			self.game.setTeamData(team, 'player'+self.game.statNumberList[x+1], int(playerNumber), 2)
-			foul = self.game.getPlayerData(team, 'fouls', playerID=player_i_d)
-			self.game.setTeamData(team, 'foul'+self.game.statNumberList[x+1], foul, 2)
-			points = self.game.getPlayerData(team, 'points', playerID=player_i_d)
-			self.game.setTeamData(team, 'points'+self.game.statNumberList[x+1], points, 2)
+		for x, player_number in enumerate(active_player_list):
+			player_id = self.game.get_player_data(team, 'playerNumber', player_number=player_number)
+			self.game.set_team_data(team, 'player' + self.game.statNumberList[x + 1], int(player_number), 2)
+			foul = self.game.get_player_data(team, 'fouls', player_id=player_id)
+			self.game.set_team_data(team, 'foul' + self.game.statNumberList[x + 1], foul, 2)
+			points = self.game.get_player_data(team, 'points', player_id=player_id)
+			self.game.set_team_data(team, 'points' + self.game.statNumberList[x + 1], points, 2)
 		if len(active_player_list) < self.game.maxActive:
 			for x in range((len(self.game.statNumberList)-1)-len(active_player_list)):
-				self.game.setTeamData(team, 'player'+self.game.statNumberList[x+1+len(active_player_list)], 255, 2)
-				self.game.setTeamData(team, 'foul'+self.game.statNumberList[x+1+len(active_player_list)], 255, 2)
-				self.game.setTeamData(team, 'points'+self.game.statNumberList[x+1+len(active_player_list)], 255, 2)
+				self.game.set_team_data(team, 'player' + self.game.statNumberList[x + 1 + len(active_player_list)], 255, 2)
+				self.game.set_team_data(team, 'foul' + self.game.statNumberList[x + 1 + len(active_player_list)], 255, 2)
+				self.game.set_team_data(team, 'points' + self.game.statNumberList[x + 1 + len(active_player_list)], 255, 2)
 
 	def _load_from_add_dict(self, address):  # This is the beginning of data manipulation into the MP Format!!!
 		# Get word info, adjust it, and convert it to memory value.
@@ -417,14 +417,14 @@ class AddressMapping(object):
 		elif i_bit == '1' or i_bit == 'active':
 			i_bit = 1
 		elif i_bit == 'teamOneBonus2' or i_bit == 'teamTwoBonus2':
-			value = self.game.getTeamData(team, 'bonus')
+			value = self.game.get_team_data(team, 'bonus')
 			if value == 2:
 				i_bit = 1
 			else:
 				i_bit = 0
 		elif i_bit[:7] == 'teamTwo' or i_bit[:7] == 'teamOne':
 			i_bit = i_bit[:7] + str.lower(i_bit[7]) + i_bit[8:]
-			i_bit = self.game.getTeamData(team, i_bit[7:])
+			i_bit = self.game.get_team_data(team, i_bit[7:])
 		elif i_bit[:7] == 'penalty':
 			timer_number = i_bit[7]
 			i_bit = self._trim_penalty(i_bit)
@@ -432,27 +432,27 @@ class AddressMapping(object):
 			i_bit = self._trim_team_name(i_bit)
 			if i_bit[:5] == 'colon':
 				team = self._team_extract(team_string)
-				i_bit = self.game.getTeamData(team, 'TIMER' + timer_number + '_COLON_INDICATOR')
+				i_bit = self.game.get_team_data(team, 'TIMER' + timer_number + '_COLON_INDICATOR')
 		elif i_bit == 'outs1':
-			outs = self.game.getGameData('outs')
+			outs = self.game.get_game_data('outs')
 			if outs >= 1:
 				i_bit = 1
 			else:
 				i_bit = 0
 		elif i_bit == 'outs2':
-			outs = self.game.getGameData('outs')
+			outs = self.game.get_game_data('outs')
 			if outs >= 2:
 				i_bit = 1
 			else:
 				i_bit = 0
 		elif i_bit == 'quarter4':
-			quarter = self.game.getGameData('quarter')
+			quarter = self.game.get_game_data('quarter')
 			if quarter >= 4:
 				i_bit = 1
 			else:
 				i_bit = 0
 		else:
-			i_bit = self.game.getGameData(i_bit)
+			i_bit = self.game.get_game_data(i_bit)
 		return i_bit
 
 	def _h_bit_format(self, h_bit):
@@ -464,7 +464,7 @@ class AddressMapping(object):
 			h_bit = 1
 		elif h_bit[:7] == 'teamTwo' or h_bit[:7] == 'teamOne':
 			h_bit = h_bit[:7] + str.lower(h_bit[7]) + h_bit[8:]
-			h_bit = self.game.getTeamData(team, h_bit[7:])
+			h_bit = self.game.get_team_data(team, h_bit[7:])
 		elif h_bit[:7] == 'penalty':
 			timer_number = h_bit[7]
 			h_bit = self._trim_penalty(h_bit)
@@ -472,9 +472,9 @@ class AddressMapping(object):
 			h_bit = self._trim_team_name(h_bit)
 			if h_bit[:5] == 'colon':
 				team = self._team_extract(team_string)
-				h_bit = self.game.getTeamData(team, 'TIMER' + timer_number + '_COLON_INDICATOR')
+				h_bit = self.game.get_team_data(team, 'TIMER' + timer_number + '_COLON_INDICATOR')
 		else:
-			h_bit = self.game.getGameData(h_bit)
+			h_bit = self.game.get_game_data(h_bit)
 		return h_bit
 
 	def _team_extract(self, value):
@@ -600,7 +600,7 @@ class AddressMapping(object):
 					team_high = self._team_extract(team_string)
 					_flag_check_high = self._flag_check('timer'+timer_number+team_string+'playerFlag')
 
-					high_nibble = self.game.getTeamData(team_high, 'TIMER'+timer_number+'_PLAYER_NUMBER'+place)  # int
+					high_nibble = self.game.get_team_data(team_high, 'TIMER' + timer_number + '_PLAYER_NUMBER' + place)  # int
 
 					if high_nibble == 0 and _flag_check_high:
 						blank_type = 0
@@ -610,7 +610,7 @@ class AddressMapping(object):
 
 				elif high_nibble_name[:5] == 'colon':
 					team_high = self._team_extract(team_string)
-					high_nibble = self.game.getTeamData(team_high, 'TIMER'+timer_number+'_COLON_INDICATOR')  # int
+					high_nibble = self.game.get_team_data(team_high, 'TIMER' + timer_number + '_COLON_INDICATOR')  # int
 
 				else:
 					high_nibble = self.tempClockDict['penalty'+timer_number+'_'+team_string][high_nibble_name]  # int
@@ -620,13 +620,13 @@ class AddressMapping(object):
 
 			elif self._team_value_check(high_nibble_name):
 				high_nibble_name = self._trim_team_name(high_nibble_name)
-				high_nibble = self.game.getTeamData(team_high, high_nibble_name)  # int
+				high_nibble = self.game.get_team_data(team_high, high_nibble_name)  # int
 
 				if high_nibble == 255 or high_nibble == 25:
 					blank_type_high = True
 
 			else:
-				high_nibble = self.game.getGameData(high_nibble_name)  # int
+				high_nibble = self.game.get_game_data(high_nibble_name)  # int
 
 				if high_nibble == 255 or high_nibble == 25:
 					blank_type_high = True
@@ -644,21 +644,21 @@ class AddressMapping(object):
 				low_nibble = self.tempClockDict['periodClock'][low_nibble_name]  # int
 
 			elif low_nibble_name == 'inningUnits':
-				low_nibble = self.game.getGameData(low_nibble_name)  # int
+				low_nibble = self.game.get_game_data(low_nibble_name)  # int
 
-				if self.game.getGameData('inningTens'):
+				if self.game.get_game_data('inningTens'):
 					blank_type = 0
 
 			elif low_nibble_name == 'singlePitchCountTens':
-				low_nibble = self.game.getGameData(low_nibble_name)  # int
+				low_nibble = self.game.get_game_data(low_nibble_name)  # int
 
-				if self.game.getGameData('singlePitchCountHundreds'):
+				if self.game.get_game_data('singlePitchCountHundreds'):
 					blank_type = 0
 
 			elif low_nibble_name == 'pitchSpeedUnits':
-				low_nibble = self.game.getGameData(low_nibble_name)  # int
+				low_nibble = self.game.get_game_data(low_nibble_name)  # int
 
-				if self.game.getGameData('pitchSpeedHundreds'):
+				if self.game.get_game_data('pitchSpeedHundreds'):
 					blank_type = 0
 
 			elif low_nibble_name == 'delayOfGameClock_secondsUnits':
@@ -701,7 +701,7 @@ class AddressMapping(object):
 					place = low_nibble_name[6:]
 					team_low = self._team_extract(team_string)
 					_flag_check_low = self._flag_check('timer'+timer_number+team_string+'playerFlag')
-					low_nibble = self.game.getTeamData(team_low, 'TIMER'+timer_number+'_PLAYER_NUMBER'+place)  # int
+					low_nibble = self.game.get_team_data(team_low, 'TIMER' + timer_number + '_PLAYER_NUMBER' + place)  # int
 
 					if low_nibble == 0 and _flag_check_low:
 						blank_type = 0
@@ -711,7 +711,7 @@ class AddressMapping(object):
 
 				elif low_nibble_name[:5] == 'colon':
 					team_low = self._team_extract(team_string)
-					low_nibble = self.game.getTeamData(team_low, 'TIMER'+timer_number+'_COLON_INDICATOR')  # int
+					low_nibble = self.game.get_team_data(team_low, 'TIMER' + timer_number + '_COLON_INDICATOR')  # int
 
 				else:
 					low_nibble = self.tempClockDict['penalty'+timer_number+'_'+team_string][low_nibble_name]  # int
@@ -732,7 +732,7 @@ class AddressMapping(object):
 						active_player_list = []
 
 					stat_number = low_nibble_name[6:-4]
-					low_nibble = self.game.getTeamData(team_low, low_nibble_name)  # int
+					low_nibble = self.game.get_team_data(team_low, low_nibble_name)  # int
 
 					active_index = self.game.statNumberList.index(stat_number)
 					if active_index <= len(active_player_list):
@@ -747,17 +747,17 @@ class AddressMapping(object):
 						blank_type_low = True
 
 				elif low_nibble_name == 'pitchCountTens':
-					low_nibble = self.game.getTeamData(team_low, low_nibble_name)  # int
+					low_nibble = self.game.get_team_data(team_low, low_nibble_name)  # int
 
-					if self.game.getTeamData(team_low, 'pitchCountHundreds'):
+					if self.game.get_team_data(team_low, 'pitchCountHundreds'):
 						blank_type = 0
 				else:
-					low_nibble = self.game.getTeamData(team_low, low_nibble_name)  # int
+					low_nibble = self.game.get_team_data(team_low, low_nibble_name)  # int
 
 					if low_nibble == 255 or low_nibble == 25:
 						blank_type_low = True
 			else:
-				low_nibble = self.game.getGameData(low_nibble_name)  # int
+				low_nibble = self.game.get_game_data(low_nibble_name)  # int
 
 				if low_nibble == 255 or low_nibble == 25:
 					blank_type_low = True
@@ -798,28 +798,28 @@ class AddressMapping(object):
 			segment_data = self.__down_quarter_decode()
 		elif segment_data == 'fQtr4_gDec':
 			segment_data = ''
-			if self.game.getGameData('decimalIndicator'):
+			if self.game.get_game_data('decimalIndicator'):
 				segment_data = 'g'
 			if self.game.gameData['sportType'] == 'soccer':
 				value = 'period'
 			else:
 				value = 'quarter'
-			if self.game.getGameData(value) >= 4:
+			if self.game.get_game_data(value) >= 4:
 				segment_data += 'f'
 		elif segment_data == 'gDec':
-			if self.game.getGameData('decimalIndicator'):
+			if self.game.get_game_data('decimalIndicator'):
 				segment_data = 'g'
 			else:
 				segment_data = ''
 		elif segment_data == 'f_hitIndicator':
-			if self.game.getGameData('hitIndicator'):
+			if self.game.get_game_data('hitIndicator'):
 				segment_data = 'f'
 			else:
 				segment_data = ''
 		elif segment_data == 'abcBall_efStrike':
 			segment_data = ''
-			balls = self.game.getGameData('balls')
-			strikes = self.game.getGameData('strikes')
+			balls = self.game.get_game_data('balls')
+			strikes = self.game.get_game_data('strikes')
 			if balls == 0:
 				pass
 			elif balls == 1:
@@ -836,7 +836,7 @@ class AddressMapping(object):
 				segment_data += 'ef'
 		elif segment_data == 'bc_strike':
 			segment_data = ''
-			strikes = self.game.getGameData('strikes')
+			strikes = self.game.get_game_data('strikes')
 			if strikes == 0:
 				pass
 			elif strikes == 1:
@@ -845,8 +845,8 @@ class AddressMapping(object):
 				segment_data += 'bc'
 		elif segment_data == 'abcBall_deOut_gDec':
 			segment_data = ''
-			balls = self.game.getGameData('balls')
-			outs = self.game.getGameData('outs')
+			balls = self.game.get_game_data('balls')
+			outs = self.game.get_game_data('outs')
 			if balls == 0:
 				pass
 			elif balls == 1:
@@ -861,26 +861,26 @@ class AddressMapping(object):
 				segment_data += 'd'
 			elif outs >= 2:
 				segment_data += 'de'
-			if self.game.getGameData('decimalIndicator'):
+			if self.game.get_game_data('decimalIndicator'):
 				segment_data += 'g'
 		elif segment_data == 'aGeHposs_fQrt4_gDec':
 			segment_data = ''
-			if self.game.getTeamData(self.game.guest, 'possession'):
+			if self.game.get_team_data(self.game.guest, 'possession'):
 				segment_data = 'a'
-			if self.game.getTeamData(self.game.home, 'possession'):
+			if self.game.get_team_data(self.game.home, 'possession'):
 				segment_data += 'e'
-			if self.game.getGameData('decimalIndicator'):
+			if self.game.get_game_data('decimalIndicator'):
 				segment_data += 'g'
-			if self.game.getGameData('quarter') >= 4:
+			if self.game.get_game_data('quarter') >= 4:
 				segment_data += 'f'
 		elif segment_data == 'abcde_PossBonus':
 			segment_data = ''
-			if self.game.getTeamData(self.game.home, 'possession'):
+			if self.game.get_team_data(self.game.home, 'possession'):
 				segment_data = 'a'
-			if self.game.getTeamData(self.game.guest, 'possession'):
+			if self.game.get_team_data(self.game.guest, 'possession'):
 				segment_data += 'b'
-			home_bonus = self.game.getTeamData(self.game.home, 'bonus')
-			guest_bonus = self.game.getTeamData(self.game.guest, 'bonus')
+			home_bonus = self.game.get_team_data(self.game.home, 'bonus')
+			guest_bonus = self.game.get_team_data(self.game.guest, 'bonus')
 			if home_bonus == 0:
 				pass
 			if home_bonus == 1:
@@ -893,9 +893,9 @@ class AddressMapping(object):
 				segment_data += 'd'
 		elif segment_data == 'home_ace_PossBonus':
 			segment_data = ''
-			if self.game.getTeamData(self.game.home, 'possession'):
+			if self.game.get_team_data(self.game.home, 'possession'):
 				segment_data = 'a'
-			home_bonus = self.game.getTeamData(self.game.home, 'bonus')
+			home_bonus = self.game.get_team_data(self.game.home, 'bonus')
 			if home_bonus == 0:
 				pass
 			if home_bonus == 1:
@@ -904,9 +904,9 @@ class AddressMapping(object):
 				segment_data += 'ce'
 		elif segment_data == 'guest_ace_PossBonus':
 			segment_data = ''
-			if self.game.getTeamData(self.game.guest, 'possession'):
+			if self.game.get_team_data(self.game.guest, 'possession'):
 				segment_data = 'a'
-			guest_bonus = self.game.getTeamData(self.game.guest, 'bonus')
+			guest_bonus = self.game.get_team_data(self.game.guest, 'bonus')
 			if guest_bonus == 0:
 				pass
 			if guest_bonus == 1:
@@ -915,7 +915,7 @@ class AddressMapping(object):
 				segment_data += 'ce'
 		elif segment_data == 'period_efg':
 			segment_data = ''
-			period = self.game.getGameData('period')
+			period = self.game.get_game_data('period')
 			if period == 0:
 				pass
 			elif period == 1:
@@ -938,9 +938,9 @@ class AddressMapping(object):
 	# Segment Decode Functions
 	def _bso_decode(self):
 		segment_data = ''
-		balls = self.game.getGameData('balls')
-		strikes = self.game.getGameData('strikes')
-		outs = self.game.getGameData('outs')
+		balls = self.game.get_game_data('balls')
+		strikes = self.game.get_game_data('strikes')
+		outs = self.game.get_game_data('outs')
 		if balls == 0:
 			pass
 		elif balls == 1:
@@ -965,8 +965,8 @@ class AddressMapping(object):
 
 	def __down_quarter_decode(self):
 		segment_data = ''
-		down = self.game.getGameData('down')
-		quarter = self.game.getGameData('quarter')
+		down = self.game.get_game_data('down')
+		quarter = self.game.get_game_data('quarter')
 		if down == 0:
 			pass
 		elif down == 1:
@@ -1063,8 +1063,8 @@ class AddressMapping(object):
 						font = numeric_data/6+1
 						justify = numeric_data % 6+1
 
-						self.game.setTeamData(self.quantumETNTunnelTeam, 'font', font, 1)
-						self.game.setTeamData(self.quantumETNTunnelTeam, 'justify', justify, 1)
+						self.game.set_team_data(self.quantumETNTunnelTeam, 'font', font, 1)
+						self.game.set_team_data(self.quantumETNTunnelTeam, 'justify', justify, 1)
 						app.utils.functions.verbose(['font', font, 'justify', justify], self.verboseTunnel)
 
 						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
@@ -1076,11 +1076,11 @@ class AddressMapping(object):
 						self.rightETNByte = numeric_data
 						app.utils.functions.verbose(['rightETNByte', numeric_data], self.verboseTunnel)
 						if self.leftETNByte and self.rightETNByte:
-							name = self.game.getTeamData(
+							name = self.game.get_team_data(
 								self.quantumETNTunnelTeam, 'name'
 							)[:(self.addressPair-1)*2]+chr(self.leftETNByte)+chr(self.rightETNByte)
 						elif self.leftETNByte:
-							name = self.game.getTeamData(
+							name = self.game.get_team_data(
 								self.quantumETNTunnelTeam, 'name'
 							)[:(self.addressPair-1)*2]+chr(self.leftETNByte)
 						elif self.rightETNByte:
@@ -1089,9 +1089,9 @@ class AddressMapping(object):
 								self.leftETNByte and self.rightETNByte], self.verboseTunnel)
 							name = ''
 						else:
-							name = self.game.getTeamData(self.quantumETNTunnelTeam, 'name')
+							name = self.game.get_team_data(self.quantumETNTunnelTeam, 'name')
 
-						self.game.setTeamData(self.quantumETNTunnelTeam, 'name', name, 1)
+						self.game.set_team_data(self.quantumETNTunnelTeam, 'name', name, 1)
 						app.utils.functions.verbose(['name-', name, '-'], self.verboseTunnel)
 
 						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
@@ -1546,7 +1546,7 @@ class AddressMapping(object):
 
 	def _set_data(self, name, value, team=None):
 		if self._game_value_check(name):
-			self.game.setGameData(name, value, places=1)
+			self.game.set_game_data(name, value, places=1)
 		elif self._team_value_check(name):
 			if name[:7] == 'penalty':
 				timer_number = name[7]
@@ -1555,7 +1555,7 @@ class AddressMapping(object):
 				name = self._trim_team_name(name)
 				if name[:6] == 'player':
 					place = name[6:]
-					self.game.setTeamData(team, 'TIMER'+timer_number+'_PLAYER_NUMBER'+place, value, places=1)
+					self.game.set_team_data(team, 'TIMER' + timer_number + '_PLAYER_NUMBER' + place, value, places=1)
 				elif name[:5] == 'colon':
 					if self.verbose:
 						print 'skip penalty timer colons'
@@ -1563,12 +1563,12 @@ class AddressMapping(object):
 					clock_name = 'penalty'+str(timer_number)+'_'+team_string+'_'+name
 					if self.verbose:
 						print clock_name
-					self.game.setGameData(clock_name, value, places=1)
+					self.game.set_game_data(clock_name, value, places=1)
 			else:
 				name = self._trim_team_name(name)
-				self.game.setTeamData(team, name, value, places=1)
+				self.game.set_team_data(team, name, value, places=1)
 		elif self._period_clock_value_check(name):
-			self.game.setGameData('periodClock_'+name, value, places=1)
+			self.game.set_game_data('periodClock_' + name, value, places=1)
 		else:
 			print 'FAIL'
 
@@ -1738,7 +1738,7 @@ def test():
 	#LHword6 = addrMap.mp.encode(2, 1, 1, 0, 0, 0, 1, 0, 0)
 	wordList=[LHword0, LHword1 , LHword2, LHword3]#, LHword4, LHword5, LHword6]
 	addrMap.un_map(addressWordList=[9, 10, 11, 12], wordList=wordList)
-	print addrMap.game.getTeamData(game.guest, 'TIMER1_PLAYER_NUMBERTens')
+	print addrMap.game.get_team_data(game.guest, 'TIMER1_PLAYER_NUMBERTens')
 
 	#raw_input()
 	print

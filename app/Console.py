@@ -66,7 +66,7 @@ class Console(object):
 		# Create Game object, attach keypad and LCD screen
 		self.configDict = app.utils.reads.read_config()
 		if internal_reset:
-			self.game.KillClockThreads()
+			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(
 			self.configDict['sport'], number_of_teams=2, mp_lx3450_flag=self.configDict['MPLX3450Flag'])
 
@@ -724,7 +724,7 @@ class Console(object):
 				teamsList = []
 				FontJustifyList = []
 				for team in ['TEAM_1', 'TEAM_2']:
-					name = self.game.getTeamData(team, 'name')
+					name = self.game.get_team_data(team, 'name')
 					length = len(name)
 					pairsList = []
 					if length:
@@ -745,8 +745,8 @@ class Console(object):
 						
 					teamsList.append(pairsList)
 
-					Justify = self.game.getTeamData(team, 'justify')
-					Font = self.game.getTeamData(team, 'font')
+					Justify = self.game.get_team_data(team, 'justify')
+					Font = self.game.get_team_data(team, 'font')
 					FontJustify = (Font-1)*6+Justify-1
 					FontJustifyList.append(FontJustify)
 						
@@ -792,7 +792,7 @@ class Console(object):
 				self.sp.guestNameChangeFlag = False
 
 				# ETN character change section
-				name = self.game.getTeamData('TEAM_1', 'name')
+				name = self.game.get_team_data('TEAM_1', 'name')
 				length = len(name)
 				pairsList = []
 				teamAddrOverride = False
@@ -852,7 +852,7 @@ class Console(object):
 				self.sp.homeNameChangeFlag = False
 
 				# ETN character change section
-				name = self.game.getTeamData('TEAM_2', 'name')
+				name = self.game.get_team_data('TEAM_2', 'name')
 				length = len(name)
 				pairsList = []
 				teamAddrOverride = False
@@ -916,8 +916,8 @@ class Console(object):
 
 				# ETN FontJustify change section
 
-				Justify = self.game.getTeamData('TEAM_1', 'justify')
-				Font = self.game.getTeamData('TEAM_1', 'font')
+				Justify = self.game.get_team_data('TEAM_1', 'justify')
+				Font = self.game.get_team_data('TEAM_1', 'font')
 				FontJustify = (Font-1)*6+Justify-1
 									
 				teamAddrShift = 0
@@ -936,8 +936,8 @@ class Console(object):
 
 				# ETN FontJustify change section
 
-				Justify = self.game.getTeamData('TEAM_2', 'justify')
-				Font = self.game.getTeamData('TEAM_2', 'font')
+				Justify = self.game.get_team_data('TEAM_2', 'justify')
+				Font = self.game.get_team_data('TEAM_2', 'font')
 				FontJustify = (Font-1)*6+Justify-1
 									
 				teamAddrShift = 64
