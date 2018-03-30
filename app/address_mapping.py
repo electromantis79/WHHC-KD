@@ -23,8 +23,7 @@ class AddressMapping(object):
 
 	**Initialization**
 
-	* Build a dictionary of the 32 possible words of a sport named **wordsDict**.
-		This will be the default values for that sport.
+	* Build a dictionary of the 32 possible words of a sport named **wordsDict**. This will be the default values for that sport.
 
 		*Key* = binary address of group and bank
 
@@ -32,17 +31,17 @@ class AddressMapping(object):
 
 			**Word** in this context is one packet of information a driver needs to update a single header
 
-			======================
-			High Byte    Low Byte
-			======================
-			1GBBWWIH     0GFEDCBA
-			======================
+				==========  =========
+				High Byte    Low Byte
+				==========  =========
+				1GBBWWIH     0GFEDCBA
+				==========  =========
 
-			G = Group, B = Bank, W = Word (Different than the word mentioned above)
+				G = Group, B = Bank, W = Word (Different than the word mentioned above)
 
-			I = Control bit, H through A = The eight segments of display data
+				I = Control bit, H through A = The eight segments of display data
 
-			.. note:: Low byte is received first and the high byte is received second
+				.. note:: Low byte is received first and the high byte is received second
 
 	*
 
