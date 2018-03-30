@@ -5,16 +5,17 @@
 
 .. topic:: Overview
 
-    This module holds the game data for all sports.
+	This module holds the game data for all sports.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
 import threading
 
-import app.functions
+import app.utils.functions
+import app.utils.reads
 import app.game.team
 import app.game.option_jumpers
 import app.game.clock
@@ -23,15 +24,15 @@ import app.game.clock
 class Game(object):
 	"""Generic base class for all sports."""
 	
-	def __init__(self, numberOfTeams=2):
-		self.numberOfTeams = numberOfTeams
+	def __init__(self, number_of_teams=2):
+		self.numberOfTeams = number_of_teams
 
 		# Build dictionaries from files
-		self.configDict = app.functions.readConfig()
-		self.gameSettings = app.functions.readGameDefaultSettings()
-		self.segmentTimerSettings = app.functions.readSegmentTimerSettings()
+		self.configDict = app.utils.reads.read_config()
+		self.gameSettings = app.utils.reads.read_game_default_settings()
+		self.segmentTimerSettings = app.utils.reads.read_segment_timer_settings()
 		self.gameSettings.update(self.segmentTimerSettings)  # Don't use the same names
-		self.gameData = app.functions.csvOneRowRead(fileName='Spreadsheets/gameDefaultValues.csv')
+		self.gameData = app.utils.reads.csv_one_row_read(file_name='Spreadsheets/gameDefaultValues.csv')
 
 		# Classes and attributes
 		self.gameData['sportType'] = "GENERIC"
@@ -41,21 +42,22 @@ class Game(object):
 		self.gameData['Version'] = self.configDict['Version']
 		
 		# Handle option jumpers
-		self.optionJumpers = app.game.option_jumpers.OptionJumpers(self.sport, app.functions.SPORT_LIST, jumperString=self.gameData['optionJumpers'])
-		self.gameSettings = self.optionJumpers.getOptions(self.gameSettings)
+		self.optionJumpers = app.game.option_jumpers.OptionJumpers(
+			self.sport, app.utils.functions.SPORT_LIST, jumper_string=self.gameData['optionJumpers'])
+		self.gameSettings = self.optionJumpers.get_options(self.gameSettings)
 		
 		self.decimalIndicator = not self.gameData['colonIndicator']
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
 		self.clockDict = {}
-		self._createClockDict()
+		self._create_clock_dict()
 
 		# Digit values common to all sports
-		self.setGameData('segmentCount', self.getGameData('segmentCount'))
-		self.setGameData('period', self.getGameData('period'))
+		self.set_game_data('segmentCount', self.get_game_data('segmentCount'))
+		self.set_game_data('period', self.get_game_data('period'))
 
 		if self.configDict['sport'][-4:] == 'ball' or self.configDict['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportMenuFlag'] = True
@@ -66,17 +68,25 @@ class Game(object):
 			self.gameSettings['multisportChoiceFlag'] = True
 		else:
 			self.gameSettings['multisportChoiceFlag'] = False
-
-	def _createTeams(self):
+		
+		# Variables
+		self.hitCount = self.gameSettings['hitIndicatorFlashCount']
+		self.errorCount = self.gameSettings['errorIndicatorFlashCount']
+		self.activeGuestPlayerList = []
+		self.activeHomePlayerList = []
+		self.statNumberList = []
+		self.notActiveIndex = None
+		
+	def _create_teams(self):
 		"""Instantiate all teams into a dictionary."""
 		self.teamsDict = {}
 		self.teamNamesList = []
 		for team in range(self.numberOfTeams):
 			name = 'TEAM_'+str(team+1)
 			self.teamNamesList.append(name)
-			self.teamsDict[name] = app.game.team.Team(self.gameData['sportType'])
+			self.teamsDict[name] = app.game.team.Team(sport_type=self.gameData['sportType'])
 
-	def _addTeamNameData(self):
+	def _add_team_name_data(self):
 		self.home = self.teamNamesList[self.gameSettings['home']]
 		self.guest = self.teamNamesList[self.gameSettings['guest']]
 		self.teamsDict[self.guest].teamData['name'] = self.gameSettings['teamOneName']
@@ -86,37 +96,40 @@ class Game(object):
 		self.teamsDict[self.guest].teamData['justify'] = self.gameSettings['teamOneJustify']
 		self.teamsDict[self.home].teamData['justify'] = self.gameSettings['teamTwoJustify']
 
-	def _createClockDict(self):
-		# class object instantiation
-		self.clockDict['timeOutTimer'] = app.game.clock.clock(False, self.gameSettings['timeOutTimerMaxSeconds'], clockName='timeOutTimer')
-		self.gameData = self.clockDict['timeOutTimer'].gameDataUpdate(self.gameData, name='timeOutTimer')
-
-		self.clockDict['timeOfDayClock'] = app.game.clock.clock(
-			True, maxSeconds=self.gameSettings['timeOfDayClockMaxSeconds'],
-			resolution=0.1, hoursFlag=True, clockName='timeOfDayClock')
-		self.gameData = self.clockDict['timeOfDayClock'].gameDataUpdate(self.gameData, name='timeOfDayClock')
-
-		self.clockDict['segmentTimer'] = app.game.clock.clock(
-			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clockName='segmentTimer')
-		self.gameData = self.clockDict['segmentTimer'].gameDataUpdate(self.gameData, name='segmentTimer')
-
-		self.clockDict['flashTimer'] = app.game.clock.clock(False, self.gameSettings['flashTimerMaxSeconds'], clockName='flashTimer')
-
-		self.clockDict['intervalTimer'] = app.game.clock.clock(
-			False, self.gameSettings['intervalTimerMaxSeconds'], clockName='intervalTimer')
-
-		self.clockDict['periodHornFlashTimer'] = app.game.clock.clock(
-			False, self.gameSettings['periodHornFlashDuration'], clockName='periodHornFlashTimer')
-
-		self.clockDict['periodBlinkyFlashTimer'] = app.game.clock.clock(False, .5, clockName='periodBlinkyFlashTimer')
+	def _create_clock_dict(self):
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['timeOutTimer'] = app.game.clock.Clock(
+			False, self.gameSettings['timeOutTimerMaxSeconds'], clock_name='timeOutTimer')
+		
+		self.clockDict['timeOfDayClock'] = app.game.clock.Clock(
+			True, max_seconds=self.gameSettings['timeOfDayClockMaxSeconds'],
+			resolution=0.1, hours_flag=True, clock_name='timeOfDayClock')
+		
+		self.clockDict['segmentTimer'] = app.game.clock.Clock(
+			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clock_name='segmentTimer')
+		
+		self.clockDict['flashTimer'] = app.game.clock.Clock(
+			False, self.gameSettings['flashTimerMaxSeconds'], clock_name='flashTimer')
+		
+		self.clockDict['intervalTimer'] = app.game.clock.Clock(
+			False, self.gameSettings['intervalTimerMaxSeconds'], clock_name='intervalTimer')
+		
+		self.clockDict['periodHornFlashTimer'] = app.game.clock.Clock(
+			False, self.gameSettings['periodHornFlashDuration'], clock_name='periodHornFlashTimer')
+		
+		self.clockDict['periodBlinkyFlashTimer'] = app.game.clock.Clock(False, .5, clock_name='periodBlinkyFlashTimer')
+		
+		# game_data_update adds values to the gameData dictionary
+		self.gameData = self.clockDict['timeOutTimer'].game_data_update(self.gameData, name='timeOutTimer')
+		self.gameData = self.clockDict['timeOfDayClock'].game_data_update(self.gameData, name='timeOfDayClock')
+		self.gameData = self.clockDict['segmentTimer'].game_data_update(self.gameData, name='segmentTimer')
 
 		if self.gameData['sport'] == "MPGENERIC":
-			self.clockDict['periodClock'] = app.game.clock.clock(self.gameSettings['periodClockCountUp'], 15*60, clockName='periodClock')
-			self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
+			self.clockDict['periodClock'] = app.game.clock.Clock(
+				self.gameSettings['periodClockCountUp'], 15 * 60, clock_name='periodClock')
+			self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, name='periodClock')
 
-		# gameDataUpdate adds values to the gameData dictionary
-
-	def _reverseHomeAndGuest(self):
+	def _reverse_home_and_guest(self):
 		# method never used
 		self.home, self.guest = self.guest, self.home
 
@@ -124,287 +137,290 @@ class Game(object):
 
 	# PUBLIC methods
 
-	def KillClockThreads(self):
+	def kill_clock_threads(self):
 		for clock in self.clockDict:
-			self.clockDict[clock].Kill()
+			self.clockDict[clock].kill_()
 
-	def getPlayerData(self, team, dataName, playerID=None, playerNumber=None):
-		if playerID is None and playerNumber is None:
-			print team, dataName, 'playerID=None, playerNumber=None'
-		elif playerID  is not None:
-			return self.teamsDict[team].playersDict[playerID].playerData[dataName]
-		elif playerNumber is not None:
-			for playerID in self.teamsDict[team].playersDict.keys():
-				if self.teamsDict[team].playersDict[playerID].playerData['playerNumber']==playerNumber:
-					return playerID
+	def get_player_data(self, team, data_name, player_id=None, player_number=None):
+		if player_id is None and player_number is None:
+			print team, data_name, 'player_id=None, player_number=None'
+		elif player_id is not None:
+			return self.teamsDict[team].playersDict[player_id].playerData[data_name]
+		elif player_number is not None:
+			for player_id in self.teamsDict[team].playersDict.keys():
+				if self.teamsDict[team].playersDict[player_id].playerData['playerNumber'] == player_number:
+					return player_id
 		else:
-			return self.teamsDict[team].playersDict[playerID].playerData[dataName]
+			return self.teamsDict[team].playersDict[player_id].playerData[data_name]
 
-	def getTeamData(self, team, dataName):
-		return self.teamsDict[team].teamData[dataName]
+	def get_team_data(self, team, data_name):
+		return self.teamsDict[team].teamData[data_name]
 
-	def getGameData(self, dataName):
-		return self.gameData[dataName]
+	def get_game_data(self, data_name):
+		return self.gameData[data_name]
 
-	def getClockData(self, clockName, dataName):
-		if self.clockDict.has_key(clockName):
-			return self.clockDict[clockName].timeUnitsDict[dataName]
+	def get_clock_data(self, clock_name, data_name):
+		if clock_name in self.clockDict:
+			return self.clockDict[clock_name].timeUnitsDict[data_name]
 		else:
 			return None
 
-	def setPlayerData(self, team, player, dataName, value, places=2):
-		if self.teamsDict[team].playersDict.has_key(player):
-			playerData = self.teamsDict[team].playersDict[player].playerData
-			if places==3:
-				playerData[dataName+'Hundreds'] = value/100
-				playerData[dataName+'Tens'] = value/10%10
-				playerData[dataName+'Units'] = value%10
-				playerData[dataName] = value
-			elif places==2:
-				if dataName=='playerNumber':
-					playerData[dataName+'Tens'] = value[0]
-					playerData[dataName+'Units'] = value[1]
-					playerData[dataName] = value
+	def set_player_data(self, team, player, data_name, value, places=2):
+		if player in self.teamsDict[team].playersDict:
+			player_data = self.teamsDict[team].playersDict[player].playerData
+			if places == 3:
+				player_data[data_name + 'Hundreds'] = value / 100
+				player_data[data_name + 'Tens'] = value / 10 % 10
+				player_data[data_name + 'Units'] = value % 10
+				player_data[data_name] = value
+			elif places == 2:
+				if data_name == 'playerNumber':
+					player_data[data_name + 'Tens'] = value[0]
+					player_data[data_name + 'Units'] = value[1]
+					player_data[data_name] = value
 				else:
-					playerData[dataName+'Tens'] = value/10
-					playerData[dataName+'Units'] = value%10
-					playerData[dataName] = value
-			elif places==1:
-				if dataName=='0' or dataName=='':
+					player_data[data_name + 'Tens'] = value / 10
+					player_data[data_name + 'Units'] = value % 10
+					player_data[data_name] = value
+			elif places == 1:
+				if data_name == '0' or data_name == '':
 					pass
 				else:
-					playerData[dataName] = value
+					player_data[data_name] = value
 			else:
-				print 'Failed to set '+team,dataName, 'value of',value
-				print 'places', places, 'player', player, 'playerData', playerData
+				print 'Failed to set '+team, data_name, 'value of', value
+				print 'places', places, 'player', player, 'player_data', player_data
 		else:
-			print 'Player %s is not in self.teamsDict[team].playersDict.' % (player)
+			print 'Player %s is not in self.teamsDict[team].playersDict.' % player
 
-	def setTeamData(self, team, dataName, value, places=2):
-		teamData = self.teamsDict[team].teamData
+	def set_team_data(self, team, data_name, value, places=2):
+		team_data = self.teamsDict[team].teamData
 		if value is not None:
-			if places==3:
-				teamData[dataName+'Hundreds'] = value/100
-				teamData[dataName+'Tens'] = value/10%10
-				teamData[dataName+'Units'] = value%10
-				teamData[dataName] = value
-			elif places==2:
-				if value==255:
-					teamData[dataName+'Tens'] = 15
-					teamData[dataName+'Units'] = 15
-					teamData[dataName] = value
+			if places == 3:
+				team_data[data_name + 'Hundreds'] = value / 100
+				team_data[data_name + 'Tens'] = value / 10 % 10
+				team_data[data_name + 'Units'] = value % 10
+				team_data[data_name] = value
+			elif places == 2:
+				if value == 255:
+					team_data[data_name + 'Tens'] = 15
+					team_data[data_name + 'Units'] = 15
+					team_data[data_name] = value
 				else:
-					teamData[dataName+'Tens'] = value/10
-					teamData[dataName+'Units'] = value%10
-					teamData[dataName] = value
-			elif places==1:
-				if dataName=='0' or dataName=='':
+					team_data[data_name + 'Tens'] = value / 10
+					team_data[data_name + 'Units'] = value % 10
+					team_data[data_name] = value
+			elif places == 1:
+				if data_name == '0' or data_name == '':
 					pass
 				else:
-					teamData[dataName] = value
+					team_data[data_name] = value
 			else:
-				print 'Failed to set %s %s value of %d.' % (team, dataName, value)
-				print 'places', places, 'teamData', teamData
+				print 'Failed to set %s %s value of %d.' % (team, data_name, value)
+				print 'places', places, 'team_data', team_data
 		else:
-				print 'Failed to set %s %s value of None.' % (team, dataName)
-				print 'places', places, 'teamData', teamData
+				print 'Failed to set %s %s value of None.' % (team, data_name)
+				print 'places', places, 'team_data', team_data
 
-	def setGameData(self, dataName, value, places=2):
-		if places==3:
-			self.gameData[dataName+'Hundreds'] = value/100
-			self.gameData[dataName+'Tens'] = value/10%10
-			self.gameData[dataName+'Units'] = value%10
-			self.gameData[dataName] = value
-		elif places==2:
-			if value==255:
-				self.gameData[dataName+'Tens'] = 15
-				self.gameData[dataName+'Units'] = 15
-				self.gameData[dataName] = value
+	def set_game_data(self, data_name, value, places=2):
+		if places == 3:
+			self.gameData[data_name + 'Hundreds'] = value / 100
+			self.gameData[data_name + 'Tens'] = value / 10 % 10
+			self.gameData[data_name + 'Units'] = value % 10
+			self.gameData[data_name] = value
+		elif places == 2:
+			if value == 255:
+				self.gameData[data_name + 'Tens'] = 15
+				self.gameData[data_name + 'Units'] = 15
+				self.gameData[data_name] = value
 			else:
-				self.gameData[dataName+'Tens'] = value/10
-				self.gameData[dataName+'Units'] = value%10
-				self.gameData[dataName] = value
-		elif places==1:
-			if dataName=='0' or dataName=='':
+				self.gameData[data_name + 'Tens'] = value / 10
+				self.gameData[data_name + 'Units'] = value % 10
+				self.gameData[data_name] = value
+		elif places == 1:
+			if data_name == '0' or data_name == '':
 				pass
 			else:
-				self.gameData[dataName] = value
+				self.gameData[data_name] = value
 		else:
-			print 'Failed to set %s value of %d.' % (dataName, value)
+			print 'Failed to set %s value of %d.' % (data_name, value)
 
-	def setClockData(self, clockName, dataName, value, places=2):
-		#print 'clockName', clockName, 'dataName', dataName, 'value', value, 'places', places
+	def set_clock_data(self, clock_name, data_name, value, places=2):
 
-		clockData = self.clockDict[clockName].timeUnitsDict
-		if places==3:
-			clockData[dataName+'Hundreds'] = value/100
-			clockData[dataName+'Tens'] = value/10%10
-			clockData[dataName+'Units'] = value%10
-			clockData[dataName] = value
-		elif places==2:
-			clockData[dataName+'Tens'] = value/10
-			clockData[dataName+'Units'] = value%10
-			clockData[dataName] = value
-		elif places==1:
-			if dataName=='0' or dataName=='':
+		clock_data = self.clockDict[clock_name].timeUnitsDict
+		if places == 3:
+			clock_data[data_name + 'Hundreds'] = value / 100
+			clock_data[data_name + 'Tens'] = value / 10 % 10
+			clock_data[data_name + 'Units'] = value % 10
+			clock_data[data_name] = value
+		elif places == 2:
+			clock_data[data_name + 'Tens'] = value / 10
+			clock_data[data_name + 'Units'] = value % 10
+			clock_data[data_name] = value
+		elif places == 1:
+			if data_name == '0' or data_name == '':
 				pass
 			else:
-				clockData[dataName] = value
+				clock_data[data_name] = value
 		else:
-			print 'Failed to set %s %s value of %d.' % (clockName, dataName, value)
+			print 'Failed to set %s %s value of %d.' % (clock_name, data_name, value)
 
-	def modPlayerData(self, team, player, dataName, modulusValue=100, operator = '+', modValue = 1, places=2):
-		playerData = self.teamsDict[team].playersDict[player].playerData
-		if dataName!='playerNumber':
-			if operator=='+':
-				playerData[dataName] = (playerData[dataName] + modValue) % modulusValue
-			elif operator=='-':
-				playerData[dataName] = (playerData[dataName] - modValue) % modulusValue
-			elif operator=='*':
-				playerData[dataName] = (playerData[dataName] * modValue) % modulusValue
-			elif operator=='/':
-				playerData[dataName] = (playerData[dataName] / modValue) % modulusValue
-			elif operator=='toggle':
-				playerData[dataName] = app.functions.toggle(playerData[dataName])
-				places=0
-			if places==3:
-				playerData[dataName+'Hundreds'] = playerData[dataName]/100
-				playerData[dataName+'Tens'] = playerData[dataName]/10%10
-				playerData[dataName+'Units'] = playerData[dataName]%10
-			elif places==2:
-				playerData[dataName+'Tens'] = playerData[dataName]/10
-				playerData[dataName+'Units'] = playerData[dataName]%10
+	def mod_player_data(self, team, player, data_name, modulus_value=100, operator='+', mod_value=1, places=2):
+		player_data = self.teamsDict[team].playersDict[player].playerData
+		if data_name != 'playerNumber':
+			if operator == '+':
+				player_data[data_name] = (player_data[data_name] + mod_value) % modulus_value
+			elif operator == '-':
+				player_data[data_name] = (player_data[data_name] - mod_value) % modulus_value
+			elif operator == '*':
+				player_data[data_name] = (player_data[data_name] * mod_value) % modulus_value
+			elif operator == '/':
+				player_data[data_name] = (player_data[data_name] / mod_value) % modulus_value
+			elif operator == 'toggle':
+				player_data[data_name] = not player_data[data_name]
+				places = 0
+			if places == 3:
+				player_data[data_name + 'Hundreds'] = player_data[data_name] / 100
+				player_data[data_name + 'Tens'] = player_data[data_name] / 10 % 10
+				player_data[data_name + 'Units'] = player_data[data_name] % 10
+			elif places == 2:
+				player_data[data_name + 'Tens'] = player_data[data_name] / 10
+				player_data[data_name + 'Units'] = player_data[data_name] % 10
 
-	def modTeamData(self, team, dataName, modulusValue=100, operator = '+', modValue = 1, places=2):
-		teamData = self.teamsDict[team].teamData
-		if operator=='+':
-			teamData[dataName] = (teamData[dataName] + modValue) % modulusValue
-		elif operator=='-':
-			teamData[dataName] = (teamData[dataName] - modValue) % modulusValue
-		elif operator=='*':
-			teamData[dataName] = (teamData[dataName] * modValue) % modulusValue
-		elif operator=='/':
-			teamData[dataName] = (teamData[dataName] / modValue) % modulusValue
-		elif operator=='toggle':
-			teamData[dataName] = app.functions.toggle(teamData[dataName])
-			places=0
-		if places==3:
-			teamData[dataName+'Hundreds'] = teamData[dataName]/100
-			teamData[dataName+'Tens'] = teamData[dataName]/10%10
-			teamData[dataName+'Units'] = teamData[dataName]%10
-		elif places==2:
-			teamData[dataName+'Tens'] = teamData[dataName]/10
-			teamData[dataName+'Units'] = teamData[dataName]%10
+	def mod_team_data(self, team, data_name, modulus_value=100, operator='+', mod_value=1, places=2):
+		team_data = self.teamsDict[team].teamData
+		if operator == '+':
+			team_data[data_name] = (team_data[data_name] + mod_value) % modulus_value
+		elif operator == '-':
+			team_data[data_name] = (team_data[data_name] - mod_value) % modulus_value
+		elif operator == '*':
+			team_data[data_name] = (team_data[data_name] * mod_value) % modulus_value
+		elif operator == '/':
+			team_data[data_name] = (team_data[data_name] / mod_value) % modulus_value
+		elif operator == 'toggle':
+			team_data[data_name] = not team_data[data_name]
+			places = 0
+		if places == 3:
+			team_data[data_name + 'Hundreds'] = team_data[data_name] / 100
+			team_data[data_name + 'Tens'] = team_data[data_name] / 10 % 10
+			team_data[data_name + 'Units'] = team_data[data_name] % 10
+		elif places == 2:
+			team_data[data_name + 'Tens'] = team_data[data_name] / 10
+			team_data[data_name + 'Units'] = team_data[data_name] % 10
 
-	def modGameData(self, dataName, modulusValue=100, operator = '+', modValue = 1, places=2):
-		if operator=='+':
-			self.gameData[dataName] = (self.gameData[dataName] + modValue) % modulusValue
-		elif operator=='-':
-			self.gameData[dataName] = (self.gameData[dataName] - modValue) % modulusValue
-		elif operator=='*':
-			self.gameData[dataName] = (self.gameData[dataName] * modValue) % modulusValue
-		elif operator=='/':
-			self.gameData[dataName] = (self.gameData[dataName] / modValue) % modulusValue
-		elif operator=='toggle':
-			self.gameData[dataName] = app.functions.toggle(self.gameData[dataName])
-			places=0
-		if places==3:
-			self.gameData[dataName+'Hundreds'] = self.gameData[dataName]/100
-			self.gameData[dataName+'Tens'] = self.gameData[dataName]/10%10
-			self.gameData[dataName+'Units'] = self.gameData[dataName]%10
-		elif places==2:
-			self.gameData[dataName+'Tens'] = self.gameData[dataName]/10
-			self.gameData[dataName+'Units'] = self.gameData[dataName]%10
+	def mod_game_data(self, data_name, modulus_value=100, operator='+', mod_value=1, places=2):
+		if operator == '+':
+			self.gameData[data_name] = (self.gameData[data_name] + mod_value) % modulus_value
+		elif operator == '-':
+			self.gameData[data_name] = (self.gameData[data_name] - mod_value) % modulus_value
+		elif operator == '*':
+			self.gameData[data_name] = (self.gameData[data_name] * mod_value) % modulus_value
+		elif operator == '/':
+			self.gameData[data_name] = (self.gameData[data_name] / mod_value) % modulus_value
+		elif operator == 'toggle':
+			self.gameData[data_name] = not self.gameData[data_name]
+			places = 0
+		if places == 3:
+			self.gameData[data_name + 'Hundreds'] = self.gameData[data_name] / 100
+			self.gameData[data_name + 'Tens'] = self.gameData[data_name] / 10 % 10
+			self.gameData[data_name + 'Units'] = self.gameData[data_name] % 10
+		elif places == 2:
+			self.gameData[data_name + 'Tens'] = self.gameData[data_name] / 10
+			self.gameData[data_name + 'Units'] = self.gameData[data_name] % 10
 
-	def modClockData(self, clockName, dataName, operator = '+', modulusValue=60, modValue = 1, places=2):
+	def mod_clock_data(self, clock_name, data_name, operator='+', modulus_value=60, mod_value=1, places=2):
 
-		clockData = self.clockDict[clockName].timeUnitsDict
-		if operator=='+':
-			clockData[dataName] = (clockData[dataName] + modValue) % modulusValue
-		elif operator=='-':
-			clockData[dataName] = (clockData[dataName] - modValue) % modulusValue
-		elif operator=='*':
-			clockData[dataName] = (clockData[dataName] * modValue) % modulusValue
-		elif operator=='/':
-			clockData[dataName] = (clockData[dataName] / modValue) % modulusValue
-		elif operator=='toggle':
-			clockData[dataName] = app.functions.toggle(clockData[dataName])
-			places=0
-		if places==3:
-			clockData[dataName+'Hundreds'] = clockData[dataName]/100
-			clockData[dataName+'Tens'] = clockData[dataName]/10%10
-			clockData[dataName+'Units'] = clockData[dataName]%10
-		elif places==2:
-			clockData[dataName+'Tens'] = clockData[dataName]/10
-			clockData[dataName+'Units'] = clockData[dataName]%10
+		clock_data = self.clockDict[clock_name].timeUnitsDict
+		if operator == '+':
+			clock_data[data_name] = (clock_data[data_name] + mod_value) % modulus_value
+		elif operator == '-':
+			clock_data[data_name] = (clock_data[data_name] - mod_value) % modulus_value
+		elif operator == '*':
+			clock_data[data_name] = (clock_data[data_name] * mod_value) % modulus_value
+		elif operator == '/':
+			clock_data[data_name] = (clock_data[data_name] / mod_value) % modulus_value
+		elif operator == 'toggle':
+			clock_data[data_name] = not clock_data[data_name]
+			places = 0
+		if places == 3:
+			clock_data[data_name + 'Hundreds'] = clock_data[data_name] / 100
+			clock_data[data_name + 'Tens'] = clock_data[data_name] / 10 % 10
+			clock_data[data_name + 'Units'] = clock_data[data_name] % 10
+		elif places == 2:
+			clock_data[data_name + 'Tens'] = clock_data[data_name] / 10
+			clock_data[data_name + 'Units'] = clock_data[data_name] % 10
 
-	#Keypad Functions
+	# Keypad methods
 
-	#GENERIC FUNCTIONS----------------------------------------
+	# GENERIC METHODS----------------------------------------
 
 	def handheldButton1(self):
-		self.clockDict['delayOfGameClock'].Reset(self.gameSettings['delayOfGameMaxSeconds1'])
+		self.clockDict['delayOfGameClock'].reset_(self.gameSettings['delayOfGameMaxSeconds1'])
 
 	def handheldButton2(self):
-		self.clockDict['delayOfGameClock'].Reset(self.gameSettings['delayOfGameMaxSeconds2'])
+		self.clockDict['delayOfGameClock'].reset_(self.gameSettings['delayOfGameMaxSeconds2'])
 
 	def handheldButton3(self):
 		if self.clockDict['delayOfGameClock'].running:
-			self.clockDict['delayOfGameClock'].Stop()
+			self.clockDict['delayOfGameClock'].stop_()
 		else:
-			self.clockDict['delayOfGameClock'].Start()
+			self.clockDict['delayOfGameClock'].start_()
 
 	def guestScorePlusTen(self):
-		team=self.guest
-		self.modTeamData(team, dataName='score', operator = '+', modulusValue=100, modValue = 10)
+		team = self.guest
+		self.mod_team_data(team, data_name='score', operator='+', modulus_value=100, mod_value=10)
 
 	def guestScorePlusOne(self):
 		if not self.gameSettings['menuFlag']:
-			team=self.guest
-			dataName='score'
+			team = self.guest
+			data_name = 'score'
 			if self.gameSettings['scoreTo19Flag']:
-				self.modTeamData(team, dataName, operator = '+', modulusValue=20, modValue = 1)
-			elif self.gameData['sport']=='MPBASKETBALL1' or self.gameData['sport']=='MPHOCKEY_LX1' or self.gameData['sport']=='MPHOCKEY1':
-				self.modTeamData(team, dataName, operator = '+', modulusValue=200, modValue = 1, places=3)
+				self.mod_team_data(team, data_name, operator='+', modulus_value=20, mod_value=1)
+			elif (
+					self.gameData['sport'] == 'MPBASKETBALL1' or self.gameData['sport'] == 'MPHOCKEY_LX1'
+					or self.gameData['sport'] == 'MPHOCKEY1'):
+				self.mod_team_data(team, data_name, operator='+', modulus_value=200, mod_value=1, places=3)
 			else:
-				self.modTeamData(team, dataName, operator = '+', modulusValue=100, modValue = 1)
+				self.mod_team_data(team, data_name, operator='+', modulus_value=100, mod_value=1)
 
 	def guestScoreMinusOne(self):
-		team=self.guest
-		self.modTeamData(team, dataName='score', operator = '-', modulusValue=100, modValue = 1)
+		team = self.guest
+		self.mod_team_data(team, data_name='score', operator='-', modulus_value=100, mod_value=1)
 
 	def homeScorePlusTen(self):
-		team=self.home
-		self.modTeamData(team, dataName='score', operator = '+', modulusValue=100, modValue = 10)
+		team = self.home
+		self.mod_team_data(team, data_name='score', operator='+', modulus_value=100, mod_value=10)
 
 	def homeScorePlusOne(self):
 		if not self.gameSettings['menuFlag']:
-			team=self.home
-			dataName='score'
+			team = self.home
+			data_name = 'score'
 			if self.gameSettings['scoreTo19Flag']:
-				self.modTeamData(team, dataName, operator = '+', modulusValue=20, modValue = 1)
-			elif self.gameData['sport']=='MPBASKETBALL1' or self.gameData['sport']=='MPHOCKEY_LX1' or self.gameData['sport']=='MPHOCKEY1':
-				self.modTeamData(team, dataName, operator = '+', modulusValue=200, modValue = 1, places=3)
+				self.mod_team_data(team, data_name, operator='+', modulus_value=20, mod_value=1)
+			elif (
+					self.gameData['sport'] == 'MPBASKETBALL1' or self.gameData['sport'] == 'MPHOCKEY_LX1'
+					or self.gameData['sport'] == 'MPHOCKEY1'):
+				self.mod_team_data(team, data_name, operator='+', modulus_value=200, mod_value=1, places=3)
 			else:
-				self.modTeamData(team, dataName, operator = '+', modulusValue=100, modValue = 1)
+				self.mod_team_data(team, data_name, operator='+', modulus_value=100, mod_value=1)
 
 	def homeScoreMinusOne(self):
-		team=self.home
-		self.modTeamData(team, dataName='score', operator = '-', modulusValue=100, modValue = 1)
+		team = self.home
+		self.mod_team_data(team, data_name='score', operator='-', modulus_value=100, mod_value=1)
 
 	def Horn(self):
 		if self.gameSettings['periodHornEnable']:
-			if self.gameSettings['endOfTimeOutTimerHornEnable'] and self.gameData['sportType']=='football':
+			if self.gameSettings['endOfTimeOutTimerHornEnable'] and self.gameData['sportType'] == 'football':
 				print '\a\aHORN ON'
 				self.gameData['periodHorn'] = True
 			elif self.gameSettings['endOfPeriodHornEnable']:
 				print '\a\aHORN ON'
 				self.gameData['periodHorn'] = True
 			if self.gameSettings['visualHornEnable']:
-				self.gameData['visualHornIndicator1']=True
+				self.gameData['visualHornIndicator1'] = True
 				print 'VISUAL HORN ON'
-				if self.gameData['sportType']=='basketball' or self.gameData['sportType']=='hockey':
-					self.gameData['visualHornIndicator2']=True
+				if self.gameData['sportType'] == 'basketball' or self.gameData['sportType'] == 'hockey':
+					self.gameData['visualHornIndicator2'] = True
 			threading.Timer(self.gameSettings['periodHornFlashDuration'], self.hornOff).start()
 
 	def shotHorn(self):
@@ -423,9 +439,9 @@ class Game(object):
 	def hornOff(self):
 		print '\aHORNS OFF'
 		self.gameData['periodHorn'] = False
-		self.gameData['visualHornIndicator1']=False
-		if self.gameData['sportType']=='basketball':
-			self.gameData['visualHornIndicator2']=False
+		self.gameData['visualHornIndicator1'] = False
+		if self.gameData['sportType'] == 'basketball':
+			self.gameData['visualHornIndicator2'] = False
 
 	def shotHornOff(self):
 		print '\aSHOT CLOCK HORN OFF'
@@ -437,116 +453,105 @@ class Game(object):
 
 	def periodClockOnOff(self):
 		if self.gameSettings['segmentTimerEnable']:
-			clockName='segmentTimer'
+			clock_name = 'segmentTimer'
 		elif self.gameSettings['timeOutTimerEnable']:
-			self.gameSettings['timeOutTimerEnable']=False
-			clockName='timeOutTimer'
-			self.clockDict[clockName].Stop()
-			self.clockDict[clockName].Reset()
-			clockName='periodClock'
+			self.gameSettings['timeOutTimerEnable'] = False
+			clock_name = 'timeOutTimer'
+			self.clockDict[clock_name].stop_()
+			self.clockDict[clock_name].reset_()
+			clock_name = 'periodClock'
 		else:
-			clockName='periodClock'
+			clock_name = 'periodClock'
 
 		if self.gameSettings['precisionEnable'] or self.gameSettings['lampTestFlag'] or self.gameSettings['blankTestFlag']:
 			print 'periodClockOnOff button not active'
 			return
 
 		else:
-			if not self.clockDict[clockName].running:
-				self.clockDict[clockName].Start()
-				if self.gameData['sport']=='MPBASKETBALL1' or self.gameData['sportType']=='hockey':
-					self.clockDict['shotClock'].Start()
-					if self.gameData['sportType']=='hockey':
-						for clockName in self.clockDict.keys():
-							if clockName[:7]=='penalty':
-								self.clockDict[clockName].Start()
+			if not self.clockDict[clock_name].running:
+				self.clockDict[clock_name].start_()
+				if self.gameData['sport'] == 'MPBASKETBALL1' or self.gameData['sportType'] == 'hockey':
+					self.clockDict['shotClock'].start_()
+					if self.gameData['sportType'] == 'hockey':
+						for clock_name in self.clockDict.keys():
+							if clock_name[:7] == 'penalty':
+								self.clockDict[clock_name].start_()
 			else:
-				self.clockDict[clockName].Stop()
-				if self.gameData['sport']=='MPBASKETBALL1' or self.gameData['sportType']=='hockey':
-					self.clockDict['shotClock'].Stop()
-					if self.gameData['sportType']=='hockey':
-							for clockName in self.clockDict.keys():
-								if clockName[:7]=='penalty':
-									self.clockDict[clockName].Stop()
+				self.clockDict[clock_name].stop_()
+				if self.gameData['sport'] == 'MPBASKETBALL1' or self.gameData['sportType'] == 'hockey':
+					self.clockDict['shotClock'].stop_()
+					if self.gameData['sportType'] == 'hockey':
+							for clock_name in self.clockDict.keys():
+								if clock_name[:7] == 'penalty':
+									self.clockDict[clock_name].stop_()
 
 	def minutesMinusOne(self):
 		if not self.clockDict['periodClock'].running:
-			if self.clockDict['periodClock'].currentTime<=60: # don't allow negative time
-				self.clockDict['periodClock'].changeSeconds(-self.clockDict['periodClock'].currentTime)
+			if self.clockDict['periodClock'].currentTime <= 60:  # don't allow negative time
+				self.clockDict['periodClock'].change_seconds(-self.clockDict['periodClock'].currentTime)
 			else:
-				self.clockDict['periodClock'].changeSeconds(-60)
+				self.clockDict['periodClock'].change_seconds(-60)
 
 	def secondsMinusOne(self):
 		if not self.clockDict['periodClock'].running:
-			if self.clockDict['periodClock'].currentTime<=1: # don't allow negative time
-				self.clockDict['periodClock'].changeSeconds(-self.clockDict['periodClock'].currentTime)
+			if self.clockDict['periodClock'].currentTime <= 1:  # don't allow negative time
+				self.clockDict['periodClock'].change_seconds(-self.clockDict['periodClock'].currentTime)
 			else:
-				self.clockDict['periodClock'].changeSeconds(-1)
+				self.clockDict['periodClock'].change_seconds(-1)
 
 	def secondsPlusOne(self):
 		if not self.clockDict['periodClock'].running:
-			self.clockDict['periodClock'].changeSeconds(1)
+			self.clockDict['periodClock'].change_seconds(1)
 
 	def quartersPlusOne(self):
-		modulusValue=(self.gameSettings['quarterMax']+1)
-		self.modGameData(dataName='quarter', modulusValue=modulusValue, modValue = 1, places=1, operator = '+')
+		modulus_value = self.gameSettings['quarterMax']+1
+		self.mod_game_data(data_name='quarter', modulus_value=modulus_value, mod_value=1, places=1, operator='+')
 
 	def periodsPlusOne(self):
-		modulusValue=(self.gameSettings['periodMax']+1)
-		self.modGameData(dataName='period', modulusValue=modulusValue, modValue = 1, places=1, operator = '+')
+		modulus_value = (self.gameSettings['periodMax']+1)
+		self.mod_game_data(data_name='period', modulus_value=modulus_value, mod_value=1, places=1, operator='+')
 
 	def possession(self):
-		guestP = self.getTeamData(self.guest, 'possession')
-		homeP = self.getTeamData(self.home, 'possession')
-		#print 'guestP', guestP, 'homeP', homeP
-		if guestP==False and homeP==False:
-			self.setTeamData(self.guest, 'possession', True, places=1)
+		guest_possession = self.get_team_data(self.guest, 'possession')
+		home_possession = self.get_team_data(self.home, 'possession')
+		if not guest_possession and not home_possession:
+			self.set_team_data(self.guest, 'possession', True, places=1)
 		else:
-			self.modTeamData(self.home, 'possession', operator = 'toggle')
-			self.modTeamData(self.guest, 'possession', operator = 'toggle')
+			self.mod_team_data(self.home, 'possession', operator='toggle')
+			self.mod_team_data(self.guest, 'possession', operator='toggle')
 
 	def numberPressed(self, key):
 		pass
 
 	def Number_7_ABC(self):
-		key=7
-		self.numberPressed(key)
+		self.numberPressed(7)
 
 	def Number_8_DEF(self):
-		key=8
-		self.numberPressed(key)
+		self.numberPressed(8)
 
 	def Number_9_GHI(self):
-		key=9
-		self.numberPressed(key)
+		self.numberPressed(9)
 
 	def Number_4_JKL(self):
-		key=4
-		self.numberPressed(key)
+		self.numberPressed(4)
 
 	def Number_5_MNO(self):
-		key=5
-		self.numberPressed(key)
+		self.numberPressed(5)
 
 	def Number_6_PQR(self):
-		key=6
-		self.numberPressed(key)
+		self.numberPressed(6)
 
 	def Number_1_STU(self):
-		key=1
-		self.numberPressed(key)
+		self.numberPressed(1)
 
 	def Number_2_VWX(self):
-		key=2
-		self.numberPressed(key)
+		self.numberPressed(2)
 
 	def Number_3_YZ(self):
-		key=3
-		self.numberPressed(key)
+		self.numberPressed(3)
 
 	def Number_0(self):
-		key=0
-		self.numberPressed(key)
+		self.numberPressed(0)
 
 	def clear_(self):
 		pass
@@ -602,201 +607,171 @@ class Game(object):
 	def periodClockReset(self):
 		pass
 
-	#END OF GENERIC FUNCTIONS-----------
-	#BASEBALL FUNCTIONS----------------------------------------
+	# END OF GENERIC METHODS-----------
+	# BASEBALL METHODS----------------------------------------
 
 	def clear_FlashHit(self):
-		if self.gameSettings['menuFlag'] or self.gameSettings['hitIndicatorFlashOn'] == True:
+		if self.gameSettings['menuFlag'] or self.gameSettings['hitIndicatorFlashOn']:
 			pass
 		else:
 			self.gameSettings['hitIndicatorFlashOn'] = True
-			self.hitCount=self.gameSettings['hitIndicatorFlashCount']
 			self.hitToggle()
 
 	def enter_FlashError(self):
-		if self.gameSettings['menuFlag'] or self.gameSettings['errorIndicatorFlashOn'] == True:
+		if self.gameSettings['menuFlag'] or self.gameSettings['errorIndicatorFlashOn']:
 			pass
 		else:
 			self.gameSettings['errorIndicatorFlashOn'] = True
-			self.errorCount=self.gameSettings['errorIndicatorFlashCount']
 			self.errorToggle()
 
 	def hitToggle(self):
-		self.hitCount-=1
-		if self.hitCount<=0:
+		self.hitCount -= 1
+		if self.hitCount <= 0:
 			self.gameSettings['hitIndicatorFlashOn'] = False
-			self.gameData['hitIndicator']=False
+			self.gameData['hitIndicator'] = False
 		else:
-			self.modGameData('hitIndicator', operator='toggle')
+			self.mod_game_data('hitIndicator', operator='toggle')
 			threading.Timer(self.gameSettings['hitFlashDuration'], self.hitToggle).start()
 
 	def errorToggle(self):
-		self.errorCount-=1
-		if self.errorCount<=0:
+		self.errorCount -= 1
+		if self.errorCount <= 0:
 			self.gameSettings['errorIndicatorFlashOn'] = False
-			self.gameData['errorIndicator']=False
+			self.gameData['errorIndicator'] = False
 		else:
-			self.modGameData('errorIndicator', operator='toggle')
+			self.mod_game_data('errorIndicator', operator='toggle')
 			threading.Timer(self.gameSettings['errorFlashDuration'], self.errorToggle).start()
 
 	def hitsPlusOne(self):
 		if self.gameSettings['inningBot']:
-			team=self.home
+			team = self.home
 		else:
-			team=self.guest
-		dataName = 'hits'
-		self.modTeamData(team, dataName)
+			team = self.guest
+		self.mod_team_data(team, 'hits')
 		self.clear_FlashHit()
 
 	def errorsPlusOne(self):
 		if self.gameSettings['inningBot']:
-			team=self.guest
+			team = self.guest
 		else:
-			team=self.home
-		dataName = 'errors'
-		self.modTeamData(team, dataName)
+			team = self.home
+		self.mod_team_data(team, 'errors')
 		self.enter_FlashError()
 
 	def setSinglePitchCount(self, team):
-		dataNameSPC = 'singlePitchCount'
-		dataName='pitchCount'
-		SPC = self.getTeamData(team, dataName)
-		self.setGameData(dataNameSPC, SPC, places=3)
+		self.set_game_data('singlePitchCount', self.get_team_data(team, 'pitchCount'), places=3)
 
 	def setSinglePitchCountFromMenu(self):
-		if self.gameData['sportType']=='baseball':
-			dataName='atBatIndicator'
-			guestP = self.getTeamData(self.guest, dataName)
-			homeP = self.getTeamData(self.home, dataName)
-			if not guestP and not homeP:
-				team=self.guest
+		if self.gameData['sportType'] == 'baseball':
+			data_name = 'atBatIndicator'
+			guest_at_bat = self.get_team_data(self.guest, data_name)
+			home_at_bat = self.get_team_data(self.home, data_name)
+			if not guest_at_bat and not home_at_bat:
+				team = self.guest
 			else:
-				if guestP:
-					team=self.home
-				if homeP:
-					team=self.guest
-		elif self.gameData['sportType']=='linescore':
+				if guest_at_bat:
+					team = self.home
+				if home_at_bat:
+					team = self.guest
+		elif self.gameData['sportType'] == 'linescore':
 			if self.gameSettings['linescoreStart']:
-				team=self.guest
+				team = self.guest
 			elif self.gameSettings['inningBot']:
-				team=self.guest
+				team = self.guest
 			else:
-				team=self.home
+				team = self.home
 		self.setSinglePitchCount(team)
 
 	def teamAtBat(self):
-		dataName='atBatIndicator'
-		guestP = self.getTeamData(self.guest, dataName)
-		homeP = self.getTeamData(self.home, dataName)
-		if not guestP and not homeP:
-			team=self.home
-			self.setTeamData(self.guest, dataName, True, places=1)
+		data_name = 'atBatIndicator'
+		guest_at_bat = self.get_team_data(self.guest, data_name)
+		home_at_bat = self.get_team_data(self.home, data_name)
+		if not guest_at_bat and not home_at_bat:
+			team = self.home
+			self.set_team_data(self.guest, data_name, True, places=1)
 		else:
-			if guestP:
-				team=self.guest
-			if homeP:
-				team=self.home
-			self.modTeamData(self.home, dataName, operator = 'toggle')
-			self.modTeamData(self.guest, dataName, operator = 'toggle')
+			if guest_at_bat:
+				team = self.guest
+			if home_at_bat:
+				team = self.home
+			self.mod_team_data(self.home, data_name, operator='toggle')
+			self.mod_team_data(self.guest, data_name, operator='toggle')
 		self.setSinglePitchCount(team)
 
 	def singlePitchesPlusOne(self):
 		if self.gameSettings['inningBot']:
 			self.guestPitchesPlusOne()
-			team=self.guest
+			team = self.guest
 		else:
 			self.homePitchesPlusOne()
-			team=self.home
+			team = self.home
 		self.setSinglePitchCount(team)
 
 	def guestPitchesPlusOne(self):
-		team=self.guest
-		dataName = 'pitchCount'
-		self.modTeamData(team, dataName, modulusValue=200, places=3)
-		dataName='atBatIndicator'
-		guestP = self.getTeamData(self.guest, dataName)
-		homeP = self.getTeamData(self.home, dataName)
-		if not guestP:
-			self.setSinglePitchCount(team)
+		self.mod_team_data(self.guest, 'pitchCount', modulus_value=200, places=3)
+		if self.get_team_data(self.home, 'atBatIndicator'):
+			self.setSinglePitchCount(self.guest)
 
 	def homePitchesPlusOne(self):
-		team=self.home
-		dataName = 'pitchCount'
-		self.modTeamData(team, dataName, modulusValue=200, places=3)
-		dataName='atBatIndicator'
-		guestP = self.getTeamData(self.guest, dataName)
-		if guestP:
-			self.setSinglePitchCount(team)
+		self.mod_team_data(self.home, 'pitchCount', modulus_value=200, places=3)
+		if self.get_team_data(self.guest, 'atBatIndicator'):
+			self.setSinglePitchCount(self.home)
 
 	def inningsPlusOne(self):
-		dataName = 'inning'
-		self.modGameData(dataName, modulusValue=20)
+		self.mod_game_data('inning', modulus_value=20)
 
 	def ballsPlusOne(self):
-		dataName = 'balls'
-		modulusValue=self.gameSettings['ballsMax']+1
-		self.modGameData(dataName, modulusValue, places=1)
+		self.mod_game_data('balls', modulus_value=self.gameSettings['ballsMax']+1, places=1)
 
 	def strikesPlusOne(self):
-		dataName = 'strikes'
-		modulusValue=self.gameSettings['strikesMax']+1
-		self.modGameData(dataName, modulusValue, places=1)
+		self.mod_game_data('strikes', modulus_value=self.gameSettings['strikesMax']+1, places=1)
 
 	def outsPlusOne(self):
-		dataName = 'outs'
-		modulusValue=self.gameSettings['outsMax']+1
-		self.modGameData(dataName, modulusValue, places=1)
+		self.mod_game_data('outs', modulus_value=self.gameSettings['outsMax']+1, places=1)
 
 	def incInningTop_Bot(self):
-		inn=self.getGameData('inning')
+		inn = self.get_game_data('inning')
 		if self.gameSettings['linescoreStart']:
-			self.gameSettings['linescoreStart']=False
-			self.gameSettings['inningBot']=False
+			self.gameSettings['linescoreStart'] = False
+			self.gameSettings['inningBot'] = False
 			self.gameData['inning'] = 1
-			team=self.home
-			self.setSinglePitchCount(team)
+			self.setSinglePitchCount(self.home)
 		elif self.gameSettings['inningBot']:
-			self.gameSettings['inningBot']=False
+			self.gameSettings['inningBot'] = False
 			self.inningsPlusOne()
-			team=self.home
-			if inn<=10 and inn!=0:
-				dataName = 'scoreInn'+str(inn)
-				if self.getTeamData(team, dataName)==255:
-					self.setTeamData(team, dataName, value=0, places=1)
-			self.setSinglePitchCount(team)
+			if inn <= 10 and inn != 0:
+				data_name = 'scoreInn'+str(inn)
+				if self.get_team_data(self.home, data_name) == 255:
+					self.set_team_data(self.home, data_name, value=0, places=1)
+			self.setSinglePitchCount(self.home)
 		else:
-			self.gameSettings['inningBot']=True
-			if inn<=10 and inn!=0:
-				team=self.guest
-				dataName = 'scoreInn'+str(inn)
-				if self.getTeamData(team, dataName)==255:
-					self.setTeamData(team, dataName, value=0, places=1)
-			team=self.guest
-			self.setSinglePitchCount(team)
+			self.gameSettings['inningBot'] = True
+			if inn <= 10 and inn != 0:
+				data_name = 'scoreInn'+str(inn)
+				if self.get_team_data(self.guest, data_name) == 255:
+					self.set_team_data(self.guest, data_name, value=0, places=1)
+			self.setSinglePitchCount(self.guest)
 
 	def runsPlusOne(self):
-		inn=self.getGameData('inning')
+		inn = self.get_game_data('inning')
 		if self.gameSettings['linescoreStart']:
 			if self.gameSettings['inningBot']:
-				team=self.guest
+				team = self.guest
 			else:
-				team=self.home
-			dataName = 'score'
-			self.modTeamData(team, dataName)
+				team = self.home
+			self.mod_team_data(team, 'score')
 		else:
 			if self.gameSettings['inningBot']:
-				team=self.home
-				dataName = 'score'
-				self.modTeamData(team, dataName)
+				team = self.home
+				self.mod_team_data(team, 'score')
 			else:
-				team=self.guest
-				dataName = 'score'
-				self.modTeamData(team, dataName)
-			if inn<=10 and inn!=0:
-				dataName = 'scoreInn'+str(inn)
-				if self.getTeamData(team, dataName)==255:
-					self.setTeamData(team, dataName, value=0, places=1)
-				self.modTeamData(team, dataName, modulusValue=10, places=1)
+				team = self.guest
+				self.mod_team_data(team, 'score')
+			if inn <= 10 and inn != 0:
+				data_name = 'scoreInn'+str(inn)
+				if self.get_team_data(team, data_name) == 255:
+					self.set_team_data(team, data_name, value=0, places=1)
+				self.mod_team_data(team, data_name, modulus_value=10, places=1)
 
 	def assignError(self):
 		pass
@@ -822,8 +797,8 @@ class Game(object):
 	def setInningTop_Bot(self):
 		pass
 
-	#END OF BASEBALL FUNCTIONS-----------
-	#FOOTBALL FUNCTIONS----------------------------------------
+	# END OF BASEBALL METHODS-----------
+	# FOOTBALL METHODS----------------------------------------
 
 	def guestTimeOutsMinusOne(self):
 		pass
@@ -832,19 +807,19 @@ class Game(object):
 		pass
 
 	def downsPlusOne(self):
-		self.modGameData('down', modulusValue=5, places=1)
+		self.mod_game_data('down', modulus_value=5, places=1)
 
 	def yardsToGoMinusTen(self):
-		if self.gameData['yardsToGo']<=10:
-			self.setGameData('yardsToGo', 0)
+		if self.gameData['yardsToGo'] <= 10:
+			self.set_game_data('yardsToGo', 0)
 		else:
-			self.modGameData('yardsToGo', operator='-', modValue=10)
+			self.mod_game_data('yardsToGo', operator='-', mod_value=10)
 
 	def yardsToGoMinusOne(self):
-		if self.gameData['yardsToGo']<=1:
-			self.setGameData('yardsToGo', 0)
+		if self.gameData['yardsToGo'] <= 1:
+			self.set_game_data('yardsToGo', 0)
 		else:
-			self.modGameData('yardsToGo', operator='-', modValue=1)
+			self.mod_game_data('yardsToGo', operator='-', mod_value=1)
 
 	def yardsToGoReset(self):
 		pass
@@ -861,99 +836,71 @@ class Game(object):
 	def setBallOn(self):
 		pass
 
-	#END OF FOOTBALL FUNCTIONS-----------
-	#SOCCER FUNCTIONS----------------------------------------
+	# END OF FOOTBALL METHODS-----------
+	# SOCCER METHODS----------------------------------------
 
 	def clear_GuestGoal(self):
 		if self.gameSettings['menuFlag']:
 			pass
 		else:
-			team=self.guest
-			self.modTeamData(team, 'goalIndicator', operator = 'toggle')
-		return
+			self.mod_team_data(self.guest, 'goalIndicator', operator='toggle')
 
 	def enter_HomeGoal(self):
 		if self.gameSettings['menuFlag']:
 			pass
 		else:
-			team=self.home
-			self.modTeamData(team, 'goalIndicator', operator = 'toggle')
-		return
+			self.mod_team_data(self.home, 'goalIndicator', operator='toggle')
 
 	def guestPenaltyPlusOne(self):
-		team=self.guest
-		self.modTeamData(team, 'penaltyCount', modulusValue=10, places=1)
-		return
+		self.mod_team_data(self.guest, 'penaltyCount', modulus_value=10, places=1)
 
 	def homePenaltyPlusOne(self):
-		team=self.home
-		self.modTeamData(team, 'penaltyCount', modulusValue=10, places=1)
-		return
+		self.mod_team_data(self.home, 'penaltyCount', modulus_value=10, places=1)
 
 	def guestShotsPlusOne(self):
-		team=self.guest
-		self.modTeamData(team, 'shots')
-		return
+		self.mod_team_data(self.guest, 'shots')
 
 	def homeShotsPlusOne(self):
-		team=self.home
-		self.modTeamData(team, 'shots')
-		return
+		self.mod_team_data(self.home, 'shots')
 
 	def guestKicksPlusOne(self):
-		team=self.guest
-		self.modTeamData(team, 'kicks')
-		return
+		self.mod_team_data(self.guest, 'kicks')
 
 	def homeKicksPlusOne(self):
-		team=self.home
-		self.modTeamData(team, 'kicks')
-		return
+		self.mod_team_data(self.home, 'kicks')
 
 	def guestSavesPlusOne(self):
-		team=self.guest
-		self.modTeamData(team, 'saves')
-		return
+		self.mod_team_data(self.guest, 'saves')
 
 	def homeSavesPlusOne(self):
-		team=self.home
-		self.modTeamData(team, 'saves')
-		return
+		self.mod_team_data(self.home, 'saves')
 
-	#END OF SOCCER FUNCTIONS-----------
-	#HOCKEY FUNCTIONS----------------------------------------
+	# END OF SOCCER METHODS-----------
+	# HOCKEY METHODS----------------------------------------
 
 	def guestPenalty(self):
-		return
+		pass
 
 	def homePenalty(self):
-		return
+		pass
 
-	#END OF HOCKEY FUNCTIONS-----------
-	#BASKETBALL FUNCTIONS----------------------------------------
+	# END OF HOCKEY METHODS-----------
+	# BASKETBALL METHODS----------------------------------------
 
 	def guestTeamFoulsPlusOne(self):
-		team=self.guest
-		modulusValue=self.gameSettings['FoulsMax']+1
-		self.modTeamData(team, 'fouls', modulusValue, operator='+', places=2)
+		self.mod_team_data(self.guest, 'fouls', modulus_value=self.gameSettings['FoulsMax']+1, operator='+', places=2)
 		return
 
 	def homeTeamFoulsPlusOne(self):
-		team=self.home
-		modulusValue=self.gameSettings['FoulsMax']+1
-		self.modTeamData(team, 'fouls', modulusValue, operator='+', places=2)
+		self.mod_team_data(self.home, 'fouls', modulus_value=self.gameSettings['FoulsMax']+1, operator='+', places=2)
 		return
 
 	def guestBonusPlusOne(self):
-		team=self.guest
-		modulusValue=3
-		self.modTeamData(team, 'bonus', modulusValue, operator='+', places=1)
+		self.mod_team_data(self.guest, 'bonus', modulus_value=3, operator='+', places=1)
 		return
 
 	def homeBonusPlusOne(self):
-		team=self.home
-		modulusValue=3
-		self.modTeamData(team, 'bonus', modulusValue, operator='+', places=1)
+		self.mod_team_data(self.home, 'bonus', modulus_value=3, operator='+', places=1)
 		return
 
 	def playerMatchGame(self):
@@ -962,410 +909,369 @@ class Game(object):
 	def playerFoul(self):
 		return
 
-	#END OF BASKETBALL FUNCTIONS-----------
-	#CRICKET FUNCTIONS----------------------------------------
+	# END OF BASKETBALL METHODS-----------
+	# CRICKET METHODS----------------------------------------
 
 	def oversPlusOne(self):
 		self.gameData['overs'] = (self.gameData['overs'] + 1) % 100
-		return
 
 	def player1ScorePlusOne(self):
 		self.gameData['player1Score'] = (self.gameData['player1Score'] + 1) % 200
-		return
 
 	def player2ScorePlusOne(self):
 		self.gameData['player2Score'] = (self.gameData['player2Score'] + 1) % 200
-		return
 
 	def wicketsPlusOne(self):
 		self.gameData['wickets'] = (self.gameData['wickets'] + 1) % 10
-		return
 
 	def setPlayer1Number(self):
-		return
+		pass
 
 	def setPlayer2Number(self):
-		return
+		pass
 
 	def setPlayer1Score(self):
-		return
+		pass
 
 	def setPlayer2Score(self):
-		return
+		pass
 
 	def setTotalScore(self):
-		return
+		pass
 
 	def setOvers(self):
-		return
+		pass
 
 	def setLastMan(self):
-		return
+		pass
 
 	def setLastWicket(self):
-		return
+		pass
 
 	def set1eInnings(self):
-		return
+		pass
 
-	#END OF CRICKET FUNCTIONS-----------
-	#RACETRACK FUNCTIONS----------------------------------------
+	# END OF CRICKET METHODS-----------
+	# RACETRACK METHODS----------------------------------------
 
-	#END OF RACETRACK FUNCTIONS-----------
-	#STAT FUNCTIONS----------------------------------------
+	# END OF RACETRACK METHODS-----------
+	# STAT METHODS----------------------------------------
 
 	def fouls_digsMinusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
-		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
-			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
-			self.modPlayerData(team, playerID, 'fouls', operator='-')
-			modulusValue=self.gameSettings['FoulsMax']+1
-			self.modTeamData(team, 'fouls', modulusValue, operator='-', places=2)
-		return
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)  # Only team needed
+		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber'] != '  ':
+			player_id = self.get_player_data(team, 'playerNumber', player_number=self.gameSettings['playerNumber'])
+			self.mod_player_data(team, player_id, 'fouls', operator='-')
+			self.mod_team_data(team, 'fouls', modulus_value=self.gameSettings['FoulsMax']+1, operator='-', places=2)
 
 	def fouls_digsPlusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
-		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
-			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
-			self.modPlayerData(team, playerID, 'fouls', operator='+')
-			modulusValue=self.gameSettings['FoulsMax']+1
-			self.modTeamData(team, 'fouls', modulusValue, operator='+', places=2)
-		return
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)  # Only team needed
+		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber'] != '  ':
+			player_id = self.get_player_data(team, 'playerNumber', player_number=self.gameSettings['playerNumber'])
+			self.mod_player_data(team, player_id, 'fouls', operator='+')
+			self.mod_team_data(team, 'fouls', modulus_value=self.gameSettings['FoulsMax']+1, operator='+', places=2)
 
 	def guest_homeSwitch(self):
-		self.gameSettings['currentTeamGuest']= not self.gameSettings['currentTeamGuest']
+		self.gameSettings['currentTeamGuest'] = not self.gameSettings['currentTeamGuest']
 		if self.gameSettings['currentTeamGuest']:
-			activePlayerList=self.activeGuestPlayerList
+			active_player_list = self.activeGuestPlayerList
 		else:
-			activePlayerList=self.activeHomePlayerList
-		if len(activePlayerList)==0:
-			statIndex=0
+			active_player_list = self.activeHomePlayerList
+		if len(active_player_list) == 0:
+			stat_index = 0
 		else:
-			statIndex=1
-		self.gameSettings['statNumber']=self.statNumberList[statIndex]
-		return
+			stat_index = 1
+		self.gameSettings['statNumber'] = self.statNumberList[stat_index]
 
 	def points_killsMinusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
-		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
-			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
-			self.modPlayerData(team, playerID, 'points', operator='-')
-			modulusValue=200
-			self.modTeamData(team, 'score', modulusValue, operator = '-', places=3)
-		return
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)  # Only team needed
+		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber'] != '  ':
+			player_id = self.get_player_data(team, 'playerNumber', player_number=self.gameSettings['playerNumber'])
+			self.mod_player_data(team, player_id, 'points', operator='-')
+			self.mod_team_data(team, 'score', modulus_value=200, operator='-', places=3)
 
 	def points_killsPlusOne(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
-		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber']!='  ':
-			playerID=self.getPlayerData(team, 'playerNumber', playerNumber=self.gameSettings['playerNumber'])
-			self.modPlayerData(team, playerID, 'points', operator='+')
-			modulusValue=200
-			self.modTeamData(team, 'score', modulusValue, operator = '+', places=3)
-		return
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)  # Only team needed
+		if self.gameSettings['statNumber'] is not None or self.gameSettings['playerNumber'] != '  ':
+			player_id = self.get_player_data(team, 'playerNumber', player_number=self.gameSettings['playerNumber'])
+			self.mod_player_data(team, player_id, 'points', operator='+')
+			self.mod_team_data(team, 'score', modulus_value=200, operator='+', places=3)
 
 	def nextPlayer(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
-		notActiveList=[]
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)
+		not_active_list = []
 		for playerID in self.teamsDict[team].playersDict.keys():
-			playerNumber=self.getPlayerData(team, 'playerNumber', playerID=playerID)
-			playerActive=self.getPlayerData(team, 'playerActive', playerID=playerID)
-			if playerNumber!='  ' and not playerActive:
-				notActiveList.append(playerNumber)
-		print 'notActiveList', notActiveList
-		notActiveList.sort()
-		print 'notActiveList', notActiveList
+			player_number = self.get_player_data(team, 'playerNumber', player_id=playerID)
+			player_active = self.get_player_data(team, 'playerActive', player_id=playerID)
+			if player_number != '  ' and not player_active:
+				not_active_list.append(player_number)
+		not_active_list.sort()
+		active_index = self.statNumberList.index(self.gameSettings['statNumber'])
 
-		activeIndex=self.statNumberList.index(self.gameSettings['statNumber'])
-		print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-		print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-		print 'statNumber', self.gameSettings['statNumber']
-
-		#Enter index governed list choosing area
-		if activeIndex and self.notActiveIndex is not None:
-			if activeIndex>=len(activePlayerList):
-				self.notActiveIndex=0
-				print 1
-				print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-				print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-				print 'statNumber', self.gameSettings['statNumber']
-				self.gameSettings['statNumber']=self.statNumberList[0]
-				self.gameSettings['playerNumber']=notActiveList[self.notActiveIndex]
-				print 'statNumber', self.gameSettings['statNumber']
-				print 'playerNumber', self.gameSettings['playerNumber']
+		# Enter index governed list choosing area
+		if active_index and self.notActiveIndex is not None:
+			if active_index >= len(active_player_list):
+				self.notActiveIndex = 0
+				self.gameSettings['statNumber'] = self.statNumberList[0]
+				self.gameSettings['playerNumber'] = not_active_list[self.notActiveIndex]
 			else:
-				print 2
-				print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-				print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-				print 'statNumber', self.gameSettings['statNumber']
-				self.gameSettings['statNumber']=self.statNumberList[activeIndex+1]
-				self.gameSettings['playerNumber']=activePlayerList[activeIndex]
-				print 'statNumber', self.gameSettings['statNumber']
-				print 'playerNumber', self.gameSettings['playerNumber']
-		elif activeIndex:
-			if activeIndex>=len(activePlayerList):
-				print 3
-				print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-				print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-				print 'statNumber', self.gameSettings['statNumber']
-				self.gameSettings['statNumber']=self.statNumberList[1]
-				self.gameSettings['playerNumber']=activePlayerList[0]
-				print 'statNumber', self.gameSettings['statNumber']
-				print 'playerNumber', self.gameSettings['playerNumber']
+				self.gameSettings['statNumber'] = self.statNumberList[active_index+1]
+				self.gameSettings['playerNumber'] = active_player_list[active_index]
+		elif active_index:
+			if active_index >= len(active_player_list):
+				self.gameSettings['statNumber'] = self.statNumberList[1]
+				self.gameSettings['playerNumber'] = active_player_list[0]
 			else:
-				print 4
-				print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-				print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-				print 'statNumber', self.gameSettings['statNumber']
-				self.gameSettings['statNumber']=self.statNumberList[activeIndex+1]
-				self.gameSettings['playerNumber']=activePlayerList[activeIndex]
-				print 'statNumber', self.gameSettings['statNumber']
-				print 'playerNumber', self.gameSettings['playerNumber']
+				self.gameSettings['statNumber'] = self.statNumberList[active_index+1]
+				self.gameSettings['playerNumber'] = active_player_list[active_index]
 		elif self.notActiveIndex is not None:
-			if self.notActiveIndex+1>=len(notActiveList):
-				print 5
-				self.notActiveIndex=0
-				print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-				print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-				print 'statNumber', self.gameSettings['statNumber']
-				if len(activePlayerList):
-					returnToActive=1
-					self.gameSettings['playerNumber']=activePlayerList[activeIndex]
+			if self.notActiveIndex+1 >= len(not_active_list):
+				self.notActiveIndex = 0
+				if len(active_player_list):
+					return_to_active = 1
+					self.gameSettings['playerNumber'] = active_player_list[active_index]
 				else:
-					returnToActive=0
-					self.gameSettings['playerNumber']=notActiveList[self.notActiveIndex]
-				self.gameSettings['statNumber']=self.statNumberList[returnToActive]
-				print 'statNumber', self.gameSettings['statNumber']
-				print 'playerNumber', self.gameSettings['playerNumber']
+					return_to_active = 0
+					self.gameSettings['playerNumber'] = not_active_list[self.notActiveIndex]
+				self.gameSettings['statNumber'] = self.statNumberList[return_to_active]
 			else:
-				print 6
-				self.notActiveIndex+=1
-				print 'activeIndex', activeIndex, 'self.notActiveIndex', self.notActiveIndex
-				print 'len(notActiveList)', len(notActiveList),'len(activePlayerList)', len(activePlayerList)
-				print 'statNumber', self.gameSettings['statNumber']
-				self.gameSettings['statNumber']=self.statNumberList[0]
-				self.gameSettings['playerNumber']=notActiveList[self.notActiveIndex]
-				print 'statNumber', self.gameSettings['statNumber']
-				print 'playerNumber', self.gameSettings['playerNumber']
+				self.notActiveIndex += 1
+				self.gameSettings['statNumber'] = self.statNumberList[0]
+				self.gameSettings['playerNumber'] = not_active_list[self.notActiveIndex]
 		else:
 			print 'No players in roster'
-		return
 
 	def previousPlayer(self):
-		activePlayerList, team, teamName=app.functions.activePlayerListSelect(self)
-
-		index=self.statNumberList.index(self.gameSettings['statNumber'])
-		if len(activePlayerList):
-			if index==1:
-				print 'end', len(activePlayerList), index
-				self.gameSettings['statNumber']=self.statNumberList[len(activePlayerList)]
-				self.gameSettings['playerNumber']=activePlayerList[len(activePlayerList)-1]
+		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)
+		index = self.statNumberList.index(self.gameSettings['statNumber'])
+		if len(active_player_list):
+			if index == 1:
+				self.gameSettings['statNumber'] = self.statNumberList[len(active_player_list)]
+				self.gameSettings['playerNumber'] = active_player_list[len(active_player_list)-1]
 			else:
-				print 'previous', len(activePlayerList), index
-				self.gameSettings['statNumber']=self.statNumberList[index-1]
-				self.gameSettings['playerNumber']=activePlayerList[index-2]
-		else:
-			pass
-		return
+				self.gameSettings['statNumber'] = self.statNumberList[index-1]
+				self.gameSettings['playerNumber'] = active_player_list[index-2]
 
 	def subPlayer(self):
-		return
+		pass
 
 	def addPlayer(self):
-		return
+		pass
 
 	def deletePlayer(self):
-		return
+		pass
 
 	def displaySize(self):
-		return
+		pass
 
 	def editPlayer(self):
-		return
+		pass
 
-	#END OF STAT FUNCTIONS-----------
+	# END OF STAT METHODS-----------
+
 
 class Baseball(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Baseball, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Baseball, self).__init__(number_of_teams)
 
-		self.gameData['sportType']="baseball"
+		self.gameData['sportType'] = "baseball"
 		if self.gameSettings['hoursFlagJumper']:
-			self.gameSettings['hoursFlag']=True
-		if self.gameData['sport']=='MPLINESCORE4' or self.gameData['sport']=='MPLINESCORE5' or self.gameData['sport']=='MPMP-15X1' or self.gameData['sport']=='MPMP-14X1':
-			self.gameData['sportType']='linescore'
-			self.gameSettings['hoursFlag']=True
+			self.gameSettings['hoursFlag'] = True
+		if (
+				self.gameData['sport'] == 'MPLINESCORE4' or self.gameData['sport'] == 'MPLINESCORE5'
+				or self.gameData['sport'] == 'MPMP-15X1' or self.gameData['sport'] == 'MPMP-14X1'):
+			self.gameData['sportType'] = 'linescore'
+			self.gameSettings['hoursFlag'] = True
 
-		if self.configDict['keypadType']=='MM':
+		if self.configDict['keypadType'] == 'MM':
 			self.gameSettings['baseballPeriodClockMaxSeconds'] = self.gameSettings['MM_baseballPeriodClockMaxSeconds']
-		elif self.configDict['keypadType']=='MP':
+		elif self.configDict['keypadType'] == 'MP':
 			self.gameSettings['baseballPeriodClockMaxSeconds'] = self.gameSettings['MP_baseballPeriodClockMaxSeconds']
 
-		homePC = self.getTeamData(self.home, 'pitchCount')
-		self.setGameData('singlePitchCount', homePC, places=3)
-		self.setGameData('inning', self.getGameData('inning'))
+		self.set_game_data('singlePitchCount', self.get_team_data(self.home, 'pitchCount'), places=3)
+		self.set_game_data('inning', self.get_game_data('inning'))
 
-		if self.gameData['outs']>=2:
+		if self.gameData['outs'] >= 2:
 			self.gameData['outs1'] = True
 			self.gameData['outs2'] = True
-		elif self.gameData['outs']==1:
+		elif self.gameData['outs'] == 1:
 			self.gameData['outs1'] = True
 			self.gameData['outs2'] = False
 		else:
 			self.gameData['outs1'] = False
 			self.gameData['outs2'] = False
 
-		self.setGameData('pitchSpeed', self.getGameData('pitchSpeed'), places=3)
-		self.setGameData('batterNumber', self.getGameData('batterNumber'))
+		self.set_game_data('pitchSpeed', self.get_game_data('pitchSpeed'), places=3)
+		self.set_game_data('batterNumber', self.get_game_data('batterNumber'))
 
-		self.gameSettings['errorIndicatorFlashOn']=False
-		self.gameSettings['hitIndicatorFlashOn']=False
+		self.gameSettings['errorIndicatorFlashOn'] = False
+		self.gameSettings['hitIndicatorFlashOn'] = False
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
-		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
-		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')
-		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
-		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, 'delayOfGameClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['baseballPeriodClockMaxSeconds'], \
-		self.gameSettings['periodClockResolution'], self.gameSettings['hoursFlag'], clockName='periodClock')	
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)	
-		self.clockList=self.clockDict.keys()
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['shotClock'] = app.game.clock.Clock(
+			False, self.gameSettings['shotClockMaxSeconds1'], clock_name='shotClock')
+		
+		self.clockDict['delayOfGameClock'] = app.game.clock.Clock(
+			False, self.gameSettings['delayOfGameMaxSeconds1'], clock_name='delayOfGameClock')
+		
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.gameSettings['baseballPeriodClockMaxSeconds'],
+			self.gameSettings['periodClockResolution'], self.gameSettings['hoursFlag'], clock_name='periodClock')
+		
+		self.gameData = self.clockDict['shotClock'].game_data_update(self.gameData, 'shotClock')
+		self.gameData = self.clockDict['delayOfGameClock'].game_data_update(self.gameData, 'delayOfGameClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData)
 
 	def periodClockReset(self):
 		if not self.gameSettings['menuFlag']:
 			if not self.clockDict['periodClock'].running:
-				self.gameSettings['periodClockResetFlag']=True
-				perMax=self.gameSettings['baseballPeriodClockMaxSeconds']
-				if self.clockDict['periodClock'].currentTime>=(90*60):
-					self.clockDict['periodClock'].Reset(perMax)
-				elif self.clockDict['periodClock'].currentTime>=(60*60):
-					self.clockDict['periodClock'].Reset(90*60)
-				elif self.clockDict['periodClock'].currentTime>=(30*60):
-					self.clockDict['periodClock'].Reset(60*60)
-				elif self.clockDict['periodClock'].currentTime>=(15*60):
-					self.clockDict['periodClock'].Reset(30*60)
-				elif self.clockDict['periodClock'].currentTime>=perMax:
-					self.clockDict['periodClock'].Reset(15*60)
-				elif self.clockDict['periodClock'].currentTime<perMax:
-					self.clockDict['periodClock'].Reset(perMax)
+				self.gameSettings['periodClockResetFlag'] = True
+				period_max = self.gameSettings['baseballPeriodClockMaxSeconds']
+				if self.clockDict['periodClock'].currentTime >= (90*60):
+					self.clockDict['periodClock'].reset_(period_max)
+				elif self.clockDict['periodClock'].currentTime >= (60*60):
+					self.clockDict['periodClock'].reset_(90 * 60)
+				elif self.clockDict['periodClock'].currentTime >= (30*60):
+					self.clockDict['periodClock'].reset_(60 * 60)
+				elif self.clockDict['periodClock'].currentTime >= (15*60):
+					self.clockDict['periodClock'].reset_(30 * 60)
+				elif self.clockDict['periodClock'].currentTime >= period_max:
+					self.clockDict['periodClock'].reset_(15 * 60)
+				elif self.clockDict['periodClock'].currentTime < period_max:
+					self.clockDict['periodClock'].reset_(period_max)
+
 
 class Football(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Football, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Football, self).__init__(number_of_teams)
 
 		self.gameData['sportType'] = 'football'
 
-		if self.configDict['keypadType']=='MM':
+		if self.configDict['keypadType'] == 'MM':
 			self.gameSettings['footballPeriodClockMaxSeconds'] = self.gameSettings['MM_footballPeriodClockMaxSeconds']
-		elif self.configDict['keypadType']=='MP':
+		elif self.configDict['keypadType'] == 'MP':
 			self.gameSettings['footballPeriodClockMaxSeconds'] = self.gameSettings['MP_footballPeriodClockMaxSeconds']
 
-		if self.gameData['quarter']==4:
+		if self.gameData['quarter'] == 4:
 			self.gameData['quarter4'] = True
 		else:
 			self.gameData['quarter4'] = False
 
-		self.setGameData('yardsToGo', self.gameData['yardsToGo'])
-		self.setGameData('ballOn', self.gameData['ballOn'])
+		self.set_game_data('yardsToGo', self.gameData['yardsToGo'])
+		self.set_game_data('ballOn', self.gameData['ballOn'])
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 		
-		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='delayOfGameClock')
-		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, name='delayOfGameClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['footballPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, name='periodClock')
-		self.clockList=self.clockDict.keys()
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['delayOfGameClock'] = app.game.clock.Clock(
+			False, self.gameSettings['delayOfGameMaxSeconds1'], clock_name='delayOfGameClock')
+		
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.gameSettings['footballPeriodClockMaxSeconds'],
+			self.gameSettings['periodClockResolution'], clock_name='periodClock')
+		
+		self.gameData = self.clockDict['delayOfGameClock'].game_data_update(self.gameData, name='delayOfGameClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, name='periodClock')
 
 	def periodClockReset(self):
 		if not self.gameSettings['menuFlag']:
 			if not self.clockDict['periodClock'].running:
-				self.gameSettings['periodClockResetFlag']=True
-				perMax=self.gameSettings['footballPeriodClockMaxSeconds']
-				if self.clockDict['periodClock'].currentTime>=(90*60):
-					self.clockDict['periodClock'].Reset(perMax)
-				elif self.clockDict['periodClock'].currentTime>=(60*60):
-					self.clockDict['periodClock'].Reset(90*60)
-				elif self.clockDict['periodClock'].currentTime>=(30*60):
-					self.clockDict['periodClock'].Reset(60*60)
-				elif self.clockDict['periodClock'].currentTime>=(15*60):
-					self.clockDict['periodClock'].Reset(30*60)
-				elif self.clockDict['periodClock'].currentTime>=perMax:
-					self.clockDict['periodClock'].Reset(15*60)
-				elif self.clockDict['periodClock'].currentTime<perMax:
-					self.clockDict['periodClock'].Reset(perMax)
+				self.gameSettings['periodClockResetFlag'] = True
+				period_max = self.gameSettings['footballPeriodClockMaxSeconds']
+				if self.clockDict['periodClock'].currentTime >= (90*60):
+					self.clockDict['periodClock'].reset_(period_max)
+				elif self.clockDict['periodClock'].currentTime >= (60*60):
+					self.clockDict['periodClock'].reset_(90 * 60)
+				elif self.clockDict['periodClock'].currentTime >= (30*60):
+					self.clockDict['periodClock'].reset_(60 * 60)
+				elif self.clockDict['periodClock'].currentTime >= (15*60):
+					self.clockDict['periodClock'].reset_(30 * 60)
+				elif self.clockDict['periodClock'].currentTime >= period_max:
+					self.clockDict['periodClock'].reset_(15 * 60)
+				elif self.clockDict['periodClock'].currentTime < period_max:
+					self.clockDict['periodClock'].reset_(period_max)
 
 	def guestTimeOutsMinusOne(self):
-		team=self.guest
-		modulusValue=self.gameSettings['TOLMaxFB']+1
-		self.modTeamData(team, 'timeOutsLeft', modulusValue, operator='-', places=1)
+		self.mod_team_data(self.guest, 'timeOutsLeft', modulus_value=self.gameSettings['TOLMaxFB']+1, operator='-', places=1)
 
 	def homeTimeOutsMinusOne(self):
-		team=self.home
-		modulusValue=self.gameSettings['TOLMaxFB']+1
-		self.modTeamData(team, 'timeOutsLeft', modulusValue, operator='-', places=1)
+		self.mod_team_data(self.home, 'timeOutsLeft', modulus_value=self.gameSettings['TOLMaxFB']+1, operator='-', places=1)
+
 
 class Soccer(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Soccer, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Soccer, self).__init__(number_of_teams)
 
-		self.gameData['sportType']='soccer'
+		self.gameData['sportType'] = 'soccer'
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 		
-		self.clockDict['delayOfGameClock']=app.game.clock.clock(False, self.gameSettings['delayOfGameMaxSeconds1'], clockName='periodClock')
-		self.gameData = self.clockDict['delayOfGameClock'].gameDataUpdate(self.gameData, 'delayOfGameClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_soccerPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['delayOfGameClock'] = app.game.clock.Clock(
+			False, self.gameSettings['delayOfGameMaxSeconds1'], clock_name='periodClock')
 
-		self.clockList=self.clockDict.keys()
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.gameSettings['MP_soccerPeriodClockMaxSeconds'],
+			self.gameSettings['periodClockResolution'], clock_name='periodClock')
+
+		self.gameData = self.clockDict['delayOfGameClock'].game_data_update(self.gameData, 'delayOfGameClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, 'periodClock')
+
 
 class Hockey(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Hockey, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Hockey, self).__init__(number_of_teams)
 
-		self.gameData['sportType']='hockey'
+		self.gameData['sportType'] = 'hockey'
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
-		self.clockDict['penalty1_teamOne']=app.game.clock.clock(False, 0, clockName='penalty1_teamOne')
-		self.gameData = self.clockDict['penalty1_teamOne'].gameDataUpdate(self.gameData, 'penalty1_teamOne')
-		self.clockDict['penalty1_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty1_teamTwo')
-		self.gameData = self.clockDict['penalty1_teamTwo'].gameDataUpdate(self.gameData, 'penalty1_teamTwo')
-		self.clockDict['penalty2_teamOne']=app.game.clock.clock(False, 0, clockName='penalty2_teamOne')
-		self.gameData = self.clockDict['penalty2_teamOne'].gameDataUpdate(self.gameData, 'penalty2_teamOne')
-		self.clockDict['penalty2_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty2_teamTwo')
-		self.gameData = self.clockDict['penalty2_teamTwo'].gameDataUpdate(self.gameData, 'penalty2_teamTwo')
-		self.clockDict['penalty3_teamOne']=app.game.clock.clock(False, 0, clockName='penalty3_teamOne')
-		self.gameData = self.clockDict['penalty3_teamOne'].gameDataUpdate(self.gameData, 'penalty3_teamOne')
-		self.clockDict['penalty3_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty3_teamTwo')
-		self.gameData = self.clockDict['penalty3_teamTwo'].gameDataUpdate(self.gameData, 'penalty3_teamTwo')
-		self.clockDict['penalty4_teamOne']=app.game.clock.clock(False, 0, clockName='penalty4_teamOne')
-		self.gameData = self.clockDict['penalty4_teamOne'].gameDataUpdate(self.gameData, 'penalty4_teamOne')
-		self.clockDict['penalty4_teamTwo']=app.game.clock.clock(False, 0, clockName='penalty4_teamTwo')
-		self.gameData = self.clockDict['penalty4_teamTwo'].gameDataUpdate(self.gameData, 'penalty4_teamTwo')
-		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
-		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')		
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_hockeyPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')		
-		self.clockList=self.clockDict.keys()
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['penalty1_teamOne'] = app.game.clock.Clock(False, 0, clock_name='penalty1_teamOne')
+		self.clockDict['penalty1_teamTwo'] = app.game.clock.Clock(False, 0, clock_name='penalty1_teamTwo')
+		self.clockDict['penalty2_teamOne'] = app.game.clock.Clock(False, 0, clock_name='penalty2_teamOne')
+		self.clockDict['penalty2_teamTwo'] = app.game.clock.Clock(False, 0, clock_name='penalty2_teamTwo')
+		self.clockDict['penalty3_teamOne'] = app.game.clock.Clock(False, 0, clock_name='penalty3_teamOne')
+		self.clockDict['penalty3_teamTwo'] = app.game.clock.Clock(False, 0, clock_name='penalty3_teamTwo')
+		self.clockDict['penalty4_teamOne'] = app.game.clock.Clock(False, 0, clock_name='penalty4_teamOne')
+		self.clockDict['penalty4_teamTwo'] = app.game.clock.Clock(False, 0, clock_name='penalty4_teamTwo')
+		self.clockDict['shotClock'] = app.game.clock.Clock(
+			False, self.gameSettings['shotClockMaxSeconds1'], clock_name='shotClock')
+
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.gameSettings['MP_hockeyPeriodClockMaxSeconds'],
+			self.gameSettings['periodClockResolution'], clock_name='periodClock')
+
+		self.gameData = self.clockDict['penalty1_teamOne'].game_data_update(self.gameData, 'penalty1_teamOne')
+		self.gameData = self.clockDict['penalty1_teamTwo'].game_data_update(self.gameData, 'penalty1_teamTwo')
+		self.gameData = self.clockDict['penalty2_teamOne'].game_data_update(self.gameData, 'penalty2_teamOne')
+		self.gameData = self.clockDict['penalty2_teamTwo'].game_data_update(self.gameData, 'penalty2_teamTwo')
+		self.gameData = self.clockDict['penalty3_teamOne'].game_data_update(self.gameData, 'penalty3_teamOne')
+		self.gameData = self.clockDict['penalty3_teamTwo'].game_data_update(self.gameData, 'penalty3_teamTwo')
+		self.gameData = self.clockDict['penalty4_teamOne'].game_data_update(self.gameData, 'penalty4_teamOne')
+		self.gameData = self.clockDict['penalty4_teamTwo'].game_data_update(self.gameData, 'penalty4_teamTwo')
+		self.gameData = self.clockDict['shotClock'].game_data_update(self.gameData, 'shotClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, 'periodClock')
 
 	def handheldButton1(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds1'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds1'])
 		self.gameSettings['shotClockBlankEnable'] = False
-		self.gameSettings['shotClockHornEnable']=True
+		self.gameSettings['shotClockHornEnable'] = True
 
 	def handheldButton2(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds2'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds2'])
 		self.gameSettings['shotClockBlankEnable'] = False
-		self.gameSettings['shotClockHornEnable']=True
+		self.gameSettings['shotClockHornEnable'] = True
 
 	def handheldButton3(self):
 		if self.gameSettings['shotClockBlankEnable']:
@@ -1373,46 +1279,50 @@ class Hockey(Game):
 		else:
 			self.gameSettings['shotClockBlankEnable'] = True
 		if self.clockDict['shotClock'].currentTime:
-			self.gameSettings['shotClockHornEnable']=False
-			self.clockDict['shotClock'].Reset(0)
+			self.gameSettings['shotClockHornEnable'] = False
+			self.clockDict['shotClock'].reset_(0)
+
 
 class Basketball(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Basketball, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Basketball, self).__init__(number_of_teams)
 
-		self.gameData['sportType']='basketball'
+		self.gameData['sportType'] = 'basketball'
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
-		if self.configDict['keypadType']=='MM':
+		if self.configDict['keypadType'] == 'MM':
 			self.basketballPeriodClockMaxSeconds = (self.gameSettings['MM_basketballPeriodClockMaxSeconds'])
-		elif self.configDict['keypadType']=='MP':
+		elif self.configDict['keypadType'] == 'MP':
 			self.basketballPeriodClockMaxSeconds = (self.gameSettings['MP_basketballPeriodClockMaxSeconds'])
 
-		self.gameSettings['periodClockTenthsFlag']=True
+		self.gameSettings['periodClockTenthsFlag'] = True
 
-		self.setGameData('playerNumber', self.gameData['playerNumber'])
-		self.setGameData('playerFouls', self.gameData['playerFouls'])
+		self.set_game_data('playerNumber', self.gameData['playerNumber'])
+		self.set_game_data('playerFouls', self.gameData['playerFouls'])
 		
-		#Order of thread creation sets priority when init same class, last is highest
-		self.clockDict['shotClock']=app.game.clock.clock(False, self.gameSettings['shotClockMaxSeconds1'], clockName='shotClock')
-		self.gameData = self.clockDict['shotClock'].gameDataUpdate(self.gameData, 'shotClock')
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.basketballPeriodClockMaxSeconds, self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData, 'periodClock')
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['shotClock'] = app.game.clock.Clock(
+			False, self.gameSettings['shotClockMaxSeconds1'], clock_name='shotClock')
 
-		self.clockList=self.clockDict.keys()
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.basketballPeriodClockMaxSeconds,
+			self.gameSettings['periodClockResolution'], clock_name='periodClock')
+
+		self.gameData = self.clockDict['shotClock'].game_data_update(self.gameData, 'shotClock')
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData, 'periodClock')
 
 	def handheldButton1(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds1'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds1'])
 		self.gameSettings['shotClockBlankEnable'] = False
-		self.gameSettings['shotClockHornEnable']=True
+		self.gameSettings['shotClockHornEnable'] = True
 
 	def handheldButton2(self):
-		self.clockDict['shotClock'].Reset(self.gameSettings['shotClockMaxSeconds2'])
+		self.clockDict['shotClock'].reset_(self.gameSettings['shotClockMaxSeconds2'])
 		self.gameSettings['shotClockBlankEnable'] = False
-		self.gameSettings['shotClockHornEnable']=True
+		self.gameSettings['shotClockHornEnable'] = True
 
 	def handheldButton3(self):
 		if self.gameSettings['shotClockBlankEnable']:
@@ -1420,91 +1330,95 @@ class Basketball(Game):
 		else:
 			self.gameSettings['shotClockBlankEnable'] = True
 		if self.clockDict['shotClock'].currentTime:
-			self.gameSettings['shotClockHornEnable']=False
-			self.clockDict['shotClock'].Reset(0)
+			self.gameSettings['shotClockHornEnable'] = False
+			self.clockDict['shotClock'].reset_(0)
 
 	def periodClockReset(self):
 		if not self.gameSettings['menuFlag']:
 			if not self.clockDict['periodClock'].running:
-				self.gameSettings['periodClockResetFlag']=True
-				perMax=self.basketballPeriodClockMaxSeconds
-				if self.clockDict['periodClock'].currentTime>=(90*60):
-					self.clockDict['periodClock'].Reset(perMax)
-				elif self.clockDict['periodClock'].currentTime>=(60*60):
-					self.clockDict['periodClock'].Reset(90*60)
-				elif self.clockDict['periodClock'].currentTime>=(30*60):
-					self.clockDict['periodClock'].Reset(60*60)
-				elif self.clockDict['periodClock'].currentTime>=(15*60):
-					self.clockDict['periodClock'].Reset(30*60)
-				elif self.clockDict['periodClock'].currentTime>=perMax:
-					self.clockDict['periodClock'].Reset(15*60)
-				elif self.clockDict['periodClock'].currentTime<perMax:
-					self.clockDict['periodClock'].Reset(perMax)
+				self.gameSettings['periodClockResetFlag'] = True
+				period_max = self.basketballPeriodClockMaxSeconds
+				if self.clockDict['periodClock'].currentTime >= (90*60):
+					self.clockDict['periodClock'].reset_(period_max)
+				elif self.clockDict['periodClock'].currentTime >= (60*60):
+					self.clockDict['periodClock'].reset_(90 * 60)
+				elif self.clockDict['periodClock'].currentTime >= (30*60):
+					self.clockDict['periodClock'].reset_(60 * 60)
+				elif self.clockDict['periodClock'].currentTime >= (15*60):
+					self.clockDict['periodClock'].reset_(30 * 60)
+				elif self.clockDict['periodClock'].currentTime >= period_max:
+					self.clockDict['periodClock'].reset_(15 * 60)
+				elif self.clockDict['periodClock'].currentTime < period_max:
+					self.clockDict['periodClock'].reset_(period_max)
 
 	def guestTimeOutsMinusOne(self):
-		team=self.guest
-		modulusValue=self.gameSettings['TOLMaxBB']+1
-		self.modTeamData(team, 'timeOutsLeft', modulusValue, operator='-', places=1)
+		self.mod_team_data(self.guest, 'timeOutsLeft', modulus_value=self.gameSettings['TOLMaxBB']+1, operator='-', places=1)
 		return
 
 	def homeTimeOutsMinusOne(self):
-		team=self.home
-		modulusValue=self.gameSettings['TOLMaxBB']+1
-		self.modTeamData(team, 'timeOutsLeft', modulusValue, operator='-', places=1)
+		self.mod_team_data(self.home, 'timeOutsLeft', modulus_value=self.gameSettings['TOLMaxBB']+1, operator='-', places=1)
 		return
 
-class Cricket(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Cricket, self).__init__(numberOfTeams)
 
-		self.gameData['sportType']='cricket'
+class Cricket(Game):
+	def __init__(self, number_of_teams=2):
+		super(Cricket, self).__init__(number_of_teams)
+
+		self.gameData['sportType'] = 'cricket'
 
 		self.gameSettings['MP_cricketPeriodClockMaxSeconds'] = self.gameSettings['MP_cricketPeriodClockMaxSeconds']
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_cricketPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)
-		self.clockList=self.clockDict.keys()
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.gameSettings['MP_cricketPeriodClockMaxSeconds'],
+			self.gameSettings['periodClockResolution'], clock_name='periodClock')
+
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData)
+
 
 class Racetrack(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Racetrack, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Racetrack, self).__init__(number_of_teams)
 
-		self.gameData['sportType']='racetrack'
+		self.gameData['sportType'] = 'racetrack'
 
 		self.MP_racetrackPeriodClockMaxSeconds = (self.gameSettings['MP_racetrackPeriodClockMaxSeconds'])
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
-		self.clockDict['periodClock']=app.game.clock.clock(self.gameSettings['periodClockCountUp'], self.gameSettings['MP_racetrackPeriodClockMaxSeconds'], self.gameSettings['periodClockResolution'], clockName='periodClock')
-		self.gameData = self.clockDict['periodClock'].gameDataUpdate(self.gameData)
-		self.clockList=self.clockDict.keys()
+		# Order of thread creation sets priority when init same class, last is highest
+		self.clockDict['periodClock'] = app.game.clock.Clock(
+			self.gameSettings['periodClockCountUp'], self.gameSettings['MP_racetrackPeriodClockMaxSeconds'],
+			self.gameSettings['periodClockResolution'], clock_name='periodClock')
+
+		self.gameData = self.clockDict['periodClock'].game_data_update(self.gameData)
+
 
 class Stat(Game):
-	def __init__(self, numberOfTeams=2):
-		super(Stat, self).__init__(numberOfTeams)
+	def __init__(self, number_of_teams=2):
+		super(Stat, self).__init__(number_of_teams)
 
-		self.gameData['sportType']='stat'
+		self.gameData['sportType'] = 'stat'
 
-		self._createTeams()
+		self._create_teams()
 
-		self._addTeamNameData()
+		self._add_team_name_data()
 
-		self.clockList=self.clockDict.keys()
-
-		self.gameSettings['currentTeamGuest']=True
+		self.gameSettings['currentTeamGuest'] = True
 		if self.gameSettings['vollyballFlag']:
-			self.maxActive=6
+			self.maxActive = 6
 		else:
-			self.maxActive=5
-		self.statNumberList=[None,'One','Two','Three','Four','Five','Six']
-		self.gameSettings['statNumber']=self.statNumberList[0]
-		self.gameSettings['playerNumber']='  '
-		self.notActiveIndex=None
-		self.activeGuestPlayerList=[]
-		self.activeHomePlayerList=[]
+			self.maxActive = 5
+
+		self.statNumberList = [None, 'One', 'Two', 'Three', 'Four', 'Five', 'Six']
+		self.gameSettings['statNumber'] = self.statNumberList[0]
+		self.gameSettings['playerNumber'] = '  '
+		self.notActiveIndex = None
+		self.activeGuestPlayerList = []
+		self.activeHomePlayerList = []

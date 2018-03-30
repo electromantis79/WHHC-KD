@@ -2,26 +2,26 @@
 #  -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 91%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
-    This module simulates a console.
+	This module simulates a console with limited functionality of interpreting MP data.
 
-    :Created Date: 3/11/2015
-    :Modified Date: 11/10/2016
-    :Author: **Craig Gunter**
+	:Created Date: 3/11/2015
+	:Author: **Craig Gunter**
 
 """
 
-import thread, threading, time, timeit, os
-from sys import platform as _platform
-from threading import Thread
+import threading
+import time
 
-from functions import *
-from Keypad_Mapping import Keypad_Mapping
-from Address_Mapping import *
-import serial_IO.serial_packet
+import app.utils.functions
+import app.utils.reads
+import app.mp_data_handler
+import app.serial_IO.serial_packet
+import app.address_mapping
+
+from sys import platform as _platform
 
 
 class Console(object):
@@ -31,22 +31,22 @@ class Console(object):
 	"""
 
 	def __init__(
-			self, vboseList=[1, 0, 0], checkEventsFlag=True,
-			serialInputFlag=0, serialInputType='MP', serialOutputFlag=1, encodePacketFlag=False,
-			serverThreadFlag=True):
+			self, vbose_list=(1, 0, 0), check_events_flag=True,
+			serial_input_flag=0, serial_input_type='MP', serial_output_flag=1, encode_packet_flag=False,
+			server_thread_flag=True):
 		self.className = 'console'
 
-		self.checkEventsFlag = checkEventsFlag
-		self.serialInputFlag = serialInputFlag
-		self.serialInputType = serialInputType
-		self.serialOutputFlag = serialOutputFlag
-		self.encodePacketFlag = encodePacketFlag
-		self.serverThreadFlag = serverThreadFlag
-		self.vboseList = vboseList
+		self.checkEventsFlag = check_events_flag
+		self.serialInputFlag = serial_input_flag
+		self.serialInputType = serial_input_type
+		self.serialOutputFlag = serial_output_flag
+		self.encodePacketFlag = encode_packet_flag
+		self.serverThreadFlag = server_thread_flag
+		self.vboseList = vbose_list
 		self.verbose = self.vboseList[0]  # Method Name or arguments
 		self.verboseMore = self.vboseList[1]  # Deeper loop information in methods
 		self.verboseMost = self.vboseList[2]  # Crazy Deep Stuff
-		verbose(['\nCreating Console object'], self.verbose)
+
 		self.MP_StreamRefreshFlag = True
 		self.printTimesFlag = False
 		self.checkEventsActiveFlag = False
@@ -56,24 +56,22 @@ class Console(object):
 		self.verboseDiagnostic = False
 		self.initTime = time.time()
 
+		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
 		self.Reset()
 
 	# INIT Functions
 
-	def Reset(self, internalReset=0):
+	def Reset(self, internal_reset=0):
 		"""Resets the console to a new game."""
-		verbose(['\nConsole Reset'], self.verbose)
+		app.utils.functions.verbose(['\nConsole Reset'], self.verbose)
 
 		# Create Game object, attach keypad and LCD screen
-		self.configDict = readConfig()
-		splashTime = self.configDict['splashTime']
-		if internalReset:
-			self.game.KillClockThreads()
-		self.game = selectSportInstance(
-			self.configDict['sport'], numberOfTeams=2, MPLX3450Flag=self.configDict['MPLX3450Flag'])
-		self.setKeypad()
-		#self.lcd = Menu_Event_Handler(sport=self.game.sport, splashTime=splashTime, vboseList=self.vboseList)
-		#self.lcd.RefreshScreen(self.game)
+		self.configDict = app.utils.reads.read_config()
+		if internal_reset:
+			self.game.kill_clock_threads()
+		self.game = app.utils.functions.select_sport_instance(
+			self.configDict['sport'], number_of_teams=2, mp_lx3450_flag=self.configDict['MPLX3450Flag'])
+
 		print 'sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']
 		if self.serialInputFlag and self.serialInputType == 'ASCII':
 			pass
@@ -81,11 +79,11 @@ class Console(object):
 			# self.game.activeHomePlayerList = [1,2,3,4,5,6]
 
 		# Build address maps
-		self.addrMap = Address_Mapping(self.game.gameData['sportType'], self.game)
-		self.lampTest = Lamptest_Mapping(self.game.gameData['sportType'])
-		self.blankTest = Blanktest_Mapping(self.game.gameData['sportType'])
-		self.mp = MP_Data_Handler()
-		self.addrMap.Map()
+		self.addrMap = app.address_mapping.AddressMapping(self.game.gameData['sportType'], self.game)
+		self.lampTest = app.address_mapping.LamptestMapping(self.game.gameData['sportType'])
+		self.blankTest = app.address_mapping.BlanktestMapping(self.game.gameData['sportType'])
+		self.mp = app.mp_data_handler.MpDataHandler()
+		self.addrMap.map()
 
 		# Variables
 		self.dirtyDict = {}
@@ -104,8 +102,7 @@ class Console(object):
 		self.broadcastFlag = False
 		self.broadcastString = ''
 		self.showOutputString = False
-
-		self.sp = serial_IO.serial_packet.SerialPacket(self.game)
+		self.sp = app.serial_IO.serial_packet.SerialPacket(self.game)
 		self.serialInputRefreshFrequency = 0.004
 		self.serialOutputRefreshFrequency = .1
 		self.checkEventsRefreshFrequency = self.game.gameSettings['periodClockResolution']
@@ -115,7 +112,7 @@ class Console(object):
 		self.previousMPWordDict = dict(self.addrMap.wordsDict)
 		self.dataUpdateIndex = 1
 
-		self.selectMPdataPriority()
+		self.select_mp_data_priority()
 
 		self.shotClockSportsFlag = (
 				self.game.gameData['sport'] == 'MPBASKETBALL1' or self.game.gameData['sport'] == 'MPHOCKEY_LX1'
@@ -124,13 +121,14 @@ class Console(object):
 		# Platform Dependencies
 		if _platform == "linux" or _platform == "linux2":
 			print 'Platform is', _platform
-			if self.serialInputFlag and not internalReset:
-				verbose(['\nSerial Input On'], self.verbose)
+			if self.serialInputFlag and not internal_reset:
+				app.utils.functions.verbose(['\nSerial Input On'], self.verbose)
 				import serial_IO.mp_serial
 				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
 				if self.serialInputType == 'ASCII':
 					self.serialInputRefreshFrequency = .1
-				self.refresherSerialInput = Thread(target=threadTimer, args=(self.serialInput, self.serialInputRefreshFrequency))
+				self.refresherSerialInput = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
 				self.alignTime = 0.0
 				self.previousByteCount = 0
@@ -138,16 +136,16 @@ class Console(object):
 				if self.serialInputType == 'MP':
 					self.checkEventsRefreshFrequency = self.checkEventsRefreshFrequency/10
 
-			if self.checkEventsFlag and not internalReset:
+			if self.checkEventsFlag and not internal_reset:
 				if self.serialInputType == 'ASCII':
 					pass  # time.sleep(0.2) #  This delay seems to cause packet corruption
-				self.refresherCheckEvents = Thread(
-					target=threadTimer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
+				self.refresherCheckEvents = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
 				self.refresherCheckEvents.daemon = True				
 				self.refresherCheckEvents.start()
 
-			if self.serialOutputFlag and not internalReset:
-				verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
+			if self.serialOutputFlag and not internal_reset:
+				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
 				
 				# Wait till we have an alignTime stamped from checkEvents
 				if self.serialInputType == 'MP':
@@ -155,8 +153,8 @@ class Console(object):
 				else:
 					time.sleep(0.05)
 				
-				self.refresherSerialOutput = Thread(
-					target=threadTimer,
+				self.refresherSerialOutput = threading.Thread(
+					target=app.utils.functions.thread_timer,
 					args=(self.serialOutput, self.serialOutputRefreshFrequency, None, self.alignTime))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
@@ -171,17 +169,17 @@ class Console(object):
 			self.serialOutputFlag = False
 			self.serialInputFlag = False
 			# self.showOutputString = True
-			if self.checkEventsFlag and not internalReset:
+			if self.checkEventsFlag and not internal_reset:
 				threading.Timer(.1, self.checkEvents).start()
 				
-			if self.serialOutputFlag and not internalReset:
-				verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
-				self.refresherSerialOutput = Thread(
-					target=threadTimer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
+			if self.serialOutputFlag and not internal_reset:
+				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
+				self.refresherSerialOutput = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.start()		
 		
-	def selectMPdataPriority(self):
+	def select_mp_data_priority(self):
 		# Select priority order list
 		# G1		B1 = 1,2,3,4		B2 = 5,6,7,8 		B3 = 9,10,11,12, 		B4 = 13,14,15,16
 		# G2		B1 = 17,18,19,20 	B2 = 21,22,23,24 	B3 = 25,26,27,28 		B4 = 29,30,31,32
@@ -244,12 +242,12 @@ class Console(object):
 				
 				if self.addrMap.quantumETNTunnelProcessed:
 					self.addrMap.quantumETNTunnelProcessed = False
-					ETNFlag = True
-					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
+					e_t_n_flag = True
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=e_t_n_flag, packet=packet)
 				else:
-					ETNFlag = False
+					e_t_n_flag = False
 				
-					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=ETNFlag, packet=packet)
+					self.serialString = self.sp.encode_packet(print_string=True, e_t_n_flag=e_t_n_flag, packet=packet)
 
 		try:
 			self.s.serial_output(self.serialString)
@@ -292,7 +290,7 @@ class Console(object):
 				elif self.serialInputType == 'MP':
 					# This area is called 10X faster than normal else area
 					
-					self.addrMap.UnMap(wordList = self.s.receiveList)
+					self.addrMap.un_map(self.s.receiveList)
 					
 					# This aligns the output to after the input receive gap starts
 					if self.previousByteCount and len(self.s.receiveList) == 0:
@@ -309,51 +307,13 @@ class Console(object):
 							or not self.game.gameSettings['restoreGameFlag']
 					):
 						time.sleep(.05)
-						self.Reset(internalReset=1)
-						if self.className == 'scoreboard':
-							print 'Scoreboard Graphics Reset'
-							self.resetGraphicsFlag = True
-							# self.boardReset()
+						self.Reset(internal_reset=1)
 						self.switchKeypadFlag = True
 
 			if not self.serialInputFlag or self.serialInputType == 'ASCII':
-				"""Area for internally generated game data"""
-				# Handle a key press
-				if self.keyPressedFlag:
-					self.keyPressedFlag = False
-					print 'checkEvents key pressed'
-
-					# Handle multiple incoming button presses
-					for keyPressed in self.quickKeysPressedList:
-						print 'keyPressed = ', keyPressed
-
-						# Handle byte pair
-						try:
-							# Received byte pair is in key map format
-							self.game, funcString = self.keyMap.Map(self.game, keyPressed)
-							self.game = self.lcd.Map(self.game, funcString)
-							self.sendStateChangeOverNetwork(funcString)
-
-						except:
-							# Non-keyMap data received
-							if keyPressed == '@':
-								# If received the resend symbol resend
-								self.sendStateChangeOverNetwork()
-							else:
-								# This are handles all other cases of data received
-								try:
-									# Special display of rssi for testing
-									self.command = int(keyPressed)
-									self.commandFlag = True
-									self.addrMap.rssi = self.command
-									self.addrMap.rssiFlag = self.commandFlag
-								except:
-									pass
-
-					# Clear keys pressed list
-					self.quickKeysPressedList = []
-
+				# Area for internally generated game data
 				# Handle all events, update MP data, and form sendString
+
 				if self.serialInputType != 'ASCII':
 					self.timeEvents()
 
@@ -368,42 +328,12 @@ class Console(object):
 			elapse = (toc-tic)
 			if elapse > self.checkEventsRefreshFrequency and 0:  # For testing only
 			
-				print 'checkEvents elapse',elapse*1000, ' ms'
+				print 'checkEvents elapse', elapse*1000, ' ms'
 				print
 				self.checkEventsOverPeriodFlag = True
 			self.checkEventsActiveFlag = False
 			
 		# End Check Events --------------------------------------------------------------------
-
-	def sendStateChangeOverNetwork(self, funcString=None):
-		# if funcString == 'periodClockOnOff':
-		if self.game.clockDict['periodClock'].running:
-			self.broadcastString += 'P1'
-		else:
-			self.broadcastString += 'P0'
-		# elif funcString == 'handheldButton3':
-		if 'delayOfGameClock' in self.game.clockDict:
-			if self.game.clockDict['delayOfGameClock'].running:
-				self.broadcastString += 'D1'
-			else:
-				self.broadcastString += 'D0'
-		if 'segmentTimer' in self.game.clockDict:
-			if self.game.clockDict['segmentTimer'].running:
-				self.broadcastString += 'T1'
-			else:
-				self.broadcastString += 'T0'
-		if 'shotClock' in self.game.clockDict:
-			if self.game.clockDict['shotClock'].running:
-				self.broadcastString += 'S1'
-			else:
-				self.broadcastString += 'S0'
-		if self.game.gameSettings['inningBot']:
-			self.broadcastString += 'IB'
-		else:
-			self.broadcastString += 'IT'
-		if funcString is None:
-			self.broadcastString += '@'
-		self.broadcastFlag = True
 
 	def timeEvents(self):
 		"""Checks time related events."""
@@ -444,20 +374,20 @@ class Console(object):
 				self.game.delayOfGameHorn()
 		if self.game.clockDict['timeOutTimer'].autoStop:
 			self.game.gameSettings['timeOutTimerEnable'] = False
-			self.game.clockDict['timeOutTimer'].Reset()
+			self.game.clockDict['timeOutTimer'].reset_()
 			temp = self.game.gameSettings['endOfPeriodHornEnable']
 			self.game.gameSettings['endOfPeriodHornEnable'] = False
 			self.game.Horn()
 			self.game.gameSettings['endOfPeriodHornEnable'] = temp
 
-		# If a shot clock sport and period clock is on then start the shot clock
+		# If a shot clock sport and period Clock is on then start the shot Clock
 		if (
 				self.shotClockSportsFlag
 				and self.game.clockDict['periodClock'].running
 				and not self.game.clockDict['shotClock'].running
 				and self.game.clockDict['shotClock'].timeUnitsDict['currentTime'] > 0
 		):
-			self.game.clockDict['shotClock'].Start()
+			self.game.clockDict['shotClock'].start_()
 
 		# Start team name number pad timer
 		if self.lcd.teamNameNumpadFlag:
@@ -483,7 +413,7 @@ class Console(object):
 		):
 			self.game.gameSettings['resetGameFlag'] = False
 			time.sleep(.05)
-			self.Reset(internalReset=1)
+			self.Reset(internal_reset=1)
 			if self.className == 'scoreboard':
 				print 'Scoreboard Graphics Reset'
 				self.resetGraphicsFlag = True
@@ -491,16 +421,16 @@ class Console(object):
 			self.switchKeypadFlag = True
 
 	def _vboseLCDSave(self):
-		vboseList = [self.lcd.verbose, self.lcd.verboseMore, self.lcd.verboseMost]
+		vbose_list = [self.lcd.verbose, self.lcd.verboseMore, self.lcd.verboseMost]
 		self.lcd.verbose = 0  # Method Name or arguments
 		self.lcd.verboseMore = 0  # Deeper loop information in methods
 		self.lcd.verboseMost = 0  # Crazy Deep Stuff
-		return vboseList
+		return vbose_list
 
-	def _vboseLCDLoad(self, vboseList):
-		self.lcd.verbose = vboseList[0]  # Method Name or arguments
-		self.lcd.verboseMore = vboseList[1]  # Deeper loop information in methods
-		self.lcd.verboseMost = vboseList[2]  # Crazy Deep Stuff
+	def _vboseLCDLoad(self, vbose_list):
+		self.lcd.verbose = vbose_list[0]  # Method Name or arguments
+		self.lcd.verboseMore = vbose_list[1]  # Deeper loop information in methods
+		self.lcd.verboseMost = vbose_list[2]  # Crazy Deep Stuff
 
 	def colonDecimal(self):
 		"""Updates the colon and decimal."""
@@ -547,7 +477,7 @@ class Console(object):
 	def defaultScreen(self):
 		"""Displays the default screen on the LCD."""
 		if self.lcd.menuFlag:
-			verbose(['\nDEFAULT SCREEN'], self.verbose)
+			app.utils.functions.verbose(['\nDEFAULT SCREEN'], self.verbose)
 			self.lcd.exitMenu(self.game)
 		else:
 			self.cancelMenuTimer()
@@ -575,7 +505,7 @@ class Console(object):
 		if not self.game.gameSettings['multisportMenuFlag']:
 			self.game.gameSettings['resetGameFlag'] = True
 		else:
-			self.lcd.Map(self.game, funcString='Splash')
+			self.lcd.map(self.game, funcString='Splash')
 			self.lcd.menuTimerFlag = True
 
 	# ---------------------------------------------------------------
@@ -601,22 +531,14 @@ class Console(object):
 		# Select current map
 
 		if self.game.gameSettings['blankTestFlag']:
-			self.blankTest.Map()
+			self.blankTest.map()
 			self.MPWordDict = dict(self.blankTest.wordsDict)
 		elif self.game.gameSettings['lampTestFlag']:
-			self.lampTest.Map()
+			self.lampTest.map()
 			self.MPWordDict = dict(self.lampTest.wordsDict)
 		else:
-			self.addrMap.Map()
+			self.addrMap.map()
 			self.MPWordDict = dict(self.addrMap.wordsDict)
-
-		# Send data to drivers and graphics
-		# print 'self.sendList', self.sendList
-		try:
-			if self.className == 'scoreboard':
-				self.data2Drivers(self.sendList)
-		except:
-			verbose(['data2Drivers skipped'], self.verboseMost)
 
 		toc = time.time()
 
@@ -678,15 +600,14 @@ class Console(object):
 						print (
 							'teamAddr', teamAddr, 'teamAddrShift', teamAddrShift,
 							'leftETNByte', leftETNByte, 'rightETNByte', rightETNByte)
-						word1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-						word2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddr+teamAddrShift, 0, 0, pass3_4Flag=True)
-						word3 = self.mp.Encode(2, 4, 3, 0, 0, 0, leftETNByte, 0, '', pass3_4Flag=True)
-						word4 = self.mp.Encode(2, 4, 4, 0, 0, 0, rightETNByte, 0, '', pass3_4Flag=True)
+						word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+						word2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddr + teamAddrShift, 0, 0, pass3_4_flag=True)
+						word3 = self.mp.encode(2, 4, 3, 0, 0, 0, leftETNByte, 0, '', pass3_4_flag=True)
+						word4 = self.mp.encode(2, 4, 4, 0, 0, 0, rightETNByte, 0, '', pass3_4_flag=True)
 						# Check data stream insertion
 						sendList = [
 							word1, word2, word3, word4, self.MPWordDict[29],
 							self.MPWordDict[30], self.MPWordDict[31], self.MPWordDict[32]]
-						self.data2Drivers(sendList)
 
 					else:
 
@@ -713,12 +634,11 @@ class Console(object):
 							Justify = self.lcd.currentData
 
 						FontJustify = (Font-1)*6+Justify-1
-						word1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-						word2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddr+teamAddrShift, 0, 0, pass3_4Flag=True)
-						word4 = self.mp.Encode(2, 4, 4, 0, 0, 0, FontJustify, 0, '', pass3_4Flag=True)
+						word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+						word2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddr + teamAddrShift, 0, 0, pass3_4_flag=True)
+						word4 = self.mp.encode(2, 4, 4, 0, 0, 0, FontJustify, 0, '', pass3_4_flag=True)
 						# Check data stream insertion
 						sendList = [word1, word2, word4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[32]]
-						self.data2Drivers(sendList)
 
 		# Make custom sendlist for ASCII to MP ETN send
 		if self.serialInputType == 'ASCII' and self.serialInputFlag and self.sp.ETNChangeFlag:  # and not self.ETNSendListFlag:
@@ -739,7 +659,7 @@ class Console(object):
 				teamsList = []
 				FontJustifyList = []
 				for team in ['TEAM_1', 'TEAM_2']:
-					name = self.game.getTeamData(team, 'name')
+					name = self.game.get_team_data(team, 'name')
 					length = len(name)
 					pairsList = []
 					if length:
@@ -748,7 +668,7 @@ class Console(object):
 							rightETNByte = name[address*2+1]
 							pairsList.append((leftETNByte, rightETNByte))
 							
-						if length%2:
+						if length % 2:
 							# Odd Length Ending Section
 							leftETNByte = name[-1]
 							rightETNByte = 0
@@ -760,8 +680,8 @@ class Console(object):
 						
 					teamsList.append(pairsList)
 
-					Justify = self.game.getTeamData(team, 'justify')
-					Font = self.game.getTeamData(team, 'font')
+					Justify = self.game.get_team_data(team, 'justify')
+					Font = self.game.get_team_data(team, 'font')
 					FontJustify = (Font-1)*6+Justify-1
 					FontJustifyList.append(FontJustify)
 						
@@ -784,19 +704,19 @@ class Console(object):
 						# word 4 = rightETNByte or controlByte(if addr = 0or64)
 						if rightETNByte == 0:
 							rightETNByte = chr(rightETNByte)
-						word1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-						word2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddr, 0, 0, pass3_4Flag=True)
-						word3 = self.mp.Encode(2, 4, 3, 0, 0, 0, ord(leftETNByte), 0, '', pass3_4Flag=True)
-						word4 = self.mp.Encode(2, 4, 4, 0, 0, 0, ord(rightETNByte), 0, '', pass3_4Flag=True)
+						word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+						word2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddr, 0, 0, pass3_4_flag=True)
+						word3 = self.mp.encode(2, 4, 3, 0, 0, 0, ord(leftETNByte), 0, '', pass3_4_flag=True)
+						word4 = self.mp.encode(2, 4, 4, 0, 0, 0, ord(rightETNByte), 0, '', pass3_4_flag=True)
 						# Check data stream insertion
 						sendList = [word1, word2, word3, word4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[31], self.MPWordDict[32]]
 						# self.data2Drivers(sendList)
 						self.ETNSendList.append(sendList)
 						# print sendList
 						
-					jword1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-					jword2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddrShift, 0, 0, pass3_4Flag=True)
-					jword4 = self.mp.Encode(2, 4, 4, 0, 0, 0, FontJustifyList[x], 0, '', pass3_4Flag=True)
+					jword1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+					jword2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddrShift, 0, 0, pass3_4_flag=True)
+					jword4 = self.mp.encode(2, 4, 4, 0, 0, 0, FontJustifyList[x], 0, '', pass3_4_flag=True)
 					# Check data stream insertion
 					jsendList = [jword1, jword2, jword4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[32]]
 					# self.data2Drivers(jsendList)
@@ -807,7 +727,7 @@ class Console(object):
 				self.sp.guestNameChangeFlag = False
 
 				# ETN character change section
-				name = self.game.getTeamData('TEAM_1', 'name')
+				name = self.game.get_team_data('TEAM_1', 'name')
 				length = len(name)
 				pairsList = []
 				teamAddrOverride = False
@@ -853,10 +773,10 @@ class Console(object):
 					# word 4 = rightETNByte or controlByte(if addr = 0or64)
 					if rightETNByte == 0:
 						rightETNByte = chr(rightETNByte)
-					word1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-					word2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddr, 0, 0, pass3_4Flag=True)
-					word3 = self.mp.Encode(2, 4, 3, 0, 0, 0, ord(leftETNByte), 0, '', pass3_4Flag=True)
-					word4 = self.mp.Encode(2, 4, 4, 0, 0, 0, ord(rightETNByte), 0, '', pass3_4Flag=True)
+					word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+					word2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddr, 0, 0, pass3_4_flag=True)
+					word3 = self.mp.encode(2, 4, 3, 0, 0, 0, ord(leftETNByte), 0, '', pass3_4_flag=True)
+					word4 = self.mp.encode(2, 4, 4, 0, 0, 0, ord(rightETNByte), 0, '', pass3_4_flag=True)
 					# Check data stream insertion
 					sendList = [word1, word2, word3, word4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[31], self.MPWordDict[32]]
 					# self.data2Drivers(sendList)
@@ -867,7 +787,7 @@ class Console(object):
 				self.sp.homeNameChangeFlag = False
 
 				# ETN character change section
-				name = self.game.getTeamData('TEAM_2', 'name')
+				name = self.game.get_team_data('TEAM_2', 'name')
 				length = len(name)
 				pairsList = []
 				teamAddrOverride = False
@@ -914,10 +834,10 @@ class Console(object):
 					# word 4 = rightETNByte or controlByte(if addr = 0or64)
 					if rightETNByte == 0:
 						rightETNByte = chr(rightETNByte)
-					word1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-					word2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddr, 0, 0, pass3_4Flag = True)
-					word3 = self.mp.Encode(2, 4, 3, 0, 0, 0, ord(leftETNByte), 0, '', pass3_4Flag = True)
-					word4 = self.mp.Encode(2, 4, 4, 0, 0, 0, ord(rightETNByte), 0, '', pass3_4Flag = True)
+					word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+					word2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddr, 0, 0, pass3_4_flag= True)
+					word3 = self.mp.encode(2, 4, 3, 0, 0, 0, ord(leftETNByte), 0, '', pass3_4_flag= True)
+					word4 = self.mp.encode(2, 4, 4, 0, 0, 0, ord(rightETNByte), 0, '', pass3_4_flag= True)
 					# Check data stream insertion
 					sendList = [
 						word1, word2, word3, word4,
@@ -931,15 +851,15 @@ class Console(object):
 
 				# ETN FontJustify change section
 
-				Justify = self.game.getTeamData('TEAM_1', 'justify')
-				Font = self.game.getTeamData('TEAM_1', 'font')
+				Justify = self.game.get_team_data('TEAM_1', 'justify')
+				Font = self.game.get_team_data('TEAM_1', 'font')
 				FontJustify = (Font-1)*6+Justify-1
 									
 				teamAddrShift = 0
 
-				jword1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-				jword2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddrShift, 0, 0, pass3_4Flag=True)
-				jword4 = self.mp.Encode(2, 4, 4, 0, 0, 0, FontJustify, 0, '', pass3_4Flag=True)
+				jword1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+				jword2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddrShift, 0, 0, pass3_4_flag=True)
+				jword4 = self.mp.encode(2, 4, 4, 0, 0, 0, FontJustify, 0, '', pass3_4_flag=True)
 				# Check data stream insertion
 				jsendList = [jword1, jword2, jword4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[32]]
 				# self.data2Drivers(jsendList)
@@ -951,15 +871,15 @@ class Console(object):
 
 				# ETN FontJustify change section
 
-				Justify = self.game.getTeamData('TEAM_2', 'justify')
-				Font = self.game.getTeamData('TEAM_2', 'font')
+				Justify = self.game.get_team_data('TEAM_2', 'justify')
+				Font = self.game.get_team_data('TEAM_2', 'font')
 				FontJustify = (Font-1)*6+Justify-1
 									
 				teamAddrShift = 64
 
-				jword1 = self.mp.Encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
-				jword2 = self.mp.Encode(2, 4, 2, 0, 0, 0, teamAddrShift, 0, 0, pass3_4Flag=True)
-				jword4 = self.mp.Encode(2, 4, 4, 0, 0, 0, FontJustify, 0, '', pass3_4Flag=True)
+				jword1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+				jword2 = self.mp.encode(2, 4, 2, 0, 0, 0, teamAddrShift, 0, 0, pass3_4_flag=True)
+				jword4 = self.mp.encode(2, 4, 4, 0, 0, 0, FontJustify, 0, '', pass3_4_flag=True)
 				# Check data stream insertion
 				jsendList = [jword1, jword2, jword4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[32]]
 				# self.data2Drivers(jsendList)
@@ -1002,9 +922,9 @@ class Console(object):
 						
 						if self.verboseDiagnostic:
 							# Print info for dirty words
-							group, bank, word, I_Bit, numericData = self.mp.Decode(self.dirtyDict[addr])
+							group, bank, word, I_Bit, numericData = self.mp.decode(self.dirtyDict[addr])
 							print (
-								'group', group, 'bank', bank, 'word', word, 'addr', self.mp.GBW_to_MP_Address(group, bank, word)+1,
+								'group', group, 'bank', bank, 'word', word, 'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 								'I_Bit', I_Bit, 'data', bin(numericData), bin(self.dirtyDict[addr]))
 							
 						del self.dirtyDict[addr]
@@ -1022,10 +942,10 @@ class Console(object):
 						print (
 							'self.dataUpdateIndex',self.dataUpdateIndex, 'self.priorityListEmech[self.dataUpdateIndex]',
 							self.priorityListEmech[self.dataUpdateIndex-1])
-						group, bank, word, I_Bit, numericData = self.mp.Decode(
+						group, bank, word, I_Bit, numericData = self.mp.decode(
 							self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
 						print (
-							'group', group, 'bank', bank, 'word', word, 'addr', self.mp.GBW_to_MP_Address(group, bank, word)+1,
+							'group', group, 'bank', bank, 'word', word, 'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 							'I_Bit', I_Bit, 'data', bin(numericData), bin(self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]]),
 							self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
 						
@@ -1040,10 +960,10 @@ class Console(object):
 					
 					if self.verboseDiagnostic:
 						# Print info for remaining words
-						group, bank, word, I_Bit, numericData = self.mp.Decode(self.MPWordDict[self.dataUpdateIndex])
+						group, bank, word, I_Bit, numericData = self.mp.decode(self.MPWordDict[self.dataUpdateIndex])
 						print (
 							'group', group, 'bank', bank, 'word', word,
-							'addr', self.mp.GBW_to_MP_Address(group, bank, word)+1,
+							'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 							'I_Bit', I_Bit, 'data', bin(numericData), bin(self.MPWordDict[self.dataUpdateIndex]),
 							self.MPWordDict[self.dataUpdateIndex])
 						
@@ -1061,34 +981,15 @@ class Console(object):
 
 		# Create string for transport
 
-		serialString = ''
+		serial_string = ''
 		for word in self.sendList:
-			firstByte = chr((word & 0xFF00) >> 8)
-			secondByte = chr((word & 0xFF))
-			serialString += firstByte+secondByte
-		self.serialString = serialString
+			first_byte = chr((word & 0xFF00) >> 8)
+			second_byte = chr((word & 0xFF))
+			serial_string += first_byte+second_byte
+		self.serialString = serial_string
 
 		if self.showOutputString:
 			print self.serialString
-
-	def data2Drivers(self, sendList):
-		pass
-
-	# PUBLIC FUNCTIONS --------------------------------
-
-	def setKeypad(self, reverseHomeAndGuest=False, keypad3150=False, MMBasketball=False, WHHBaseball=False):
-		"""Sets the keypad."""
-		# PUBLIC
-		self.keyMap = Keypad_Mapping(self.game, reverseHomeAndGuest, keypad3150, MMBasketball, WHHBaseball)
-
-	def keyPressed(self, keyPressed):
-		"""Simulates pressing a key."""
-		# PUBLIC
-		self.keyPressedFlag = True
-		self.quickKeysPressedList.append(keyPressed)
-		print 'Console key pressed', keyPressed, self.quickKeysPressedList
-
-	#  THREADS ------------------------------------------
 
 
 def test():
@@ -1096,23 +997,14 @@ def test():
 	print "ON"
 	sport = 'MPBASKETBALL1'
 	c = Config()
-	c.writeSport(sport)
-	c.writeOptionJumpers('0000')
-	c = Console(
-		checkEventsFlag=True, serialInputFlag=True, serialInputType='MP',
-		serialOutputFlag=True, encodePacketFlag=True, serverThreadFlag=True)
-	# c.setKeypad(WHHBaseball = True)
+	c.write_sport(sport)
+	c.write_option_jumpers('0000')
+	Console(
+		check_events_flag=True, serial_input_flag=True, serial_input_type='MP',
+		serial_output_flag=True, encode_packet_flag=True, server_thread_flag=True)
 	while 1:
 		time.sleep(2)
 		# break
-	# raw_input()
-
-	# c.game.gameSettings['resetGameFlag'] = True
-	# c.checkEvents()
-	# c.Reset()
-	# printDictsExpanded(c)
-	# keyPressed = 'F8'
-	# c.keyPressed(keyPressed)
 
 
 if __name__ == '__main__':

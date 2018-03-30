@@ -5,15 +5,15 @@
 
 .. topic:: Overview
 
-    This module handles MP style communication on the native serial ports.
+	This module handles MP style communication on the native serial ports.
 
-    :Created Date: 3/16/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/16/2015
+	:Author: **Craig Gunter**
 
 """
 
 import app.serial_IO.serial_packet
-import app.serial_IO.Platform
+import app.utils.Platform
 
 
 class MpSerialHandler(object):
@@ -36,7 +36,7 @@ class MpSerialHandler(object):
 		self.sp.MPserial = True
 
 		# Mulit-platform support
-		platform = app.serial_IO.Platform.platform_detect()
+		platform = app.utils.Platform.platform_detect()
 		if platform == 2:
 			import Adafruit_BBIO.UART as UART
 			import serial
@@ -142,7 +142,7 @@ def test():
 	byte = s.ser.inWaiting()
 	if byte:
 		count += 1
-	elapseTime(s.serialInput, On=False)
+	elapse_time(s.serialInput, On=False)
 	toc = time.time()
 	elaps = toc-tic
 	print 'Test', byte, elaps, (tic-1446587172)
@@ -153,11 +153,11 @@ if __name__ == '__main__':
 	from sys import platform as _platform
 	from threading import Thread
 	
-	from app.MP_Data_Handler import MP_Data_Handler
+	from app.MpDataHandler import MpDataHandler
 	s = MP_Serial_Handler(verbose=False)
-	mp = MP_Data_Handler()
+	mp = MpDataHandler()
 	serialInputRefreshFrequency = .001
-	refresherSerialInput = Thread(target=threadTimer, args=(test, serialInputRefreshFrequency))
+	refresherSerialInput = Thread(target=thread_timer, args=(test, serialInputRefreshFrequency))
 	#refresherSerialInput.daemon=True
 	verbose(['\nSerial Input On'], 1)
 	refresherSerialInput.start()
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 		sleep(2)
 	for words in s.receiveList:
 		group, bank, word, I_Bit, numericData = mp.Decode(words)
-		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.GBW_to_MP_Address(
+		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.gbw_to_mp_address(
 			group, bank, word)+1, 'I_Bit', I_Bit, 'data', bin(numericData), bin(words)
 	'''
 	try:

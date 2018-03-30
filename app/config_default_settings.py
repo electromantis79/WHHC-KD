@@ -2,65 +2,64 @@
 # -*- coding: utf-8 -*-
 
 """
-**COMPLETION** = 99%  Sphinx Approved = **True**
 
 .. topic:: Overview
 
-    This module reads, writes, or modifies the defaultConfig and userConfig files.
+	This module reads, writes, or modifies the defaultConfig and userConfig files.
 
-    :Created Date: 3/12/2015
-    :Modified Date: 8/31/2016
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 
 """
 
 import time
-#import pkg_resources  # Not sure if i need this
+# import pkg_resources  # Not sure if i need this
 
-import app.functions
-import app.configobj
+import app.utils.functions
+import app.utils.misc
+import app.utils.configobj
 
 
 class Config:
 	"""Writes the chosen file or reads it and builds a dictionary of it named configDict."""
 
-	def __init__(self, write=False, fileType='user'):
-		self.fileType = fileType
+	def __init__(self, write=False, file_type='user'):
+		self.fileType = file_type
 		self.write = write
-		self.tick = 0.0
-		self.tock = 0.0
+		self.tic = 0.0
+		self.toc = 0.0
 		self.configDict = {}
 		self.configFile = {}
 		self.userConfigDict = {}
 		self.keypadType = None
-		self.Start()
+		self._process_selection()
 
-	def Start(self):
-		"""Choose read or write and default or user"""
+	def _process_selection(self):
+		# Choose read or write and default or use
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 			if self.write:
-				self.writeAll()
+				self._write_all()
 			else:
-				self.configFile = app.configobj.ConfigObj('defaultConfig')  # All values and keys are in string format
-				self.readAll()
+				self.configFile = app.utils.configobj.ConfigObj('defaultConfig')  # All values and keys are in string format
+				self._read_all()
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')
 			if self.write:
-				self.writeAll()
+				self._write_all()
 			else:
-				self.configFile = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
-				self.readAll()
+				self.configFile = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+				self._read_all()
 
-	def writeOptionJumpers(self, optionJumpers):
+	def write_option_jumpers(self, option_jumpers):
 		"""Update optionJumpers in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
-		self.configDict['optionJumpers'] = optionJumpers
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+		self.configDict['optionJumpers'] = option_jumpers
 		if (
-				optionJumpers[0] == 'B'
+				option_jumpers[0] == 'B'
 				and (
 						self.configDict['sport'] == 'MPMULTISPORT1-baseball'
 						or self.configDict['sport'] == 'MPMULTISPORT1-football')):
@@ -69,42 +68,42 @@ class Config:
 			self.configDict['MPLX3450Flag'] = False
 		self.configDict.write()
 
-	def writeSport(self, sport):
+	def write_sport(self, sport):
 		"""Update sport in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['sport'] = sport
 		self.keypadType = sport[0:2]
 		self.configDict['keypadType'] = self.keypadType
 		self.configDict.write()
 
-	def writeSERVER(self, server):
+	def write_server(self, server):
 		"""Update SERVER in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['SERVER'] = server
 		self.configDict.write()
 
-	def writeUI(self, model, boardColor, captionColor, stripeColor, LEDcolor):
+	def write_ui(self, model, board_color, caption_color, stripe_color, led_color):
 		"""Update UI variables in object and file."""
 		if self.fileType == 'default':
-			self.configDict = app.configobj.ConfigObj('defaultConfig')
+			self.configDict = app.utils.configobj.ConfigObj('defaultConfig')
 		elif self.fileType == 'user':
-			self.configDict = app.configobj.ConfigObj('userConfig')  # All values and keys are in string format
+			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['model'] = model
-		self.configDict['boardColor'] = boardColor
-		self.configDict['captionColor'] = captionColor
-		self.configDict['stripeColor'] = stripeColor
-		self.configDict['LEDcolor'] = LEDcolor
+		self.configDict['boardColor'] = board_color
+		self.configDict['captionColor'] = caption_color
+		self.configDict['stripeColor'] = stripe_color
+		self.configDict['LEDcolor'] = led_color
 		self.configDict.write()
 
-	def writeAll(self):
-		"""Write all configurations to object and file."""
-		self.tock = time.time()
+	def _write_all(self):
+		# Write all configurations to object and file
+		self.toc = time.time()
 
 		self.configDict['Version'] = 999
 		self.configDict['sport'] = 'MPLINESCORE5'  # needs user control and new instance definition for change
@@ -130,16 +129,16 @@ class Config:
 		print "WROTE TO FILE"
 
 		self.configDict.write()  # Create 'defaultConfig' file. Everything will be converted to strings
-		self.tick = time.time()
+		self.tic = time.time()
 
-	def readAll(self):
-		"""Read all configurations from file and store in object."""
-		self.tock = time.time()
+	def _read_all(self):
+		# Read all configurations from file and store in object
+		self.toc = time.time()
 		self.configDict = {}
 
 		for key in self.configFile.keys():
 			if self.configFile[key] == 'False' or self.configFile[key] == 'True':
-				self.configDict[key] = app.functions.tf(self.configFile[key])
+				self.configDict[key] = app.utils.functions.tf(self.configFile[key])
 			elif (
 					key == 'HOST' or key == 'sport' or key == 'model' or key == 'optionJumpers'
 					or key == 'boardColor' or key == 'captionColor' or key == 'stripeColor'):
@@ -151,44 +150,43 @@ class Config:
 			elif unicode(self.configFile[key]).isalnum() or self.configFile[key].isalpha():
 				self.configDict[key] = self.configFile[key]
 			else:
-				print self.configFile[key]
-				raise error('format not recognized')
-		self.tick = time.time()
+				print self.configFile[key], 'format not recognized'
+				raise Exception
+		self.tic = time.time()
 
-	def getDict(self):
+	def get_dict(self):
 		"""Return **configDict**."""
 		return self.configDict
 
-	def userEqualsDefault(self):
+	def user_equals_default(self):
 		"""Update userConfig file with defaultConfig file values."""
-		self.userConfigDict = app.configobj.ConfigObj('userConfig')
+		self.userConfigDict = app.utils.configobj.ConfigObj('userConfig')
 		self.fileType = 'default'
 		self.write = False
-		self.Start()
+		self._process_selection()
 		self.userConfigDict.update(self.configDict)
 		self.userConfigDict.write()
 
 
-def createConfigFiles():
+def create_config_files():
 	"""
-	Run this module with writeConfigFlag=True to create the defaultConfig file.
+	Run this module with write_config_flag=True to create the defaultConfig file.
 	Next press enter to copy it to the userConfig file.
 	"""
 	print "ON"
-	writeConfigFlag = True
-	#writeConfigFlag = False
-	if writeConfigFlag:
-		app.functions.silentremove('defaultConfig')
-	c = Config(writeConfigFlag, 'default')
-	app.functions.printDict(c.__dict__)
-	print "%f seconds to run config file setup." % (c.tick-c.tock)
+	write_config_flag = True
+	if write_config_flag:
+		app.utils.misc.silent_remove('defaultConfig')
+	c = Config(write_config_flag, 'default')
+	app.utils.misc.print_dict(c.__dict__)
+	print "%f seconds to run config file setup." % (c.tic - c.toc)
 	raw_input()
 
-	app.functions.silentremove('userConfig')
-	c.userEqualsDefault()
-	app.functions.printDict(c.__dict__)
-	print "%f seconds to run config file setup." % (c.tick-c.tock)
+	app.utils.misc.silent_remove('userConfig')
+	c.user_equals_default()
+	app.utils.misc.print_dict(c.__dict__)
+	print "%f seconds to run config file setup." % (c.tic - c.toc)
 
 
 if __name__ == '__main__':
-	createConfigFiles()
+	create_config_files()

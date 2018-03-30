@@ -4,13 +4,13 @@
 """
 .. topic:: Overview
 
-    This module simulates a player for all sports.
+	This module simulates a player for all sports.
 
-    :Created Date: 3/12/2015
-    :Author: **Craig Gunter**
+	:Created Date: 3/12/2015
+	:Author: **Craig Gunter**
 """
 
-import app.functions
+import app.utils.reads
 
 
 class Player(object):
@@ -18,7 +18,7 @@ class Player(object):
 	def __init__(self):
 
 		# Build dictionary from file
-		self.playerData = app.functions.csvOneRowRead(fileName='Spreadsheets/playerDefaultValues.csv')
+		self.playerData = app.utils.reads.csv_one_row_read(file_name='Spreadsheets/playerDefaultValues.csv')
 
 		self.playerData['pointsUnits'] = self.playerData['points'] % 10
 		self.playerData['pointsTens'] = self.playerData['points']/10
