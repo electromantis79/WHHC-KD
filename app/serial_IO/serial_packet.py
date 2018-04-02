@@ -232,7 +232,7 @@ class SerialPacket (object):
 				self.ETNFlag = True
 				packet_length = 60
 
-			if self.printCorruption and len(packet) != packet_length and not self.MPserial:
+			if self.printCorruption and not self.MPserial and len(packet) != packet_length:
 				string = None
 				print 'Packet Length Error'
 				print 'len(packet), packet_length = ', len(packet), packet_length

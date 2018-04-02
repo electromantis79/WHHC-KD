@@ -105,25 +105,25 @@ class TestSerialPacket(TestCase):
 
 		self._with_vars()
 
-	def test_cricket_encode_decode_encode(self):
+	def _test_cricket_encode_decode_encode(self):  # Remove _ when test used
 		self.game = game.Cricket()
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
-	def test_cricket_encode_decode_encode_with_vars(self):
+	def _test_cricket_encode_decode_encode_with_vars(self):  # Remove _ when test used
 		self.game = game.Cricket()
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
-	def test_racetrack_encode_decode_encode(self):
+	def _test_racetrack_encode_decode_encode(self):  # Remove _ when test used
 		self.game = game.Racetrack()
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
-	def test_racetrack_encode_decode_encode_with_vars(self):
+	def _test_racetrack_encode_decode_encode_with_vars(self):  # Remove _ when test used
 		self.game = game.Racetrack()
 		self.packet = packet.SerialPacket(self.game)
 
@@ -141,13 +141,13 @@ class TestSerialPacket(TestCase):
 
 		self._with_vars()
 
-	def test_game_encode_decode_encode(self):
+	def _test_game_encode_decode_encode(self):  # Remove _ when test used
 		self.game = game.Game()
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
-	def test_game_encode_decode_encode_with_vars(self):
+	def _test_game_encode_decode_encode_with_vars(self):  # Remove _ when test used
 		self.game = game.Game()
 		self.packet = packet.SerialPacket(self.game)
 

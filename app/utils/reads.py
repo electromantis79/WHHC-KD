@@ -17,8 +17,8 @@ def read_config():
 	"""
 	Returns a dictionary of the userConfig file.
 	"""
-	import config_default_settings
-	c = config_default_settings.Config(write=False, file_type='user')
+	import app.config_default_settings
+	c = app.config_default_settings.Config(write=False, file_type='user')
 	return c.get_dict()
 
 
@@ -117,6 +117,7 @@ def read_address_map(sport, sport_type, word_list_addr):
 			pass
 	return dictionary
 
+	# TODO: finish doing clean inspections from here
 
 # Simulator functions
 
@@ -181,7 +182,6 @@ def readMP_Keypad_Layouts():
 	"""
 	Uses Spreadsheets/MP_Keypad_Layouts.csv to build a dictionary of all keypads.
 	"""
-	# TODO: finish doing clean inspections from here
 	MP_Keypad_Layouts='Spreadsheets/MP_Keypad_Layouts.csv'
 	csvReader=csv.DictReader(open(MP_Keypad_Layouts, 'rb'), delimiter=',', quotechar="'")
 	keypad=[]

@@ -20,6 +20,7 @@ class MpSerialHandler(object):
 	"""Creates a serial port object."""
 
 	def __init__(self, timeout=0, serial_input_type='MP', verbose_flag=False, game=None):
+		self.timeout = timeout
 		self.serialInputType = serial_input_type
 		self.verboseFlag = verbose_flag
 		self.game = game
@@ -53,13 +54,14 @@ class MpSerialHandler(object):
 		if self.serialInputType == 'MP':
 			self.previousLowByte = None
 			self.maxBytes = 10
+			self.timeout = 0
 		elif self.serialInputType == 'ASCII':
-			timeout = 0.008
 			self.maxBytes = 1024
+			self.timeout = 0.008
 
 		# Setup serial port
 		print ('port_name', port_name)
-		self.ser = serial.Serial(port=port_name, baudrate=38400, bytesize=8, timeout=timeout)
+		self.ser = serial.Serial(port=port_name, baudrate=38400, bytesize=8, timeout=self.timeout)
 
 		# TODO: Do I need these 3 lines?
 		self.ser.close()
@@ -110,13 +112,15 @@ class MpSerialHandler(object):
 				print ('ASCII')
 			try:
 				self.packet = self.ser.read(self.maxBytes)
-				string = ''
-				self.sp.version_i_d_byte(string, packet=self.packet, length_check=True)
+
+				# Check if packet is ETN format and append to list
+				self.sp.version_i_d_byte('', packet=self.packet, length_check=True)
 				if self.sp.ETNFlag:
 					self.sp.ETNFlag = False
 					self.ETNpacketList.append(self.packet)
 				if self.verboseFlag and len(self.ETNpacketList) > 0:
 					print ('-----len(self.ETNpacketList', len(self.ETNpacketList))
+
 			except:
 				print ('ERROR serialInput function')
 			if self.verboseFlag:
@@ -129,54 +133,3 @@ class MpSerialHandler(object):
 			self.ser.write(data_in)
 		except:
 			print ('ERROR serial output function')
-
-# TODO: clean this function and create real test functions
-
-	"""
-def test():
-	'''Test function if module ran independently.
-	Called in a thread every serialInputRefreshFrequency.
-	'''
-	tic = time.time()
-	count = 0
-	byte = s.ser.inWaiting()
-	if byte:
-		count += 1
-	elapse_time(s.serialInput, On=False)
-	toc = time.time()
-	elaps = toc-tic
-	print 'Test', byte, elaps, (tic-1446587172)
-
-
-if __name__ == '__main__':
-	import thread, threading, time, timeit, os, sys
-	from sys import platform as _platform
-	from threading import Thread
-	
-	from app.MpDataHandler import MpDataHandler
-	s = MP_Serial_Handler(verbose=False)
-	mp = MpDataHandler()
-	serialInputRefreshFrequency = .001
-	refresherSerialInput = Thread(target=thread_timer, args=(test, serialInputRefreshFrequency))
-	#refresherSerialInput.daemon=True
-	verbose(['\nSerial Input On'], 1)
-	refresherSerialInput.start()
-	#test(serialInputRefreshFrequency)
-	stop=1
-	while stop:
-		#This is where we wait while test function thread runs
-		stop-=1
-		sleep(2)
-	for words in s.receiveList:
-		group, bank, word, I_Bit, numericData = mp.Decode(words)
-		print  'group', group, 'bank', bank, 'word', word, 'addr', mp.gbw_to_mp_address(
-			group, bank, word)+1, 'I_Bit', I_Bit, 'data', bin(numericData), bin(words)
-	'''
-	try:
-		s.ser.close()
-	except:
-		print 'ERROR close'
-	'''
-	print 'DONE'
-	
-	"""
