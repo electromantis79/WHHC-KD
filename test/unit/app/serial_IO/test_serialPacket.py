@@ -1,13 +1,15 @@
 from unittest import TestCase
 import app.serial_IO.serial_packet as packet
 import app.game.game as game
+import app.utils.reads
 import os
 
 
 class TestSerialPacket(TestCase):
 	def setUp(self):
 		os.chdir('/Repos/MP2ASCII/app')
-		self.game = game.Basketball()
+		self.config_dict = app.utils.reads.read_config()
+		self.game = game.Basketball(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 	def test__string_eater_one_place(self):
@@ -58,97 +60,97 @@ class TestSerialPacket(TestCase):
 		self._with_vars()
 
 	def test_football_encode_decode_encode(self):
-		self.game = game.Football()
+		self.game = game.Football(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def test_football_encode_decode_encode_with_vars(self):
-		self.game = game.Football()
+		self.game = game.Football(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def test_baseball_encode_decode_encode(self):
-		self.game = game.Baseball()
+		self.game = game.Baseball(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def test_baseball_encode_decode_encode_with_vars(self):
-		self.game = game.Baseball()
+		self.game = game.Baseball(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def test_soccer_encode_decode_encode(self):
-		self.game = game.Soccer()
+		self.game = game.Soccer(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def test_soccer_encode_decode_encode_with_vars(self):
-		self.game = game.Soccer()
+		self.game = game.Soccer(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def test_hockey_encode_decode_encode(self):
-		self.game = game.Hockey()
+		self.game = game.Hockey(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def test_hockey_encode_decode_encode_with_vars(self):
-		self.game = game.Hockey()
+		self.game = game.Hockey(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def _test_cricket_encode_decode_encode(self):  # Remove _ when test used
-		self.game = game.Cricket()
+		self.game = game.Cricket(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def _test_cricket_encode_decode_encode_with_vars(self):  # Remove _ when test used
-		self.game = game.Cricket()
+		self.game = game.Cricket(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def _test_racetrack_encode_decode_encode(self):  # Remove _ when test used
-		self.game = game.Racetrack()
+		self.game = game.Racetrack(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def _test_racetrack_encode_decode_encode_with_vars(self):  # Remove _ when test used
-		self.game = game.Racetrack()
+		self.game = game.Racetrack(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def test_stat_encode_decode_encode(self):
-		self.game = game.Stat()
+		self.game = game.Stat(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def test_stat_encode_decode_encode_with_vars(self):
-		self.game = game.Stat()
+		self.game = game.Stat(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()
 
 	def _test_game_encode_decode_encode(self):  # Remove _ when test used
-		self.game = game.Game()
+		self.game = game.Game(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._encode_decode_encode()
 
 	def _test_game_encode_decode_encode_with_vars(self):  # Remove _ when test used
-		self.game = game.Game()
+		self.game = game.Game(self.config_dict)
 		self.packet = packet.SerialPacket(self.game)
 
 		self._with_vars()

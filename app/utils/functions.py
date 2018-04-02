@@ -143,58 +143,61 @@ def verbose(messages, enable=True):
 				print message,
 
 
-def select_sport_instance(sport='GENERIC', number_of_teams=2, mp_lx3450_flag=False):
+def select_sport_instance(config_dict, number_of_teams=2):
 	"""
 	Returns an object from the *Game* module based on the sport passed.
 	"""
-	import config_default_settings
-	c = config_default_settings.Config()
-	if sport == 'MPMULTISPORT1-baseball' and mp_lx3450_flag:
-		sport = 'MPLX3450-baseball'
-	elif sport == 'MPMULTISPORT1-football' and mp_lx3450_flag:
-		sport = 'MPLX3450-football'
-	c.write_sport(sport)
+	if config_dict['sport'] == 'MPMULTISPORT1-baseball' and config_dict['MPLX3450Flag']:
+		config_dict['sport'] = 'MPLX3450-baseball'
+	elif config_dict['sport'] == 'MPMULTISPORT1-football' and config_dict['MPLX3450Flag']:
+		config_dict['sport'] = 'MPLX3450-football'
 
-	choice = SPORT_LIST.index(sport) + 1
+	# TODO: Move this out into Console function?
+	# Write sport change from mp_lx3450_flag to config file
+	import app.config_default_settings
+	c = app.config_default_settings.Config()
+	c.write_sport(config_dict['sport'])
+
+	choice = SPORT_LIST.index(config_dict['sport']) + 1
 
 	# 'MMBASEBALL3'#'MPBASEBALL1'#'MMBASEBALL4'
 	# 'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
 	# 'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
 	if (1 <= choice <= 8) or choice == 20:
 		from game.game import Baseball
-		game = Baseball(number_of_teams)
+		game = Baseball(config_dict, number_of_teams)
 
 	# 'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
 	# 'MPSOCCER_LX1-football'#'MPLX3450-football'
 	elif (9 <= choice <= 11) or choice == 14 or choice == 21:
 		from game.game import Football
-		game = Football(number_of_teams)
+		game = Football(config_dict, number_of_teams)
 
 	elif choice == 12:  # 'MPBASKETBALL1'
 		from game.game import Basketball
-		game = Basketball(number_of_teams)
+		game = Basketball(config_dict, number_of_teams)
 
 	elif choice == 13 or choice == 15:  # 'MPSOCCER_LX1-soccer'#'MPSOCCER1'
 		from game.game import Soccer
-		game = Soccer(number_of_teams)
+		game = Soccer(config_dict, number_of_teams)
 
 	elif choice == 16 or choice == 17:  # 'MPHOCKEY_LX1'#'MPHOCKEY1'
 		from game.game import Hockey
-		game = Hockey(number_of_teams)
+		game = Hockey(config_dict, number_of_teams)
 
 	elif choice == 18:  # 'MPCRICKET1'
 		from game.game import Cricket
-		game = Cricket(number_of_teams)
+		game = Cricket(config_dict, number_of_teams)
 
 	elif choice == 19:  # 'MPRACETRACK1'
 		from game.game import Racetrack
-		game = Racetrack(number_of_teams)
+		game = Racetrack(config_dict, number_of_teams)
 	elif choice == 23:  # 'STAT'
 		from game.game import Stat
-		game = Stat(number_of_teams)
+		game = Stat(config_dict, number_of_teams)
 	elif choice == 22:  # 'GENERIC'
 		from game.game import Game
-		game = Game(number_of_teams)
+		game = Game(config_dict, number_of_teams)
 	else:
 		print 'sport not in list'
 		raise Exception

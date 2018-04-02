@@ -69,8 +69,7 @@ class Console(object):
 		self.configDict = app.utils.reads.read_config()
 		if internal_reset:
 			self.game.kill_clock_threads()
-		self.game = app.utils.functions.select_sport_instance(
-			self.configDict['sport'], number_of_teams=2, mp_lx3450_flag=self.configDict['MPLX3450Flag'])
+		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
 
 		print 'sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']
 		if self.serialInputFlag and self.serialInputType == 'ASCII':
@@ -79,9 +78,9 @@ class Console(object):
 			# self.game.activeHomePlayerList = [1,2,3,4,5,6]
 
 		# Build address maps
-		self.addrMap = app.address_mapping.AddressMapping(self.game.gameData['sportType'], self.game)
-		self.lampTest = app.address_mapping.LamptestMapping(self.game.gameData['sportType'])
-		self.blankTest = app.address_mapping.BlanktestMapping(self.game.gameData['sportType'])
+		self.addrMap = app.address_mapping.AddressMapping(game=self.game)
+		self.lampTest = app.address_mapping.LamptestMapping(game=self.game)
+		self.blankTest = app.address_mapping.BlanktestMapping(game=self.game)
 		self.mp = app.mp_data_handler.MpDataHandler()
 		self.addrMap.map()
 

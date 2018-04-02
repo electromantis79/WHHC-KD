@@ -47,10 +47,15 @@ class AddressMapping(object):
 
 	"""
 
-	def __init__(self, sport_type='Generic', game=None):
+	def __init__(self, game=None, sport=None, sport_type=None):
+		self.game = game
+		self.sport = sport
 		self.sportType = sport_type
-		if game is not None:
-			self.game = game
+
+		# Override parameters if we have a game object
+		if self.game is not None:
+			self.sport = self.game.gameData['sport']
+			self.sportType = self.game.gameData['sportType']
 
 		# Variables and Dictionaries
 		self.verbose = False
@@ -85,12 +90,10 @@ class AddressMapping(object):
 		self.wordsDict = dict.fromkeys(self.wordListAddr, 0)
 		self._blank_map()
 
-		self.configDict = app.utils.reads.read_config()
-		self.sport = self.configDict['sport']
-
 		self.addressMapDict = {}
-		self.fullAddressMapDict = app.utils.reads.read_address_map(self.sport, self.sportType, self.wordListAddr)
-		self._build_addr_map()
+		if self.sport is not None and self.sportType is not None:
+			self.fullAddressMapDict = app.utils.reads.read_address_map(self.sport, self.sportType, self.wordListAddr)
+			self._build_addr_map()
 
 		self.periodClockUnMapKeysList = [
 			'hoursUnits', 'minutesTens', 'minutesUnits', 'secondsTens', 'secondsUnits', 'tenthsUnits',
@@ -174,7 +177,7 @@ class AddressMapping(object):
 				under_minute = True
 
 		# Check for any flag changes
-		if self.game.sport == 'MPBASEBALL1' or self.game.sport == 'MMBASEBALL3':
+		if self.sport == 'MPBASEBALL1' or self.sport == 'MMBASEBALL3':
 			if under_minute:
 				if self.game.gameSettings['2D_Clock']:
 					alts = self._format_alts(alts, [2, 21], 2)
@@ -188,7 +191,7 @@ class AddressMapping(object):
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				alts = self._format_alts(alts, [1, 2, 21, 22], 4)
 
-		elif self.game.sport == 'MPLINESCORE5':
+		elif self.sport == 'MPLINESCORE5':
 			if self.game.gameSettings['clock_3D_or_less_Flag'] and not under_minute:
 				alts = self._format_alts(alts, [23], 2)
 
@@ -205,13 +208,13 @@ class AddressMapping(object):
 			elif under_minute and self.game.gameSettings['periodClockTenthsFlag']:
 				alts = self._format_alts(alts, [21, 22], 2)
 
-		elif self.game.sport == 'MPLINESCORE4':
+		elif self.sport == 'MPLINESCORE4':
 			if under_minute and self.game.gameSettings['periodClockTenthsFlag']:
 				alts = self._format_alts(alts, [21, 22], 2)
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				alts = self._format_alts(alts, [21, 22], 4)
 
-		elif self.game.sport == 'MPMP_15X1' or self.game.sport == 'MPMP_14X1' or self.game.sport == 'MMBASEBALL4':
+		elif self.sport == 'MPMP_15X1' or self.sport == 'MPMP_14X1' or self.sport == 'MMBASEBALL4':
 			pass
 
 		elif (
@@ -247,7 +250,7 @@ class AddressMapping(object):
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				alts = self._format_alts(alts, [6, 7, 8, 21, 22], 4)
 
-		elif self.game.sport == 'MPFOOTBALL1':
+		elif self.sport == 'MPFOOTBALL1':
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 4)
 			elif self.game.gameSettings['timeOutTimerEnable'] and self.game.gameSettings['timeOutTimerToScoreboard']:
@@ -263,7 +266,7 @@ class AddressMapping(object):
 			if self.game.gameSettings['yardsToGoUnits_to_quarter']:  # or 1:# This added for a range test with a 2180 WARNING
 				alts = self._format_alts(alts, [23], 2)
 
-		elif self.game.sport == 'MMFOOTBALL4':
+		elif self.sport == 'MMFOOTBALL4':
 			if under_minute and self.game.gameSettings['periodClockTenthsFlag']:
 				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 2)
 			if self.game.gameSettings['yardsToGoUnits_to_quarter']:
@@ -282,7 +285,7 @@ class AddressMapping(object):
 				if self.game.gameSettings['periodClockTenthsFlag']:
 					alts = self._format_alts(alts, [18], 2)
 
-		elif self.game.sport == 'MPBASKETBALL1':
+		elif self.sport == 'MPBASKETBALL1':
 			if self.game.gameSettings['shotClockBlankEnable']:
 				alts = self._format_alts(alts, [5], 3)
 			if self.game.gameSettings['timeOfDayClockEnable']:
@@ -292,7 +295,7 @@ class AddressMapping(object):
 			elif under_minute and self.game.gameSettings['periodClockTenthsFlag']:
 				alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 2)
 
-		elif self.game.sport == 'MPHOCKEY_LX1':
+		elif self.sport == 'MPHOCKEY_LX1':
 			if self.game.gameSettings['shotClockBlankEnable']:
 				alts = self._format_alts(alts, [5], 3)
 			if self.game.gameSettings['timeOfDayClockEnable']:
@@ -1574,8 +1577,8 @@ class AddressMapping(object):
 
 class LamptestMapping(AddressMapping):
 	"""Map of all non-horn segments on per the sport."""
-	def __init__(self, sport_type='Generic'):
-		super(LamptestMapping, self).__init__(sport_type, game=None)
+	def __init__(self, game=None):
+		super(LamptestMapping, self).__init__(game=game)
 
 		if self.statFlag:
 			for k in range(2):
@@ -1696,8 +1699,8 @@ class LamptestMapping(AddressMapping):
 
 class BlanktestMapping(AddressMapping):
 	"""Map of all segments off."""
-	def __init__(self, sport_type='Generic'):
-		super(BlanktestMapping, self).__init__(sport_type, game=None)
+	def __init__(self, game=None):
+		super(BlanktestMapping, self).__init__(game=game)
 
 	def _build_addr_map(self):
 		pass
