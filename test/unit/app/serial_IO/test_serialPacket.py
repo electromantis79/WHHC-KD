@@ -15,12 +15,12 @@ class TestSerialPacket(TestCase):
 	def test__string_eater_one_place(self):
 		packet_ = 'B12345'
 		self.assertEquals(
-			self.packet._string_eater(packet_, places=1,), '12345')
+			'12345', self.packet._string_eater(packet_, places=1))
 
 	def test__string_eater_five_places(self):
 		packet_ = 'B12345'
 		self.assertEquals(
-			self.packet._string_eater(packet_, places=5,), '5')
+			'5', self.packet._string_eater(packet_, places=5,))
 
 	def test__string_eater_none(self):
 		packet_ = None
@@ -52,9 +52,9 @@ class TestSerialPacket(TestCase):
 		self._encode_decode_encode()
 
 		self.assertEqual(
-			self.game.get_game_data(game_variable_name), game_variable)
+			game_variable, self.game.get_game_data(game_variable_name))
 		self.assertEqual(
-			self.game.get_team_data(self.game.home, team_variable_name), team_variable)
+			team_variable, self.game.get_team_data(self.game.home, team_variable_name))
 
 	def test_basketball_encode_decode_encode_with_vars(self):
 		self._with_vars()
