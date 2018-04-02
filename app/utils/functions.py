@@ -157,6 +157,7 @@ def select_sport_instance(config_dict, number_of_teams=2):
 	import app.config_default_settings
 	c = app.config_default_settings.Config()
 	c.write_sport(config_dict['sport'])
+	del c
 
 	choice = SPORT_LIST.index(config_dict['sport']) + 1
 

@@ -129,6 +129,7 @@ class Console(object):
 				self.refresherSerialInput = threading.Thread(
 					target=app.utils.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
+				self.refresherSerialInput.name = 'serialInput'
 				self.alignTime = 0.0
 				self.previousByteCount = 0
 				self.refresherSerialInput.start()
@@ -140,7 +141,8 @@ class Console(object):
 					pass  # time.sleep(0.2) #  This delay seems to cause packet corruption
 				self.refresherCheckEvents = threading.Thread(
 					target=app.utils.functions.thread_timer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
-				self.refresherCheckEvents.daemon = True				
+				self.refresherCheckEvents.daemon = True
+				self.refresherCheckEvents.name = 'checkEvents'
 				self.refresherCheckEvents.start()
 
 			if self.serialOutputFlag and not internal_reset:
@@ -156,6 +158,7 @@ class Console(object):
 					target=app.utils.functions.thread_timer,
 					args=(self.serialOutput, self.serialOutputRefreshFrequency, None, self.alignTime))
 				self.refresherSerialOutput.daemon = True
+				self.refresherSerialOutput.name = 'serialOutput'
 				self.refresherSerialOutput.start()		
 
 		elif _platform == "darwin":
@@ -176,7 +179,8 @@ class Console(object):
 				self.refresherSerialOutput = threading.Thread(
 					target=app.utils.functions.thread_timer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
 				self.refresherSerialOutput.daemon = True
-				self.refresherSerialOutput.start()		
+				self.refresherSerialOutput.name = 'serialOutput'
+				self.refresherSerialOutput.start()
 		
 	def select_mp_data_priority(self):
 		# Select priority order list
