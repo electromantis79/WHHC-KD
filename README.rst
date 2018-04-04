@@ -1,10 +1,9 @@
-**MP - to - ASCII Converter**
+**ASCII - to - MP Converter**
 
 
-.. image:: https://readthedocs.org/projects/mp2ascii/badge/?version=latest
-    :target: https://mp2ascii.readthedocs.io/
+.. image:: https://readthedocs.org/projects/ascii2mp/badge/?version=latest
+    :target: https://ascii2mp.readthedocs.io/
 
 BBB project
 
-Added BBB IP 232
-Added public SSH
+

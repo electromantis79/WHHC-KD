@@ -1020,7 +1020,7 @@ def test():
 	c.write_sport(sport)
 	c.write_option_jumpers('0000')
 	Console(
-		check_events_flag=True, serial_input_flag=True, serial_input_type='MP',
+		check_events_flag=True, serial_input_flag=True, serial_input_type='ASCII',
 		serial_output_flag=True, encode_packet_flag=True, server_thread_flag=True)
 	while 1:
 		time.sleep(2)
