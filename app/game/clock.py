@@ -309,6 +309,7 @@ class ClockThread(threading.Thread):
 		self.function = passed_function
 		self.period = period
 		self.clockName = name
+		self.name = name
 		if _platform == "linux" or _platform == "linux2":
 			try:
 				prctl.set_name(name)  # Used on BBB to show name of process in htop
@@ -365,58 +366,3 @@ class ClockThread(threading.Thread):
 
 	def kill(self):
 		self._stopevent.set()
-
-# TODO: clean this function and create real test functions
-
-
-"""
-
-tic = time.time()
-print 'OK'
-toc = time.time()
-elapse = toc-tic
-#print toc, tic, elapse, type(elapse)
-#direction=input("Input clock direction ('0' = down): ")
-#length=input("Input Max time until stop in seconds: ")
-#hours=input("Input '1' for Hours mode or '0' for Minutes Mode: ")
-
-#periodClock=Clock(
-		countUp=direction, maxSeconds=length, resolution=0.01, hoursFlag=hours, clockName='generic', internalClock=False)
-periodClock=Clock(maxSeconds=10, countUp=False, clockName='shotClock', resolution=0.01)
-#ClockThread(thread_timer(periodClock._update, 0.01), 0.01)
-
-#clocky = periodClock._update()
-periodClock.start_()
-while periodClock.running:
-	#periodClock.updateValues()
-	print (
-		periodClock.timeUnitsDict['minutesTens'], periodClock.timeUnitsDict['minutesUnits'],
-		periodClock.timeUnitsDict['secondsTens'], periodClock.timeUnitsDict['secondsUnits'],
-		periodClock.timeUnitsDict['tenthsUnits'], periodClock.timeUnitsDict['hundredthsUnits'])
-	time.sleep(0.01)
-	if periodClock.timeUnitsDict['secondsUnits']<=5:
-		periodClock.kill_()
-		break
-periodClock.stop_()
-time.sleep(.2)
-
-while 1:
-	pass
-app.utils.misc.print_dict(periodClock.__dict__)
-
-import cProfile, pstats, StringIO
-tic = time.time()
-pr = cProfile.Profile()
-pr.enable()
-# ... do something ...
-elapse_time(periodClock._update, On=True)
-pr.disable()
-s = StringIO.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-print 'stat', s.getvalue()
-toc = time.time()
-elapse = toc-tic
-print 'elapse', elapse*1000, 'ms'
-"""

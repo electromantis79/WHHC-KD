@@ -24,11 +24,11 @@ import app.game.clock
 class Game(object):
 	"""Generic base class for all sports."""
 	
-	def __init__(self, number_of_teams=2):
+	def __init__(self, config_dict, number_of_teams=2):
+		self.configDict = config_dict
 		self.numberOfTeams = number_of_teams
 
 		# Build dictionaries from files
-		self.configDict = app.utils.reads.read_config()
 		self.gameSettings = app.utils.reads.read_game_default_settings()
 		self.segmentTimerSettings = app.utils.reads.read_segment_timer_settings()
 		self.gameSettings.update(self.segmentTimerSettings)  # Don't use the same names
@@ -37,13 +37,13 @@ class Game(object):
 		# Classes and attributes
 		self.gameData['sportType'] = "GENERIC"
 		self.gameData['sport'] = self.configDict['sport']
-		self.sport = self.configDict['sport']
+		self.gameData['keypadType'] = self.configDict['keypadType']
 		self.gameData['optionJumpers'] = self.configDict['optionJumpers']
 		self.gameData['Version'] = self.configDict['Version']
-		
+
 		# Handle option jumpers
 		self.optionJumpers = app.game.option_jumpers.OptionJumpers(
-			self.sport, app.utils.functions.SPORT_LIST, jumper_string=self.gameData['optionJumpers'])
+			self.gameData['sport'], app.utils.functions.SPORT_LIST, jumper_string=self.gameData['optionJumpers'])
 		self.gameSettings = self.optionJumpers.get_options(self.gameSettings)
 		
 		self.decimalIndicator = not self.gameData['colonIndicator']
@@ -59,12 +59,12 @@ class Game(object):
 		self.set_game_data('segmentCount', self.get_game_data('segmentCount'))
 		self.set_game_data('period', self.get_game_data('period'))
 
-		if self.configDict['sport'][-4:] == 'ball' or self.configDict['sport'][-6:] == 'soccer':
+		if self.gameData['sport'][-4:] == 'ball' or self.gameData['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportMenuFlag'] = True
 		else:
 			self.gameSettings['multisportMenuFlag'] = False
 
-		if self.configDict['sport'][-8:] == 'football' or self.configDict['sport'][-6:] == 'soccer':
+		if self.gameData['sport'][-8:] == 'football' or self.gameData['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportChoiceFlag'] = True
 		else:
 			self.gameSettings['multisportChoiceFlag'] = False
@@ -1071,8 +1071,8 @@ class Game(object):
 
 
 class Baseball(Game):
-	def __init__(self, number_of_teams=2):
-		super(Baseball, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Baseball, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = "baseball"
 		if self.gameSettings['hoursFlagJumper']:
@@ -1083,9 +1083,9 @@ class Baseball(Game):
 			self.gameData['sportType'] = 'linescore'
 			self.gameSettings['hoursFlag'] = True
 
-		if self.configDict['keypadType'] == 'MM':
+		if self.gameData['keypadType'] == 'MM':
 			self.gameSettings['baseballPeriodClockMaxSeconds'] = self.gameSettings['MM_baseballPeriodClockMaxSeconds']
-		elif self.configDict['keypadType'] == 'MP':
+		elif self.gameData['keypadType'] == 'MP':
 			self.gameSettings['baseballPeriodClockMaxSeconds'] = self.gameSettings['MP_baseballPeriodClockMaxSeconds']
 
 		self.set_game_data('singlePitchCount', self.get_team_data(self.home, 'pitchCount'), places=3)
@@ -1146,14 +1146,14 @@ class Baseball(Game):
 
 
 class Football(Game):
-	def __init__(self, number_of_teams=2):
-		super(Football, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Football, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'football'
 
-		if self.configDict['keypadType'] == 'MM':
+		if self.gameData['keypadType'] == 'MM':
 			self.gameSettings['footballPeriodClockMaxSeconds'] = self.gameSettings['MM_footballPeriodClockMaxSeconds']
-		elif self.configDict['keypadType'] == 'MP':
+		elif self.gameData['keypadType'] == 'MP':
 			self.gameSettings['footballPeriodClockMaxSeconds'] = self.gameSettings['MP_footballPeriodClockMaxSeconds']
 
 		if self.gameData['quarter'] == 4:
@@ -1205,8 +1205,8 @@ class Football(Game):
 
 
 class Soccer(Game):
-	def __init__(self, number_of_teams=2):
-		super(Soccer, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Soccer, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'soccer'
 
@@ -1227,8 +1227,8 @@ class Soccer(Game):
 
 
 class Hockey(Game):
-	def __init__(self, number_of_teams=2):
-		super(Hockey, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Hockey, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'hockey'
 
@@ -1284,8 +1284,8 @@ class Hockey(Game):
 
 
 class Basketball(Game):
-	def __init__(self, number_of_teams=2):
-		super(Basketball, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Basketball, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'basketball'
 
@@ -1293,9 +1293,9 @@ class Basketball(Game):
 
 		self._add_team_name_data()
 
-		if self.configDict['keypadType'] == 'MM':
+		if self.gameData['keypadType'] == 'MM':
 			self.basketballPeriodClockMaxSeconds = (self.gameSettings['MM_basketballPeriodClockMaxSeconds'])
-		elif self.configDict['keypadType'] == 'MP':
+		elif self.gameData['keypadType'] == 'MP':
 			self.basketballPeriodClockMaxSeconds = (self.gameSettings['MP_basketballPeriodClockMaxSeconds'])
 
 		self.gameSettings['periodClockTenthsFlag'] = True
@@ -1361,8 +1361,8 @@ class Basketball(Game):
 
 
 class Cricket(Game):
-	def __init__(self, number_of_teams=2):
-		super(Cricket, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Cricket, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'cricket'
 
@@ -1381,8 +1381,8 @@ class Cricket(Game):
 
 
 class Racetrack(Game):
-	def __init__(self, number_of_teams=2):
-		super(Racetrack, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Racetrack, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'racetrack'
 
@@ -1401,8 +1401,8 @@ class Racetrack(Game):
 
 
 class Stat(Game):
-	def __init__(self, number_of_teams=2):
-		super(Stat, self).__init__(number_of_teams)
+	def __init__(self, config_dict, number_of_teams=2):
+		super(Stat, self).__init__(config_dict, number_of_teams=number_of_teams)
 
 		self.gameData['sportType'] = 'stat'
 

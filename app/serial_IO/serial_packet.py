@@ -232,7 +232,7 @@ class SerialPacket (object):
 				self.ETNFlag = True
 				packet_length = 60
 
-			if self.printCorruption and len(packet) != packet_length and not self.MPserial:
+			if self.printCorruption and not self.MPserial and len(packet) != packet_length:
 				string = None
 				print 'Packet Length Error'
 				print 'len(packet), packet_length = ', len(packet), packet_length
@@ -1626,40 +1626,3 @@ class SerialPacket (object):
 		else:
 			string += checkSum
 			return string
-
-
-# TODO: clean this function and create real test functions
-
-
-"""
-def test():
-	'''Test function if module ran independently.'''
-	print "ON"
-	sport='MPFOOTBALL1'
-	game = select_sport_instance(sport)
-	var1='period'
-	var2='TIMER2_PLAYER_NUMBERTens'
-	game.set_game_data(var1, 9, 1)
-	game.set_team_data(game.home, var2, 7)
-
-	#app.utils.misc.print_dict(self.game.__dict__)
-	time.sleep(1)
-	sp=Serial_Packet()
-	print "\nCreate ASCII string"
-	game, string=sp.encodePacket(game, printString=True, ETNFlag=False)
-	print "\nLoad String back into game"
-	sp.encodePacket(game, printString=True, ETNFlag=False, packet=string)
-	print "\nPrint string again to look for changes"
-	game, string=sp.encodePacket(game, printString=True, ETNFlag=False)
-
-	#print game.get_game_data(var1)
-	#print game.get_team_data(game.home, var2)
-
-
-if __name__  ==  '__main__':
-	import time
-	os.chdir('..') 
-	'''Added this for csv_one_row_read to work with this structure, 
-	add this line for each level below project root'''
-	test()
-"""
