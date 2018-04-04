@@ -34,7 +34,6 @@ class Console(object):
 			self, vbose_list=(1, 0, 0), check_events_flag=True,
 			serial_input_flag=0, serial_input_type='MP', serial_output_flag=1, encode_packet_flag=False,
 			server_thread_flag=True):
-		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
 		self.className = 'console'
 
 		self.checkEventsFlag = check_events_flag
@@ -47,6 +46,8 @@ class Console(object):
 		self.verbose = self.vboseList[0]  # Method Name or arguments
 		self.verboseMore = self.vboseList[1]  # Deeper loop information in methods
 		self.verboseMost = self.vboseList[2]  # Crazy Deep Stuff
+
+		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
 
 		self.MP_StreamRefreshFlag = True
 		self.printTimesFlag = False
@@ -491,7 +492,7 @@ class Console(object):
 					self.game.gameData['colonIndicator'] = True
 					self.game.gameData['decimalIndicator'] = False
 
-	# Timer triggered events ------------------------
+	# Timer triggered menu events ------------------------
 
 	def defaultScreen(self):
 		"""Displays the default screen on the LCD."""
@@ -780,7 +781,7 @@ class Console(object):
 				for y, pair in enumerate(pairsList):
 					leftETNByte = pair[0]
 					rightETNByte = pair[1]					
-					if	teamAddrOverride:
+					if teamAddrOverride:
 						teamAddr = teamAddrShift+singleAddr
 						# print 'single team addr'
 					else:
@@ -840,7 +841,7 @@ class Console(object):
 				for y, pair in enumerate(pairsList):
 					leftETNByte = pair[0]
 					rightETNByte = pair[1]
-					if	teamAddrOverride:
+					if teamAddrOverride:
 						teamAddr = teamAddrShift+singleAddr
 						# print 'single team addr'
 					else:

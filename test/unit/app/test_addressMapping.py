@@ -61,4 +61,3 @@ class TestAddressMappingBaseballOne(TestCase):
 		word_list = [word_0]
 
 		self._profile_function(self.addr.un_map, word_list)
-

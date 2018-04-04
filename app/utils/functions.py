@@ -99,54 +99,6 @@ def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
 				time.sleep(period)
 
 
-def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
-	"""
-	Simple function to test execution time of the passed function.
-	Does not accept args.
-	"""
-	if on:
-		start_time = time.time()
-		result = passed_function()
-		end_time = time.time()
-		total_time = (end_time-start_time)*1000
-		if total_time >= lower_limit*1000:
-			print passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit)
-	else:
-		result = passed_function()
-
-	if time_it:
-		t = timeit.Timer(passed_function, "print 'time_it'")
-		print t.timeit(1)*1000, 'ms'
-
-	return result
-
-
-def tf(string):
-	"""
-	Returns boolean True for string = 'True' or string = 'TRUE'
-	or returns boolean False for string = 'False' or string = 'FALSE'.
-	"""
-	if string == 'True' or string == 'TRUE':
-		return True
-	elif string == 'False' or string == 'FALSE':
-		return False
-	return None
-
-
-def verbose(messages, enable=True):
-	"""
-	Prints a list of items for debugging.
-	.. warning:: Only send list type messages.
-	"""
-	# Use list format for messages
-	if enable:
-		for x, message in enumerate(messages):
-			if x == len(messages)-1:
-				print message
-			else:
-				print message,
-
-
 def select_sport_instance(config_dict, number_of_teams=2):
 	"""
 	Returns an object from the *Game* module based on the sport passed.
@@ -229,3 +181,51 @@ def active_player_list_select(game):  # Used for Stat game methods
 		except:
 			pass
 	return active_player_list, team, team_name
+
+
+def tf(string):
+	"""
+	Returns boolean True for string = 'True' or string = 'TRUE'
+	or returns boolean False for string = 'False' or string = 'FALSE'.
+	"""
+	if string == 'True' or string == 'TRUE':
+		return True
+	elif string == 'False' or string == 'FALSE':
+		return False
+	return None
+
+
+def verbose(messages, enable=True):
+	"""
+	Prints a list of items for debugging.
+	.. warning:: Only send list type messages.
+	"""
+	# Use list format for messages
+	if enable:
+		for x, message in enumerate(messages):
+			if x == len(messages)-1:
+				print message
+			else:
+				print message,
+
+
+def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
+	"""
+	Simple function to test execution time of the passed function.
+	Does not accept args.
+	"""
+	if on:
+		start_time = time.time()
+		result = passed_function()
+		end_time = time.time()
+		total_time = (end_time-start_time)*1000
+		if total_time >= lower_limit*1000:
+			print passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit)
+	else:
+		result = passed_function()
+
+	if time_it:
+		t = timeit.Timer(passed_function, "print 'time_it'")
+		print t.timeit(1)*1000, 'ms'
+
+	return result
