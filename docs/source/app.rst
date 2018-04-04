@@ -1,5 +1,5 @@
 app package
-================
+===========
 
 Subpackages
 -----------
@@ -7,71 +7,40 @@ Subpackages
 .. toctree::
 
     app.game
-    app.serial
+    app.serial_IO
+    app.utils
 
 Submodules
 ----------
 
-app.Address_Mapping module
--------------------------------
-
-.. automodule:: app.Address_Mapping
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.Config module
-----------------------
-
-.. automodule:: app.Config
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 app.Console module
------------------------
+------------------
 
 .. automodule:: app.Console
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.Keypad_Mapping module
-------------------------------
-
-.. automodule:: app.Keypad_Mapping
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.MP_Data_Handler module
--------------------------------
-
-.. automodule:: app.MP_Data_Handler
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-app.Menu_Class module
+app.address_mapping module
 --------------------------
 
-.. automodule:: app.Menu_Class
+.. automodule:: app.address_mapping
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.configobj module
--------------------------
+app.mp_data_handler module
+--------------------------
 
-.. automodule:: app.configobj
+.. automodule:: app.mp_data_handler
     :members:
     :undoc-members:
     :show-inheritance:
 
-app.functions module
--------------------------
+app.config_default_settings module
+----------------------------------
 
-.. automodule:: app.functions
+.. automodule:: app.config_default_settings
     :members:
     :undoc-members:
     :show-inheritance:

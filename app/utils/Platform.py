@@ -27,6 +27,7 @@ RASPBERRY_PI     = 1
 BEAGLEBONE_BLACK = 2
 MINNOWBOARD      = 3
 
+
 def platform_detect():
     """Detect if running on the Raspberry Pi or Beaglebone Black and return the
     platform type.  Will return RASPBERRY_PI, BEAGLEBONE_BLACK, or UNKNOWN."""
@@ -36,8 +37,8 @@ def platform_detect():
         return RASPBERRY_PI
 
     # Handle Beaglebone Black
-    # TODO: Check the Beaglebone Black /proc/cpuinfo value instead of reading
-    # the platform.
+    # TODO: Check the Beaglebone Black /proc/cpuinfo value instead of reading the platform.
+
     plat = platform.platform()
     if plat.lower().find('armv7l-with-debian') > -1:
         return BEAGLEBONE_BLACK
@@ -50,7 +51,7 @@ def platform_detect():
     # Assumption is that mraa is installed
     try:
         import mraa
-        if mraa.getPlatformName()=='MinnowBoard MAX':
+        if mraa.getPlatformName() == 'MinnowBoard MAX':
             return MINNOWBOARD
     except ImportError:
         pass
@@ -88,10 +89,10 @@ def pi_version():
     # 2709 is pi 2
     # Anything else is not a pi.
     try:
-		with open('/proc/cpuinfo', 'r') as infile:
-			cpuinfo = infile.read()
+        with open('/proc/cpuinfo', 'r') as infile:
+            cpuinfo = infile.read()
     except:
-		return None
+        return None
     # Match a line like 'Hardware   : BCM2709'
     match = re.search('^Hardware\s+:\s+(\w+)$', cpuinfo,
                       flags=re.MULTILINE | re.IGNORECASE)
@@ -108,8 +109,10 @@ def pi_version():
         # Something else, not a pi.
         return None
 
+
 def test():
-	print platform_detect()
+    print platform_detect()
+
 
 if __name__ == '__main__':
-	test()
+    test()
