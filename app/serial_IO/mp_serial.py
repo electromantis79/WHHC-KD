@@ -102,7 +102,7 @@ class MpSerialHandler(object):
 						print (self.ser.inWaiting(), 'bytes in buffer')
 
 			except:
-				print ('ERROR serialInput function')
+				print ('ERROR _serial_input function')
 
 			if self.verboseFlag:
 				print ('---')
@@ -122,7 +122,7 @@ class MpSerialHandler(object):
 					print ('-----len(self.ETNpacketList', len(self.ETNpacketList))
 
 			except:
-				print ('ERROR serialInput function')
+				print ('ERROR _serial_input function')
 			if self.verboseFlag:
 				print (self.packet)
 

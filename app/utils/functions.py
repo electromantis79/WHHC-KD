@@ -34,6 +34,10 @@ SPORT_LIST = [
 
 
 def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
+	"""
+	Wrapper to increase accuracy of calling a function periodically for linux.
+	.. warning:: This only works if function takes less time to complete than the period.
+	"""
 	next_call = time.time()
 	start_time = time.time()
 	#print 'start_time', start_time

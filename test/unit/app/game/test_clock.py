@@ -24,7 +24,7 @@ class TestClock(TestCase):
 				self.clock.timeUnitsDict['secondsTens'], self.clock.timeUnitsDict['secondsUnits'],
 				self.clock.timeUnitsDict['tenthsUnits'], self.clock.timeUnitsDict['hundredthsUnits'])
 			time.sleep(0.01)
-			if self.clock.timeUnitsDict['secondsUnits'] <= 5:
+			if self.clock.timeUnitsDict['secondsUnits'] <= 9:
 				self.clock.stop_()
 				self.clock.kill_()
 				break

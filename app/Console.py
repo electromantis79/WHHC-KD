@@ -34,6 +34,7 @@ class Console(object):
 			self, vbose_list=(1, 0, 0), check_events_flag=True,
 			serial_input_flag=0, serial_input_type='MP', serial_output_flag=1, encode_packet_flag=False,
 			server_thread_flag=True):
+		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
 		self.className = 'console'
 
 		self.checkEventsFlag = check_events_flag
@@ -54,18 +55,18 @@ class Console(object):
 		self.ETNSendListCount = 0
 		self.ETNSendListLength = 0
 		self.verboseDiagnostic = False
+		self.print_input_time_flag = False
 		self.initTime = time.time()
 
-		app.utils.functions.verbose(['\nCreating Console object'], self.verbose)
-		self.Reset()
+		self.reset()
 
 	# INIT Functions
 
-	def Reset(self, internal_reset=0):
+	def reset(self, internal_reset=0):
 		"""Resets the console to a new game."""
 		app.utils.functions.verbose(['\nConsole Reset'], self.verbose)
 
-		# Create Game object, attach keypad and LCD screen
+		# Create Game object
 		self.configDict = app.utils.reads.read_config()
 		if internal_reset:
 			self.game.kill_clock_threads()
@@ -110,79 +111,15 @@ class Console(object):
 		self.MPWordDict = dict(self.addrMap.wordsDict)
 		self.previousMPWordDict = dict(self.addrMap.wordsDict)
 		self.dataUpdateIndex = 1
-
-		self.select_mp_data_priority()
-
 		self.shotClockSportsFlag = (
 				self.game.gameData['sport'] == 'MPBASKETBALL1' or self.game.gameData['sport'] == 'MPHOCKEY_LX1'
 				or self.game.gameData['sport'] == 'MPHOCKEY1')
-		
-		# Platform Dependencies
-		if _platform == "linux" or _platform == "linux2":
-			print 'Platform is', _platform
-			if self.serialInputFlag and not internal_reset:
-				app.utils.functions.verbose(['\nSerial Input On'], self.verbose)
-				import serial_IO.mp_serial
-				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
-				if self.serialInputType == 'ASCII':
-					self.serialInputRefreshFrequency = .1
-				self.refresherSerialInput = threading.Thread(
-					target=app.utils.functions.thread_timer, args=(self.serialInput, self.serialInputRefreshFrequency))
-				self.refresherSerialInput.daemon = True
-				self.refresherSerialInput.name = 'serialInput'
-				self.alignTime = 0.0
-				self.previousByteCount = 0
-				self.refresherSerialInput.start()
-				if self.serialInputType == 'MP':
-					self.checkEventsRefreshFrequency = self.checkEventsRefreshFrequency/10
 
-			if self.checkEventsFlag and not internal_reset:
-				if self.serialInputType == 'ASCII':
-					pass  # time.sleep(0.2) #  This delay seems to cause packet corruption
-				self.refresherCheckEvents = threading.Thread(
-					target=app.utils.functions.thread_timer, args=(self.checkEvents, self.checkEventsRefreshFrequency))
-				self.refresherCheckEvents.daemon = True
-				self.refresherCheckEvents.name = 'checkEvents'
-				self.refresherCheckEvents.start()
+		self.priorityListEmech = self._select_mp_data_priority()
 
-			if self.serialOutputFlag and not internal_reset:
-				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
-				
-				# Wait till we have an alignTime stamped from checkEvents
-				if self.serialInputType == 'MP':
-					time.sleep(0.3)
-				else:
-					time.sleep(0.05)
-				
-				self.refresherSerialOutput = threading.Thread(
-					target=app.utils.functions.thread_timer,
-					args=(self.serialOutput, self.serialOutputRefreshFrequency, None, self.alignTime))
-				self.refresherSerialOutput.daemon = True
-				self.refresherSerialOutput.name = 'serialOutput'
-				self.refresherSerialOutput.start()		
+		self._setup_threads(internal_reset)
 
-		elif _platform == "darwin":
-			#  OS X
-			print 'Apple Sucks!!!!!', 'Disabling input and output flags'
-			self.serialOutputFlag = False
-			self.serialInputFlag = False
-		elif _platform == "win32":
-			print '\nSerial Input not working for', _platform, 'Disabling input and output flags'
-			self.serialOutputFlag = False
-			self.serialInputFlag = False
-			# self.showOutputString = True
-			if self.checkEventsFlag and not internal_reset:
-				threading.Timer(.1, self.checkEvents).start()
-				
-			if self.serialOutputFlag and not internal_reset:
-				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
-				self.refresherSerialOutput = threading.Thread(
-					target=app.utils.functions.thread_timer, args=(self.serialOutput, self.serialOutputRefreshFrequency))
-				self.refresherSerialOutput.daemon = True
-				self.refresherSerialOutput.name = 'serialOutput'
-				self.refresherSerialOutput.start()
-		
-	def select_mp_data_priority(self):
+	def _select_mp_data_priority(self):
 		# Select priority order list
 		# G1		B1 = 1,2,3,4		B2 = 5,6,7,8 		B3 = 9,10,11,12, 		B4 = 13,14,15,16
 		# G2		B1 = 17,18,19,20 	B2 = 21,22,23,24 	B3 = 25,26,27,28 		B4 = 29,30,31,32
@@ -197,38 +134,116 @@ class Console(object):
 
 		# All known priorities
 		if (
-				key == '402' 
-				and self.game.gameData['sport'] == 'MPFOOTBALL1' 
+				key == '402'
+				and self.game.gameData['sport'] == 'MPFOOTBALL1'
 				and self.game.gameSettings['trackClockEnable']
 
 				or key == 'Emech'
 		):
-			self.priorityListEmech = [18,11,22,1,6,5,21,2,7,25,9,8,24,3,23,4,20,19,17,12,10,16,15,14,13,28,27,26,32,31,30,29]
+			priority_list_emech = [
+				18, 11, 22, 1, 6, 5, 21, 2, 7, 25, 9, 8, 24, 3, 23, 4, 20, 19, 17, 12, 10, 16, 15,
+				14, 13, 28, 27, 26, 32, 31, 30, 29]
 		elif key == '402':
-			self.priorityListEmech = [22,1,6,5,21,2,7,25,9,8,24,3,23,4,20,19,17,12,10,16,15,14,13,28,27,26,32,31,30,29,18,11]
-		elif key == 'Sockey' and self.game.gameData['sportType'] == 'soccer' and self.game.gameSettings['trackClockEnable']:
-			self.priorityListEmech = [18,11,6,5,25,22,1,7,21,2,10,14,12,13,17,29,4,9,8,3,15,16,26,30,24,20,23,19,28,27,32,31]
+			priority_list_emech = [
+				22, 1, 6, 5, 21, 2, 7, 25, 9, 8, 24, 3, 23, 4, 20, 19, 17, 12, 10, 16, 15, 14, 13,
+				28, 27, 26, 32, 31, 30, 29, 18, 11]
+		elif key == 'Sockey' and self.game.gameData['sportType'] == 'soccer' and self.game.gameSettings[
+			'trackClockEnable']:
+			priority_list_emech = [
+				18, 11, 6, 5, 25, 22, 1, 7, 21, 2, 10, 14, 12, 13, 17, 29, 4, 9, 8, 3, 15, 16, 26,
+				30, 24, 20, 23, 19, 28, 27, 32, 31]
 		elif key == 'Sockey':
-			self.priorityListEmech = [22,6,1,5,25,21,7,2,10,14,12,13,17,29,4,9,8,3,11,15,16,18,26,30,24,20,23,19,28,27,32,31]
+			priority_list_emech = [
+				22, 6, 1, 5, 25, 21, 7, 2, 10, 14, 12, 13, 17, 29, 4, 9, 8, 3, 11, 15, 16, 18, 26,
+				30, 24, 20, 23, 19, 28, 27, 32, 31]
 		elif key == '314' or key == '313':
-			self.priorityListEmech = [24,23,22,21,4,3,2,1,8,7,6,5,20,19,18,17,12,11,10,9,16,15,14,13,28,27,26,25,32,21,30,29]
+			priority_list_emech = [
+				24, 23, 22, 21, 4, 3, 2, 1, 8, 7, 6, 5, 20, 19, 18, 17, 12, 11, 10, 9, 16, 15, 14,
+				13, 28, 27, 26, 25, 32, 21, 30, 29]
 		elif key == 'Stat':
-			self.priorityListEmech = self.addrMap.wordListAddrStat
-			# self.priorityListEmech = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,
-			# 23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
+			priority_list_emech = self.addrMap.wordListAddrStat
+		# self.priority_list_emech = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,
+		# 23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
 		else:
-			self.priorityListEmech = range(32)
-		# print 'self.priorityListEmech', self.priorityListEmech
+			priority_list_emech = range(32)
+		return priority_list_emech
 
-	def serialInput(self):
+	def _setup_threads(self, internal_reset):
+		# Platform Dependencies
+		if _platform == "linux" or _platform == "linux2":
+			print 'Platform is', _platform
+			if self.serialInputFlag and not internal_reset:
+				app.utils.functions.verbose(['\nSerial Input On'], self.verbose)
+				import serial_IO.mp_serial
+				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
+				if self.serialInputType == 'ASCII':
+					self.serialInputRefreshFrequency = .1
+				self.refresherSerialInput = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self._serial_input, self.serialInputRefreshFrequency))
+				self.refresherSerialInput.daemon = True
+				self.refresherSerialInput.name = '_serial_input'
+				self.alignTime = 0.0
+				self.previousByteCount = 0
+				self.refresherSerialInput.start()
+				if self.serialInputType == 'MP':
+					self.checkEventsRefreshFrequency = self.checkEventsRefreshFrequency/10
+
+			if self.checkEventsFlag and not internal_reset:
+				if self.serialInputType == 'ASCII':
+					pass  # time.sleep(0.2) #  This delay seems to cause packet corruption
+				self.refresherCheckEvents = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self._check_events, self.checkEventsRefreshFrequency))
+				self.refresherCheckEvents.daemon = True
+				self.refresherCheckEvents.name = '_check_events'
+				self.refresherCheckEvents.start()
+
+			if self.serialOutputFlag and not internal_reset:
+				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
+				
+				# Wait till we have an alignTime stamped from _check_events
+				if self.serialInputType == 'MP':
+					time.sleep(0.3)
+				else:
+					time.sleep(0.05)
+				
+				self.refresherSerialOutput = threading.Thread(
+					target=app.utils.functions.thread_timer,
+					args=(self._serial_output, self.serialOutputRefreshFrequency, None, self.alignTime))
+				self.refresherSerialOutput.daemon = True
+				self.refresherSerialOutput.name = '_serial_output'
+				self.refresherSerialOutput.start()		
+
+		elif _platform == "darwin":
+			#  OS X
+			print 'Apple Sucks!!!!!', 'Disabling input and output flags'
+			self.serialOutputFlag = False
+			self.serialInputFlag = False
+		elif _platform == "win32":
+			print '\nSerial Input not working for', _platform, 'Disabling input and output flags'
+			self.serialOutputFlag = False
+			self.serialInputFlag = False
+			# self.showOutputString = True
+			if self.checkEventsFlag and not internal_reset:
+				threading.Timer(.1, self._check_events).start()
+				
+			if self.serialOutputFlag and not internal_reset:
+				app.utils.functions.verbose(['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.verbose)
+				self.refresherSerialOutput = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self._serial_output, self.serialOutputRefreshFrequency))
+				self.refresherSerialOutput.daemon = True
+				self.refresherSerialOutput.name = '_serial_output'
+				self.refresherSerialOutput.start()
+
+	# THREADS
+
+	def _serial_input(self):
 		"""Inputs serial packets."""
-		# tic = time.time()
-		# print 'serial Input', (tic-self.initTime)
+		if self.print_input_time_flag:
+			tic = time.time()
+			print 'serial Input', (tic-self.initTime)
 		self.s.serial_input()
-		# toc = time.time()
-		# print toc-tic
 
-	def serialOutput(self):
+	def _serial_output(self):
 		"""Outputs serial packets."""
 		if self.printTimesFlag or self.verboseDiagnostic:
 			tic = time.time()
@@ -262,7 +277,7 @@ class Console(object):
 
 	# Timer called events for the main program -----------------
 
-	def checkEvents(self):
+	def _check_events(self):
 		"""
 		Checks all events.
 
@@ -272,17 +287,18 @@ class Console(object):
 		"""
 		tic = time.time()
 		if self.printTimesFlag or self.verboseDiagnostic:
-			print 'checkEvents', (tic-self.initTime)
+			print '_check_events', (tic-self.initTime)
 
 		# This is how the check events function is called when not on linux
 		if (_platform == "win32" or _platform == "darwin") and self.checkEventsFlag:
-			self.checkEventsTimer = threading.Timer(self.checkEventsRefreshFrequency, self.checkEvents).start()
+			self.checkEventsTimer = threading.Timer(self.checkEventsRefreshFrequency, self._check_events).start()
 
+		# This flag is to eliminate double entry to this area
 		if not self.checkEventsActiveFlag:
 			self.checkEventsActiveFlag = True
 			
 			if self.serialInputFlag:
-				"""Area for externally generated game data"""
+				# Area for externally generated game data
 				if self.serialInputType == 'ASCII':
 					if self.s.ETNpacketList and not self.ETNSendListFlag:
 						packet = self.s.ETNpacketList[-1]
@@ -310,7 +326,7 @@ class Console(object):
 							or not self.game.gameSettings['restoreGameFlag']
 					):
 						time.sleep(.05)
-						self.Reset(internal_reset=1)
+						self.reset(internal_reset=1)
 						self.switchKeypadFlag = True
 
 			if not self.serialInputFlag or self.serialInputType == 'ASCII':
@@ -329,9 +345,9 @@ class Console(object):
 			# Time measurement for testing
 			toc = time.time()
 			elapse = (toc-tic)
-			if elapse > self.checkEventsRefreshFrequency and 0:  # For testing only
+			if elapse > self.checkEventsRefreshFrequency:  # For testing only
 			
-				print 'checkEvents elapse', elapse*1000, ' ms'
+				print '_check_events elapse', elapse*1000, ' ms'
 				print
 				self.checkEventsOverPeriodFlag = True
 			self.checkEventsActiveFlag = False
@@ -416,7 +432,7 @@ class Console(object):
 		):
 			self.game.gameSettings['resetGameFlag'] = False
 			time.sleep(.05)
-			self.Reset(internal_reset=1)
+			self.reset(internal_reset=1)
 			if self.className == 'scoreboard':
 				print 'Scoreboard Graphics Reset'
 				self.resetGraphicsFlag = True
@@ -904,7 +920,7 @@ class Console(object):
 				self.ETNSendListCount = 3
 				# print 'reset count'
 		elif self.ETNSendListFlag and not self.checkEventsOverPeriodFlag:
-			# Wait for checkEvents to settle before sending ETN packets
+			# Wait for _check_events to settle before sending ETN packets
 			self.ETNSendListCount -= 1
 		# print 'self.ETNSendListFlag , self.ETNSendList , not self.checkEventsOverPeriodFlag , not self.ETNSendListCount'
 		# print self.ETNSendListFlag , self.ETNSendList , not self.checkEventsOverPeriodFlag , not self.ETNSendListCount
@@ -996,7 +1012,7 @@ class Console(object):
 
 
 def test():
-	"""Creates a console object and prints its data."""
+	"""Creates an interpreter."""
 	print "ON"
 	sport = 'MPBASKETBALL1'
 	c = Config()
@@ -1008,6 +1024,12 @@ def test():
 	while 1:
 		time.sleep(2)
 		# break
+
+	# SPORT_LIST = [
+	# 'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
+	# 'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1', 'MMFOOTBALL4',
+	# 'MPBASKETBALL1', 'MPSOCCER_LX1-soccer', 'MPSOCCER_LX1-football', 'MPSOCCER1', 'MPHOCKEY_LX1', 'MPHOCKEY1',
+	# 'MPCRICKET1', 'MPRACETRACK1', 'MPLX3450-baseball', 'MPLX3450-football', 'MPGENERIC',  'MPSTAT']
 
 
 if __name__ == '__main__':
