@@ -26,6 +26,7 @@ class SerialPacket (object):
 		self.decodePacket = None
 		self.printCorruption = False
 		self.printETNData = False
+		self.double_packet_flag = False
 		
 		# Change flags
 		self.ETNChangeFlag = False
@@ -60,8 +61,9 @@ class SerialPacket (object):
 		self.homeNameChangeFlag = False
 		self.homeNameChangeOneCharFlag = False
 		self.homeFontJustifyChangeFlag = False
-		self.printCorruption = False
-		self.printETNData = False
+		self.printCorruption = True
+		self.printETNData = True
+		self.double_packet_flag = False
 		
 		# Start byte, 1B
 		string += chr(0x01)
@@ -79,6 +81,9 @@ class SerialPacket (object):
 					return 0
 			length_check = self.version_i_d_byte(string, packet=packet, length_check=True)
 			if length_check is None:
+				return 0
+			elif length_check == 'double':
+				self.double_packet_flag = True
 				return 0
 
 			# Remove start byte
@@ -232,11 +237,15 @@ class SerialPacket (object):
 				self.ETNFlag = True
 				packet_length = 60
 
-			if self.printCorruption and not self.MPserial and len(packet) != packet_length:
+			if not self.MPserial and len(packet) != packet_length:
 				string = None
-				print 'Packet Length Error'
-				print 'len(packet), packet_length = ', len(packet), packet_length
-				print 'self.decodePacket "', self.decodePacket, '"END\n'
+				if self.printCorruption:
+					print 'Packet Length Error'
+					print 'len(packet), packet_length = ', len(packet), packet_length
+					print 'self.decodePacket "', self.decodePacket, '"END\n'
+				if len(packet) > packet_length:
+					string = 'double'
+					print 'double packet received'
 				return string
 
 		else:

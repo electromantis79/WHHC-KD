@@ -53,11 +53,15 @@ class Console(object):
 		self.printTimesFlag = False
 		self.checkEventsActiveFlag = False
 		self.checkEventsOverPeriodFlag = False
+		self.count_event_time = 0
+		self.count_event_time_list = []
 		self.ETNSendListCount = 0
 		self.ETNSendListLength = 0
 		self.verboseDiagnostic = False
 		self.print_input_time_flag = False
 		self.initTime = time.time()
+		import datetime
+		print datetime.datetime.now()
 
 		self.reset()
 
@@ -346,10 +350,14 @@ class Console(object):
 			# Time measurement for testing
 			toc = time.time()
 			elapse = (toc-tic)
-			if elapse > self.checkEventsRefreshFrequency:  # For testing only
-			
-				print '_check_events elapse', elapse*1000, ' ms'
-				print
+			if 1 or elapse > self.checkEventsRefreshFrequency:  # For testing only
+				self.count_event_time += 1
+				#print '_check_events elapse', elapse*1000, ' ms'
+				#print
+				if elapse > self.checkEventsRefreshFrequency:
+					self.count_event_time_list.append((self.count_event_time, elapse))
+					print '----------self.count_event_time =', self.count_event_time_list
+					self.count_event_time = 0
 				self.checkEventsOverPeriodFlag = True
 			self.checkEventsActiveFlag = False
 			
