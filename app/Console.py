@@ -51,14 +51,16 @@ class Console(object):
 
 		self.MP_StreamRefreshFlag = True
 		self.printTimesFlag = False
-		self.checkEventsActiveFlag = False
-		self.checkEventsOverPeriodFlag = False
+		self.check_events_active_flag = False
+		self.check_events_over_period_flag = False
 		self.count_event_time = 0
 		self.count_event_time_list = []
 		self.ETNSendListCount = 0
 		self.ETNSendListLength = 0
 		self.verboseDiagnostic = False
 		self.print_input_time_flag = False
+		self.print_check_events_elapse_time_flag = False
+		self.count_events_time_flag = False
 		self.initTime = time.time()
 		import datetime
 		print datetime.datetime.now()
@@ -299,8 +301,8 @@ class Console(object):
 			self.checkEventsTimer = threading.Timer(self.checkEventsRefreshFrequency, self._check_events).start()
 
 		# This flag is to eliminate double entry to this area
-		if not self.checkEventsActiveFlag:
-			self.checkEventsActiveFlag = True
+		if not self.check_events_active_flag:
+			self.check_events_active_flag = True
 			
 			if self.serialInputFlag:
 				# Area for externally generated game data
@@ -350,16 +352,19 @@ class Console(object):
 			# Time measurement for testing
 			toc = time.time()
 			elapse = (toc-tic)
-			if 1 or elapse > self.checkEventsRefreshFrequency:  # For testing only
+			if self.print_check_events_elapse_time_flag:
+				print '_check_events elapse', elapse*1000, ' ms'
+				print
+
+			if self.count_events_time_flag:
 				self.count_event_time += 1
-				#print '_check_events elapse', elapse*1000, ' ms'
-				#print
 				if elapse > self.checkEventsRefreshFrequency:
 					self.count_event_time_list.append((self.count_event_time, elapse))
 					print '----------self.count_event_time =', self.count_event_time_list
 					self.count_event_time = 0
-				self.checkEventsOverPeriodFlag = True
-			self.checkEventsActiveFlag = False
+				self.check_events_over_period_flag = True
+
+			self.check_events_active_flag = False
 			
 		# End Check Events --------------------------------------------------------------------
 
@@ -919,7 +924,7 @@ class Console(object):
 			pass# self.printTimesFlag = True
 		else:
 			self.printTimesFlag = False										
-		if self.ETNSendListFlag and self.ETNSendList and not self.checkEventsOverPeriodFlag and self.ETNSendListCount < 1:
+		if self.ETNSendListFlag and self.ETNSendList and not self.check_events_over_period_flag and self.ETNSendListCount < 1:
 			self.sendList = self.ETNSendList[0]
 			# print 'self.sendList', self.sendList
 			# print 'self.ETNSendList', self.ETNSendList			
@@ -928,14 +933,14 @@ class Console(object):
 			if (self.ETNSendListLength-1) == len(self.ETNSendList):
 				self.ETNSendListCount = 3
 				# print 'reset count'
-		elif self.ETNSendListFlag and not self.checkEventsOverPeriodFlag:
+		elif self.ETNSendListFlag and not self.check_events_over_period_flag:
 			# Wait for _check_events to settle before sending ETN packets
 			self.ETNSendListCount -= 1
-		# print 'self.ETNSendListFlag , self.ETNSendList , not self.checkEventsOverPeriodFlag , not self.ETNSendListCount'
-		# print self.ETNSendListFlag , self.ETNSendList , not self.checkEventsOverPeriodFlag , not self.ETNSendListCount
+		# print 'self.ETNSendListFlag , self.ETNSendList , not self.check_events_over_period_flag , not self.ETNSendListCount'
+		# print self.ETNSendListFlag , self.ETNSendList , not self.check_events_over_period_flag , not self.ETNSendListCount
 			
-		if self.checkEventsOverPeriodFlag:
-			self.checkEventsOverPeriodFlag = False
+		if self.check_events_over_period_flag:
+			self.check_events_over_period_flag = False
 		
 		# -----End custom sendlist for ASCII to MP ETN send-----
 
