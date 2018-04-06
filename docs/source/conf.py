@@ -47,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'MP2ASCII Data Converter'
+project = u'ASCII2MP Data Converter'
 copyright = u'2018, Craig Gunter'
 
 # The version info for the project you're documenting, acts as replacement for
