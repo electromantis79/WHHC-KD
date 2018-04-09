@@ -25,7 +25,7 @@ class SerialPacket (object):
 		self.ETNFlag = False
 		self.decodePacket = None
 		self.printCorruption = False
-		self.printETNData = False
+		self.printETNData = True
 		self.double_packet_flag = False
 		
 		# Change flags
@@ -69,6 +69,7 @@ class SerialPacket (object):
 		string += chr(0x01)
 		
 		if packet is not None:
+			# Inspect packet for correct format
 			if packet:
 				check = self._checksum_byte(string, packet=self.decodePacket)
 				pack_start = self.decodePacket[0] != chr(0x01)
@@ -882,9 +883,12 @@ class SerialPacket (object):
 
 	def _team_e_t_n_string(self, string, team, packet=None):
 		if packet is not None:
+
+			# Extract name with no trailing zeros
 			name = packet[0:20]
 			name = name.rstrip()
-					
+
+			# Extract font and justify
 			if packet[20] == ' ':
 				font = 0
 			else:
@@ -893,61 +897,72 @@ class SerialPacket (object):
 				justify = 0
 			else:
 				justify = int(packet[21])
-			storedName = self.game.get_team_data(team, 'name')
-			nameCheck = storedName != name
-			fontCheck = self.game.get_team_data(team, 'font') != font
-			justifyCheck = self.game.get_team_data(team, 'justify') != justify
+
+			# Check for any changes from previous values
+			stored_name = self.game.get_team_data(team, 'name')
+			name_check = stored_name != name
+			font_check = self.game.get_team_data(team, 'font') != font
+			justify_check = self.game.get_team_data(team, 'justify') != justify
 			
-			if nameCheck or fontCheck or justifyCheck:
+			if name_check or font_check or justify_check:
+				self.ETNChangeFlag = True
+
 				if self.printETNData:
 					print 'name', name, 'font', font, 'justify', justify
-					print 'team', team, 'nameCheck', nameCheck, 'fontCheck', fontCheck, 'justifyCheck', justifyCheck
-				self.ETNChangeFlag = True
+					print 'team', team, 'name_check', name_check, 'font_check', font_check, 'justify_check', justify_check
+
 				if team == 'TEAM_1':
-					if nameCheck:
+					if name_check:
 						self.guestNameChangeFlag = True
-						lenCheck = len(storedName)-len(name)
-						if storedName and abs(lenCheck) == 1 and 0:
+						len_check = len(stored_name)-len(name)
+						if stored_name and abs(len_check) == 1 and 0:
 							self.guestNameChangeOneCharFlag = True
 							if self.printETNData:
 								print 'single guest passed'
-					if fontCheck or justifyCheck:
+
+					if font_check or justify_check:
 						self.guestFontJustifyChangeFlag = True
+
 				elif team == 'TEAM_2':
-					if nameCheck:
+					if name_check:
 						self.homeNameChangeFlag = True
-						lenCheck = len(storedName)-len(name)
+						len_check = len(stored_name)-len(name)
 						if self.printETNData:
-							print 'len(storedName)', len(storedName), 'len(name)', len(name), 'abs(lenCheck)', abs(lenCheck)
-						if storedName and abs(lenCheck) == 1 and 0:
+							print 'len(stored_name)', len(stored_name), 'len(name)', len(name), 'abs(len_check)', abs(len_check)
+						if stored_name and abs(len_check) == 1 and 0:
 							self.homeNameChangeOneCharFlag = True
 							if self.printETNData:
 								print 'single home passed'
-					if fontCheck or justifyCheck:
+
+					if font_check or justify_check:
 						self.homeFontJustifyChangeFlag = True
 								
 			self.game.set_team_data(team, 'name', name, 1)
 			self.game.set_team_data(team, 'font', font, 1)
 			self.game.set_team_data(team, 'justify', justify, 1)
 
+		# Add name trimmed to 20
 		name = self.game.get_team_data(team, 'name')
 		if len(name) > 20:
 			name = name[:20]
 		string += name
 
-		paddedString = ''
+		# Add padding if name length less than 20
+		padded_string = ''
 		padding = 20-len(name)
 		for x in range(padding):
-			paddedString += ' '
-		
-		self.decodePacket = self._string_eater(self.decodePacket, places=20)
-		string += paddedString
+			padded_string += ' '
+		string += padded_string
 
+		self.decodePacket = self._string_eater(self.decodePacket, places=20)
+
+		# Add font and justify
 		font = self.game.get_team_data(team, 'font')
 		justify = self.game.get_team_data(team, 'justify')
-		fontJustify = '%s%s' % (font, justify)
-		self.decodePacket = self._string_eater(self.decodePacket, places=len(fontJustify))
-		string += fontJustify
+		font_justify = '%s%s' % (font, justify)
+		string += font_justify
+
+		self.decodePacket = self._string_eater(self.decodePacket, places=len(font_justify))
 		return string
 
 	def _team_time_outs_left_string(self, string, team, packet=None):
