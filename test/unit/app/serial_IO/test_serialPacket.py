@@ -29,11 +29,11 @@ class TestSerialPacket(TestCase):
 
 	def _encode_decode_encode(self):
 		print "\nCreate ASCII string"
-		string = self.packet.encode_packet(print_string=True)
+		string = self.packet.process_packet(print_string=True)
 		print "\nLoad String back into game"
-		self.packet.encode_packet(print_string=True, packet=string)
+		self.packet.process_packet(print_string=True, packet=string)
 		print "\nPrint string again to look for changes"
-		final_string = self.packet.encode_packet(print_string=True)
+		final_string = self.packet.process_packet(print_string=True)
 		self.assertEqual(string, final_string)
 
 	def test_basketball_encode_decode_encode(self):
