@@ -19,7 +19,7 @@ def step_impl(context):
 
 @when('a basketball packet is encoded')
 def step_impl(context):
-	context.basketball_string = context.packet.encode_packet()
+	context.basketball_string = context.packet.process_packet()
 
 
 @then('a basketball packet of the correct format is returned')
@@ -42,7 +42,7 @@ def step_impl(context):
 
 @when("a football packet is encoded")
 def step_impl(context):
-	context.football_string = context.packet.encode_packet()
+	context.football_string = context.packet.process_packet()
 
 
 @then("a football packet of the correct format is returned")

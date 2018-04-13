@@ -59,6 +59,7 @@ class Console(object):
 		self.ETNSendListLength = 0
 		self.verboseDiagnostic = False
 		self.print_input_time_flag = False
+		self.serial_input_verbose_flag = False
 		self.print_check_events_elapse_time_flag = False
 		self.count_events_time_flag = False
 		self.initTime = time.time()
@@ -178,7 +179,8 @@ class Console(object):
 			if self.serialInputFlag and not internal_reset:
 				app.utils.functions.verbose(['\nSerial Input On'], self.verbose)
 				import serial_IO.mp_serial
-				self.s = serial_IO.mp_serial.MpSerialHandler(serial_input_type=self.serialInputType, game=self.game)
+				self.s = serial_IO.mp_serial.MpSerialHandler(
+					serial_input_type=self.serialInputType, game=self.game, verbose_flag=self.serial_input_verbose_flag)
 				self.refresherSerialInput = threading.Thread(
 					target=app.utils.functions.thread_timer, args=(self._serial_input, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
@@ -278,7 +280,7 @@ class Console(object):
 			else:
 				packet = self.s.packet
 
-			self.sp.encode_packet(print_string=False, packet=packet)
+			self.sp.process_packet(print_string=False, packet=packet)
 
 			self._update_mp_words_dict()
 
@@ -287,7 +289,7 @@ class Console(object):
 			# Time measurement for testing
 			toc = time.time()
 			elapse = (toc-tic)
-			if self.print_check_events_elapse_time_flag:
+			if elapse > self.checkEventsRefreshFrequency or self.print_check_events_elapse_time_flag:
 				print '_check_events elapse', elapse*1000, ' ms'
 				print
 
@@ -453,6 +455,7 @@ class Console(object):
 		# and an over period event has not just happened
 		# Then put one ETN packet in the main send list
 		if self.ETNSendListFlag and self.ETNSendList and not self.check_events_over_period_flag and self.ETNSendListCount < 1:
+			print self.ETNSendList
 			self.sendList = self.ETNSendList[0]
 			self.ETNSendList.pop(0)
 

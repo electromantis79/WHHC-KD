@@ -26,15 +26,12 @@ class MpSerialHandler(object):
 		self.game = game
 
 		# Variables
+		self.packet = None
 		self.receiveList = []
-		self.packet = ''
 		self.ETNpacketList = []
 
 		# Prepare for ETN packet inspection
 		self.sp = app.serial_IO.serial_packet.SerialPacket(self.game)
-		self.sp.ETNFlag = False
-		self.sp.decodePacket = 'from serial ETN check'
-		self.sp.MPserial = True
 
 		# Mulit-platform support
 		platform = app.utils.Platform.platform_detect()
@@ -56,7 +53,7 @@ class MpSerialHandler(object):
 			self.maxBytes = 10
 			self.timeout = 0
 		elif self.serialInputType == 'ASCII':
-			self.maxBytes = 1024
+			self.maxBytes = 250
 			self.timeout = 0.008
 
 		# Setup serial port
@@ -108,23 +105,28 @@ class MpSerialHandler(object):
 				print ('---')
 				
 		elif self.serialInputType == 'ASCII':
+			packet = None
 			if self.verboseFlag:
 				print ('ASCII')
 			try:
-				self.packet = self.ser.read(self.maxBytes)
+				packet = self.ser.read(self.maxBytes)
 
 				# Check if packet is ETN format and append to list
-				self.sp.version_i_d_byte('', packet=self.packet, length_check=True)
-				if self.sp.ETNFlag:
-					self.sp.ETNFlag = False
-					self.ETNpacketList.append(self.packet)
+				etn = self.sp.etn_check(packet)
+				if etn:
+					self.ETNpacketList.append(packet)
+					print 'ETN packet received'
+
+				else:
+					self.packet = packet
 				if self.verboseFlag and len(self.ETNpacketList) > 0:
 					print ('-----len(self.ETNpacketList', len(self.ETNpacketList))
 
 			except:
 				print ('ERROR _serial_input function')
 			if self.verboseFlag:
-				print (self.packet)
+				print packet
+				print self.packet
 
 	def serial_output(self, data):
 		"""Handles serial output."""
