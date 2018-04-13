@@ -23,7 +23,9 @@ class AddressMapping(object):
 
 	**Initialization**
 
-	* Build a dictionary of the 32 possible words of a sport named **wordsDict**. This will be the default values for that sport.
+	* Build a dictionary of the 32 possible words of a sport named **wordsDict**.
+
+		This will be the default values for that sport.
 
 		*Key* = binary address of group and bank
 
@@ -73,7 +75,8 @@ class AddressMapping(object):
 		self.rightETNByte = 0
 		self.quantumETNTunnelTeam = ''
 		self.addressPair = 1
-		self.quantumETNTunnelProcessed = False
+		self.quantumETNTunnelNameProcessed = False
+		self.quantumETNTunnelFontJustifyProcessed = False
 		self.wordListAddrStat = [
 			1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 17, 18, 19, 21, 22, 23, 33, 34, 35, 37, 38, 39, 41, 42,
 			43, 45, 46, 47, 49, 50, 51, 53, 54, 55]
@@ -102,7 +105,7 @@ class AddressMapping(object):
 
 	# Startup methods
 	def _blank_map(self):
-		"""Build blank MP wordsDict"""
+		# Build blank MP wordsDict
 		if self.statFlag:
 			for k in range(2):
 				for i in range(2):
@@ -124,7 +127,7 @@ class AddressMapping(object):
 					self.wordsDict[(i*4+j)*4+4] = self.mp.encode(i + 1, j + 1, 4, 1, 0, 0, 0, 'AlwaysHighLow', 0)
 
 	def _build_addr_map(self):
-		"""Build an address map with the current state of flag selected alternates."""
+		# Build an address map with the current state of flag selected alternates
 		for address in self.wordListAddr:
 			try:
 				self.addressMapDict[address] = self.fullAddressMapDict[address][1]
@@ -1072,7 +1075,7 @@ class AddressMapping(object):
 						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel = 0
 						self.quantumETNTunnel = 0
-						self.quantumETNTunnelProcessed = True
+						self.quantumETNTunnelFontJustifyProcessed = True
 
 					elif self.quantumETNTunnel:
 						self.rightETNByte = numeric_data
@@ -1099,7 +1102,7 @@ class AddressMapping(object):
 						app.utils.functions.verbose(['Quantum data tunnel closed!!!!'], self.verboseTunnel)
 						self.quantumDimmingTunnel = 0
 						self.quantumETNTunnel = 0
-						self.quantumETNTunnelProcessed = True
+						self.quantumETNTunnelNameProcessed = True
 
 			else:
 				# Normal data
@@ -1163,9 +1166,6 @@ class AddressMapping(object):
 					# Save values if checks are passed
 					self._save_data(decode_data, data_names)
 
-				else:
-					pass
-
 		self._multisport_state_check()
 
 	def _select_address_word_list(self):
@@ -1225,6 +1225,7 @@ class AddressMapping(object):
 		multisport_type = mp_multisport1 or mp_lx3450 or mp_soccer_lx1
 
 		if multisport_type:
+			# If correct sports only check for reset state every second
 			if self.multisportChangeSportCount < 10:
 				self.multisportChangeSportCount += 1
 			else:
@@ -1715,38 +1716,3 @@ class BlanktestMapping(AddressMapping):
 	def un_map(self, word_list):
 		"""Overrides to be empty."""
 		pass
-
-
-"""
-def test():
-	print "ON"
-	c = Config()
-	sport = 'MPSTAT'
-	c.writeSport(sport)
-	game = app.functions.select_sport_instance(sport)
-	addrMap = AddressMapping(game.gameData['sportType'], game=game)
-	app.functions.elapse_time(addrMap.Map, On=False, Timeit=False)
-
-	app.utils.misc.print_dicts_expanded(addrMap, True)
-	raw_input()
-
-	'''
-	LHword0 = addrMap.mp.encode(1, 3, 1, 1, 0, 6, 9, 0, 0)
-	LHword1 = addrMap.mp.encode(1, 3, 2, 0, 0, 5, 8, 0, 0)
-	LHword2 = addrMap.mp.encode(1, 3, 3, 1, 0, 0, 5, 0, 0)
-	LHword3 = addrMap.mp.encode(1, 3, 4, 0, 0, 0, 6, 0, 0)
-	#LHword4 = addrMap.mp.encode(2, 3, 4, 1, 0, 0, 0, 0, 'abcd')
-	#LHword5 = addrMap.mp.encode(2, 3, 1, 0, 0, 0, 1, 0, 0)
-	#LHword6 = addrMap.mp.encode(2, 1, 1, 0, 0, 0, 1, 0, 0)
-	wordList=[LHword0, LHword1 , LHword2, LHword3]#, LHword4, LHword5, LHword6]
-	addrMap.un_map(addressWordList=[9, 10, 11, 12], wordList=wordList)
-	print addrMap.game.get_team_data(game.guest, 'TIMER1_PLAYER_NUMBERTens')
-
-	#raw_input()
-	print
-	#addrDict=addrMap.__dict__
-	#app.utils.misc.print_dict(addrDict)
-	#app.utils.misc.print_dicts_expanded(addrMap, True)
-	'''
-
-"""
