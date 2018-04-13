@@ -26,8 +26,8 @@ class MpSerialHandler(object):
 		self.game = game
 
 		# Variables
-		self.packet = None
 		self.receiveList = []
+		self.packet = ''
 		self.ETNpacketList = []
 
 		# Prepare for ETN packet inspection
@@ -75,7 +75,7 @@ class MpSerialHandler(object):
 			if self.verboseFlag:
 				print ('---- self.previousLowByte', self.previousLowByte)
 			try:
-				
+
 				data_out = bytearray(self.ser.read(1))
 
 				if self.verboseFlag:
@@ -84,7 +84,7 @@ class MpSerialHandler(object):
 					if byte > 127:
 						byte_type = 'high'
 						if self.previousLowByte is not None:
-							word = (self.previousLowByte << 8)+byte
+							word = (self.previousLowByte << 8) + byte
 							self.receiveList.append(word)
 					else:
 						byte_type = 'low'
@@ -103,35 +103,27 @@ class MpSerialHandler(object):
 
 			if self.verboseFlag:
 				print ('---')
-				
+
 		elif self.serialInputType == 'ASCII':
-			packet = None
 			if self.verboseFlag:
 				print ('ASCII')
 			try:
-				packet = self.ser.read(self.maxBytes)
+				self.packet = self.ser.read(self.maxBytes)
 
 				# Check if packet is ETN format and append to list
-				etn = self.sp.etn_check(packet)
-				if etn:
-					self.ETNpacketList.append(packet)
-					print 'ETN packet received'
-
-				else:
-					self.packet = packet
+				if self.sp.etn_check(self.packet):
+					self.ETNpacketList.append(self.packet)
 				if self.verboseFlag and len(self.ETNpacketList) > 0:
 					print ('-----len(self.ETNpacketList', len(self.ETNpacketList))
 
 			except:
 				print ('ERROR _serial_input function')
 			if self.verboseFlag:
-				print packet
-				print self.packet
+				print (self.packet)
 
 	def serial_output(self, data):
 		"""Handles serial output."""
-		data_in = data
 		try:
-			self.ser.write(data_in)
+			self.ser.write(data)
 		except:
 			print ('ERROR serial output function')

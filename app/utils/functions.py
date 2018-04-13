@@ -17,6 +17,7 @@
 import time
 import os
 import timeit
+
 from sys import platform as _platform
 
 # thread_timer related
@@ -27,10 +28,10 @@ if _platform == "linux" or _platform == "linux2":
 		pass
 
 SPORT_LIST = [
-	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5', 
+	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
 	'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1', 'MMFOOTBALL4',
 	'MPBASKETBALL1', 'MPSOCCER_LX1-soccer', 'MPSOCCER_LX1-football', 'MPSOCCER1', 'MPHOCKEY_LX1', 'MPHOCKEY1',
-	'MPCRICKET1', 'MPRACETRACK1', 'MPLX3450-baseball', 'MPLX3450-football', 'MPGENERIC',  'MPSTAT']
+	'MPCRICKET1', 'MPRACETRACK1', 'MPLX3450-baseball', 'MPLX3450-football', 'MPGENERIC', 'MPSTAT']
 
 
 def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
@@ -40,62 +41,46 @@ def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
 	"""
 	next_call = time.time()
 	start_time = time.time()
-	#print 'start_time', start_time
 	if _platform == "linux" or _platform == "linux2":
 		os.nice(-1)
 		if align_time:
-			#print 'align_time', align_time
-			#print 'start_time', start_time
 			next_call = align_time
 			count = 0
-			while (next_call-start_time) < 0:
-				next_call = next_call+period
+			while (next_call - start_time) < 0:
+				next_call = next_call + period
 				count += 1
-			next_call = next_call+period*count
-			#print count, next_call
+			next_call = next_call + period * count
+			print 'thread_timer adjusted', start_time - align_time, 'seconds'
 
-	stamp = 0
-	#name = threading.current_thread().getName()+str(passed_function)
 	if _platform == "linux" or _platform == "linux2":
 		try:
-			prctl.set_name(passed_function.__name__)
+			prctl.set_name(passed_function.__name__)  # Used only for htop testing
 		except:
 			pass
+
+	stamp = 0
 	while 1:
 		stamp += 1
-		#start_time=time.time()
-		#print name, 'stamp1', stamp, next_call-1486587172
-		next_call = next_call+period
-		#print name, 'stamp2', stamp, next_call-1486587172
+		next_call = next_call + period
 		if arg is not None:
 			passed_function(arg)
 		else:
 			passed_function()
-		#endTime=time.time()
-		#elapse=endTime-start_time
 		count = 0
 
 		try:
 			now = time.time()
-			time.sleep(next_call-now)
-		except Exception as err:
-			#print name, 'thread_timer sleep error is', err, 'for', function
-			#print name, 'stamp3', stamp, next_call-1486587172, 'next_call-time.time()', next_call-now
-			while (next_call-now) < 0:
-				next_call = next_call+period
+			time.sleep(next_call - now)
+		except:
+			now = time.time()
+			while (next_call - now) < 0:
+				next_call = next_call + period
 				count += 1
-			#print name, 'stamp4', stamp, 'count', count
-			#print name, 'stamp5', stamp, next_call-1486587172
-			next_call = next_call+period*count
-			#print name, 'stamp6', stamp, next_call-1486587172
-			#next_call=next_call+period*(count+1)
-			#print name, 'stamp7', stamp, 'count', count, next_call-1486587172, next_call-now
+			next_call = next_call + period * count
 			try:
 				now = time.time()
-				time.sleep(next_call-now)
+				time.sleep(next_call - now)
 			except:
-				#print name, 'stamp8', stamp, 'count', count, next_call-1486587172, next_call-now
-				#next_call=next_call+period*(count+3)
 				time.sleep(period)
 
 
@@ -203,7 +188,7 @@ def verbose(messages, enable=True):
 	# Use list format for messages
 	if enable:
 		for x, message in enumerate(messages):
-			if x == len(messages)-1:
+			if x == len(messages) - 1:
 				print message
 			else:
 				print message,
@@ -218,14 +203,14 @@ def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
 		start_time = time.time()
 		result = passed_function()
 		end_time = time.time()
-		total_time = (end_time-start_time)*1000
-		if total_time >= lower_limit*1000:
+		total_time = (end_time - start_time) * 1000
+		if total_time >= lower_limit * 1000:
 			print passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit)
 	else:
 		result = passed_function()
 
 	if time_it:
 		t = timeit.Timer(passed_function, "print 'time_it'")
-		print t.timeit(1)*1000, 'ms'
+		print t.timeit(1) * 1000, 'ms'
 
 	return result
