@@ -545,10 +545,14 @@ class Console(object):
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
 	print "ON"
-	sport = 'MPBASKETBALL1'
+	sport = 'MPSTAT'
+	jumpers = '0000'
+	print 'sport', sport, 'jumpers', jumpers
+
 	c = Config()
 	c.write_sport(sport)
-	c.write_option_jumpers('0000')
+	c.write_option_jumpers(jumpers)
+
 	Console(
 		check_events_flag=True, serial_input_flag=True, serial_input_type='ASCII',
 		serial_output_flag=True, encode_packet_flag=True, server_thread_flag=False)

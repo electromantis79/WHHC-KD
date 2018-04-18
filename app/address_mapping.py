@@ -345,7 +345,7 @@ class AddressMapping(object):
 				print 'alts', alts, 'Not in address map'
 
 		# Sort the players on a stat board
-		if self.statFlag:  # 0 for troubleshooting ASCII 2 MP converter
+		if self.statFlag and 0:  # 0 for ASCII 2 MP converter
 			self._sort_players()
 
 		# Use map to get correct variable, then store in the words dictionary
@@ -367,6 +367,7 @@ class AddressMapping(object):
 				high_nibble, low_nibble, blank_type, segment_data, stat_flag=self.statFlag)
 
 	def _sort_players(self):
+		# Only needed for menu controlled sorting
 		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self.game)
 		active_player_list.sort()
 
