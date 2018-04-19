@@ -1015,14 +1015,27 @@ class SerialPacket (object):
 			self.game.set_team_data(team, 'pitchCountHundreds', pitchCountHundreds, 1)
 			self.game.set_team_data(team, 'pitchCountTens', pitchCountTens, 1)
 			self.game.set_team_data(team, 'pitchCountUnits', pitchCountUnits, 1)
-			if self.game.get_team_data(self.game.home, 'atBatIndicator') and team == self.game.guest:
-				self.game.set_game_data('singlePitchCountHundreds', pitchCountHundreds, 1)
-				self.game.set_game_data('singlePitchCountTens', pitchCountTens, 1)
-				self.game.set_game_data('singlePitchCountUnits', pitchCountUnits, 1)
-			elif not self.game.get_team_data(self.game.home, 'atBatIndicator') and team == self.game.home:
-				self.game.set_game_data('singlePitchCountHundreds', pitchCountHundreds, 1)
-				self.game.set_game_data('singlePitchCountTens', pitchCountTens, 1)
-				self.game.set_game_data('singlePitchCountUnits', pitchCountUnits, 1)
+			if team == self.game.guest:
+				if (
+						not self.game.get_team_data(self.game.home, 'atBatIndicator')
+						and not self.game.get_team_data(self.game.guest, 'atBatIndicator')):
+					self.game.set_game_data('singlePitchCountHundreds', pitchCountHundreds, 1)
+					self.game.set_game_data('singlePitchCountTens', pitchCountTens, 1)
+					self.game.set_game_data('singlePitchCountUnits', pitchCountUnits, 1)
+				elif (
+						self.game.get_team_data(self.game.home, 'atBatIndicator')
+						and not self.game.get_team_data(self.game.guest, 'atBatIndicator')):
+					self.game.set_game_data('singlePitchCountHundreds', pitchCountHundreds, 1)
+					self.game.set_game_data('singlePitchCountTens', pitchCountTens, 1)
+					self.game.set_game_data('singlePitchCountUnits', pitchCountUnits, 1)
+
+			elif team == self.game.home:
+				if (
+						not self.game.get_team_data(self.game.home, 'atBatIndicator')
+						and self.game.get_team_data(self.game.guest, 'atBatIndicator')):
+					self.game.set_game_data('singlePitchCountHundreds', pitchCountHundreds, 1)
+					self.game.set_game_data('singlePitchCountTens', pitchCountTens, 1)
+					self.game.set_game_data('singlePitchCountUnits', pitchCountUnits, 1)
 
 			self.game.set_team_data(team, 'hitsHundreds', hitsHundreds, 1)
 			self.game.set_team_data(team, 'hitsTens', hitsTens, 1)
