@@ -545,8 +545,8 @@ class Console(object):
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
 	print "ON"
-	sport = 'MPBASEBALL1'
-	jumpers = '0C00'
+	sport = 'MPMULTISPORT1-football'
+	jumpers = 'B000'
 	print 'sport', sport, 'jumpers', jumpers
 
 	c = Config()
