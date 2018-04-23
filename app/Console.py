@@ -20,6 +20,7 @@ import app.utils.reads
 import app.address_mapping
 import app.mp_data_handler
 import app.serial_IO.serial_packet
+import app.keypad_mapping
 
 from sys import platform as _platform
 
@@ -71,12 +72,17 @@ class Console(object):
 		self.sendList = []
 		self.ETNSendList = []
 		self.ETNSendListFlag = False
+		self.quickKeysPressedList = []
+		self.keyPressedFlag = False
+		self.broadcastFlag = False
+		self.broadcastString = ''
 
 		self.dataUpdateIndex = 1
 
 		# Main module items set in reset
 		self.configDict = None
 		self.game = None
+		self.keyMap = None
 		self.addrMap = None
 		self.MPWordDict = None
 		self.previousMPWordDict = None
@@ -97,6 +103,7 @@ class Console(object):
 		if internal_reset:
 			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
+		self.set_keypad()
 
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
@@ -198,6 +205,10 @@ class Console(object):
 				self.refresherSerialOutput.name = '_serial_output'
 				self.refresherSerialOutput.start()
 
+			if self.serverThreadFlag and not internal_reset:
+				self.serverThread = threading.Thread(target=self._socket_server)
+				self.serverThread.daemon = True
+				self.serverThread.start()
 	# THREADS
 
 	def _serial_input(self):
@@ -235,16 +246,45 @@ class Console(object):
 		# This flag is to eliminate double entry to this area (Should never happen anyway)
 		if not self.checkEventsActiveFlag:
 			self.checkEventsActiveFlag = True
-			
-			# Select normal packet or packet from ETN packet list
-			if self.s.ETNpacketList and not self.ETNSendListFlag:
-				packet = self.s.ETNpacketList[-1]
-				self.s.ETNpacketList.pop(0)
-			else:
-				packet = self.s.packet
 
-			# Save any good data received to the game
-			self.sp.process_packet(print_string=False, packet=packet)
+			# Handle a key press
+			if self.keyPressedFlag:
+				self.keyPressedFlag = False
+				print 'checkEvents key pressed'
+
+				# Handle multiple incoming button presses
+				for keyPressed in self.quickKeysPressedList:
+					print 'keyPressed=', keyPressed
+
+					# Handle byte pair
+					try:
+						# Received byte pair is in key map format
+						self.game, funcString = self.keyMap.Map(self.game, keyPressed)
+						# self.game = self.lcd.Map(self.game, funcString)
+						self.send_state_change_over_network(funcString)
+
+					except:
+						# Non-keyMap data received
+						if keyPressed == '@':
+							# If received the resend symbol resend
+							self.send_state_change_over_network(None)
+						else:
+							# This are handles all other cases of data received
+							try:
+								# Special display of rssi for testing
+								self.command = int(keyPressed)
+								self.commandFlag = True
+								self.addrMap.rssi = self.command
+								self.addrMap.rssiFlag = self.commandFlag
+							except:
+								pass
+
+				# Clear keys pressed list
+				self.quickKeysPressedList = []
+
+			# self.timeEvents()  # DO we need anything here?
+
+			# self.dataEvents()  # DO we need anything here?
 
 			# Update the new data in addrMap wordDict
 			self._update_mp_words_dict()
@@ -271,6 +311,40 @@ class Console(object):
 			self.checkEventsActiveFlag = False
 
 		# End Check Events --------------------------------------------------------------------
+
+	def send_state_change_over_network(self, func_string):
+		if self.game.clockDict['periodClock'].running:
+			self.broadcastString += 'P1'
+		else:
+			self.broadcastString += 'P0'
+
+		if 'delayOfGameClock' in self.game.clockDict:
+			if self.game.clockDict['delayOfGameClock'].running:
+				self.broadcastString += 'D1'
+			else:
+				self.broadcastString += 'D0'
+
+		if 'segmentTimer' in self.game.clockDict:
+			if self.game.clockDict['segmentTimer'].running:
+				self.broadcastString += 'T1'
+			else:
+				self.broadcastString += 'T0'
+
+		if 'shotClock' in self.game.clockDict:
+			if self.game.clockDict['shotClock'].running:
+				self.broadcastString += 'S1'
+			else:
+				self.broadcastString += 'S0'
+
+		if self.game.gameSettings['inningBot']:
+			self.broadcastString += 'IB'
+		else:
+			self.broadcastString += 'IT'
+
+		if func_string is None:
+			self.broadcastString += '@'
+
+		self.broadcastFlag = True
 
 	def _update_mp_words_dict(self):
 		self.addrMap.map()
@@ -541,6 +615,150 @@ class Console(object):
 		send_list = [word1, word2, word4, self.MPWordDict[29], self.MPWordDict[30], self.MPWordDict[32]]
 		self.ETNSendList.append(send_list)
 
+	# PUBLIC FUNCTIONS --------------------------------
+
+	def set_keypad(self, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_baseball=False):
+		"""Sets the keypad."""
+		# PUBLIC
+		self.keyMap = app.keypad_mapping.Keypad_Mapping(
+			self.game, reverse_home_and_guest, keypad3150, mm_basketball, whh_baseball)
+
+	def key_pressed(self, key_pressed):
+		"""Simulates pressing a key."""
+		# PUBLIC
+		self.keyPressedFlag = True
+		self.quickKeysPressedList.append(key_pressed)
+		print 'Console key pressed', key_pressed, self.quickKeysPressedList
+
+	# THREADS ------------------------------------------
+
+	def _socket_server(self):
+		# Tcp Chat server
+		# RUN IN ITS OWN THREAD-PROCESS
+
+		import socket
+		import select
+		import sys
+		import multiprocessing
+
+		h_o_s_t = ''
+		socket_list = []
+		receive_buffer = 4096
+		p_o_r_t = 60032
+
+		p = multiprocessing.current_process()
+		print 'Starting:', p.name, p.pid
+		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		try:
+			server_socket.bind((h_o_s_t, p_o_r_t))
+		except socket.error as err:
+			print 'errno', err.errno
+			if err.errno == 98:
+				# This means we already have a server
+				connected = 0
+				while not connected:
+					time.sleep(3)
+					try:
+						server_socket.bind((h_o_s_t, p_o_r_t))
+						connected = 1
+					except:
+						pass
+			else:
+				sys.exit(err.errno)
+
+		server_socket.listen(10)
+
+		# add server socket object to the list of readable connections
+		socket_list.append(server_socket)
+
+		print "Chat server started on port " + str(p_o_r_t)
+
+		while 1:
+
+			# get the list sockets which are ready to be read through select
+			# 4th arg, time_out  = 0 : poll and never block
+			ready_to_read, ready_to_write, in_error = select.select(socket_list, [], [], 0)
+
+			for sock in ready_to_read:
+				# a new connection request received
+				if sock == server_socket:
+					sockfd, addr = server_socket.accept()
+					socket_list.append(sockfd)
+					print "[%s, %s] is connected" % (sockfd, addr)
+					message = "[%s:%s] entered our chatting room\n" % (sockfd, addr)
+					socket_list = self._broadcast(server_socket, message, socket_list)
+
+				else:
+					# process data received from client
+					try:
+						# receiving data from the socket.
+						data = sock.recv(receive_buffer)
+						if data:
+							# there is something in the socket
+							self.key_pressed(data)
+							socket_list = self._broadcast(server_socket, data, socket_list)
+						else:
+							# remove the socket that's broken
+							if sock in socket_list:
+								socket_list.remove(sock)
+
+							# at this stage, no data means probably the connection has been broken
+							message = "[%s] is offline\n" % sock
+							socket_list = self._broadcast(server_socket, message, socket_list)
+
+					# exception
+					except:
+						message = "[%s] is offline\n" % sock
+						socket_list = self._broadcast(server_socket, message, socket_list)
+						continue
+
+			if self.broadcastFlag:
+				self.broadcastFlag = False
+				socket_list = self._broadcast(server_socket, self.broadcastString, socket_list)
+				self.broadcastString = ''
+			time.sleep(.1)
+
+		server_socket.close()
+		'''
+		import Network, logging
+		jobs=[]
+		server=multiprocessing.Process(name='server', target=Network.chat_server)
+		jobs.append(server)
+		multiprocessing.log_to_stderr(logging.DEBUG)
+		server.start()
+		server.join()
+		while 1:
+			#
+			if not server.is_alive() and configDict['SERVER']==True:
+				print server.exitcode
+				configDict['SERVER']=False
+				c.writeSERVER(False)
+				server.terminate()
+			elif configDict['SERVER']==False:
+				time.sleep(3)
+				server=multiprocessing.Process(name='server', target=Network.chat_server)
+				jobs.append(server)
+				server.start()
+				server.join()
+		'''
+
+	@staticmethod
+	def _broadcast(server_socket, message, socket_list):
+		# broadcast chat messages to all connected clients
+		for socket in socket_list:
+			# send the message only to peer
+			if socket != server_socket:
+				try:
+					socket.send(message)
+				except:
+					# broken socket connection
+					socket.close()
+					# broken socket, remove it
+					if socket in socket_list:
+						socket_list.remove(socket)
+		return socket_list
+
 
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
@@ -554,7 +772,7 @@ def test():
 	c.write_option_jumpers(jumpers)
 
 	Console(
-		check_events_flag=True, serial_input_flag=True, serial_input_type='ASCII',
+		check_events_flag=True, serial_input_flag=False, serial_input_type='',
 		serial_output_flag=True, encode_packet_flag=True, server_thread_flag=False)
 	while 1:
 		time.sleep(2)

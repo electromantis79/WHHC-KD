@@ -106,39 +106,39 @@ def select_sport_instance(config_dict, number_of_teams=2):
 	# 'MPMULTISPORT1-baseball'#'MPLX3450-baseball'
 	# 'MPLINESCORE4'#'MPLINESCORE5'#'MPMP-15X1'#'MPMP-14X1'
 	if (1 <= choice <= 8) or choice == 20:
-		from game.game import Baseball
+		from app.game.game import Baseball
 		game = Baseball(config_dict, number_of_teams)
 
 	# 'MPMULTISPORT1-football'#'MPFOOTBALL1'#'MMFOOTBALL4'
 	# 'MPSOCCER_LX1-football'#'MPLX3450-football'
 	elif (9 <= choice <= 11) or choice == 14 or choice == 21:
-		from game.game import Football
+		from app.game.game import Football
 		game = Football(config_dict, number_of_teams)
 
 	elif choice == 12:  # 'MPBASKETBALL1'
-		from game.game import Basketball
+		from app.game.game import Basketball
 		game = Basketball(config_dict, number_of_teams)
 
 	elif choice == 13 or choice == 15:  # 'MPSOCCER_LX1-soccer'#'MPSOCCER1'
-		from game.game import Soccer
+		from app.game.game import Soccer
 		game = Soccer(config_dict, number_of_teams)
 
 	elif choice == 16 or choice == 17:  # 'MPHOCKEY_LX1'#'MPHOCKEY1'
-		from game.game import Hockey
+		from app.game.game import Hockey
 		game = Hockey(config_dict, number_of_teams)
 
 	elif choice == 18:  # 'MPCRICKET1'
-		from game.game import Cricket
+		from app.game.game import Cricket
 		game = Cricket(config_dict, number_of_teams)
 
 	elif choice == 19:  # 'MPRACETRACK1'
-		from game.game import Racetrack
+		from app.game.game import Racetrack
 		game = Racetrack(config_dict, number_of_teams)
 	elif choice == 23:  # 'STAT'
-		from game.game import Stat
+		from app.game.game import Stat
 		game = Stat(config_dict, number_of_teams)
 	elif choice == 22:  # 'GENERIC'
-		from game.game import Game
+		from app.game.game import Game
 		game = Game(config_dict, number_of_teams)
 	else:
 		print 'sport not in list'
