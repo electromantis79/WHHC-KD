@@ -259,7 +259,7 @@ class Console(object):
 					# Handle byte pair
 					try:
 						# Received byte pair is in key map format
-						self.game, funcString = self.keyMap.Map(self.game, keyPressed)
+						self.game, funcString = self.keyMap.map_(self.game, keyPressed)
 						# self.game = self.lcd.Map(self.game, funcString)
 						self.send_state_change_over_network(funcString)
 
@@ -620,8 +620,9 @@ class Console(object):
 	def set_keypad(self, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_baseball=False):
 		"""Sets the keypad."""
 		# PUBLIC
-		self.keyMap = app.keypad_mapping.Keypad_Mapping(
-			self.game, reverse_home_and_guest, keypad3150, mm_basketball, whh_baseball)
+		self.keyMap = app.keypad_mapping.KeypadMapping(
+			self.game, reverse_home_and_guest=reverse_home_and_guest, keypad3150=keypad3150,
+			mm_basketball=mm_basketball, whh_baseball=whh_baseball)
 
 	def key_pressed(self, key_pressed):
 		"""Simulates pressing a key."""
