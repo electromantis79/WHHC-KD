@@ -1,9 +1,9 @@
-**ASCII - to - MP Converter**
+**Smart Node WiFi Transceiver on Micro-computer inside Scoreboard**
 
 
-.. image:: https://readthedocs.org/projects/ascii2mp/badge/?version=latest
-    :target: https://ascii2mp.readthedocs.io/
+.. image:: https://readthedocs.org/projects/WHHC-node/badge/?version=latest
+    :target: https://WHHC-node.readthedocs.io/
 
-BBB project
+BBB project started from fork of ASCII - to - MP Converter
 
-1.0.0 - Initial Build (Fully tested)
+
