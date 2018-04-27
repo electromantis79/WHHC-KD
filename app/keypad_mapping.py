@@ -156,7 +156,7 @@ class KeypadMapping(object):
 		# 30 in list, 2 per line
 		# pos=1 MPBASEBALL1, pos=21: MPGENERIC, pos=18: MPRACETRACK1 all MP_BASESOFT_CX4
 
-		position = sport_list.index(game.sport)
+		position = sport_list.index(game.gameData['sport'])
 		loop_list = [
 			(0, 1), (8, 9), (4, 5), (27, 27), (27, 27),
 			(27, 27), (27, 27), (10, 11), (12, 13), (14, 15),

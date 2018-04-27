@@ -173,15 +173,18 @@ class Console(object):
 
 	def _setup_threads(self, internal_reset):
 		# Platform Dependencies
-		if _platform == "linux" or _platform == "linux2":
+		if (_platform == "linux" or _platform == "linux2") and not internal_reset:
 			print 'Platform is', _platform
-			if self.serialInputFlag and not internal_reset:
-				app.utils.functions.verbose(['\nSerial Input On'], self.printProductionInfo)
+			if self.serialInputFlag or self.serialOutputFlag:
+				app.utils.functions.verbose(['\nSerial Port On'], self.printProductionInfo)
 
 				import serial_IO.mp_serial
 
 				self.s = serial_IO.mp_serial.MpSerialHandler(
 					serial_input_type=self.serialInputType, game=self.game, verbose_flag=self.serial_input_verbose_flag)
+
+			if self.serialInputFlag:
+				app.utils.functions.verbose(['\nSerial Input On'], self.printProductionInfo)
 				self.refresherSerialInput = threading.Thread(
 					target=app.utils.functions.thread_timer, args=(self._serial_input, self.serialInputRefreshFrequency))
 				self.refresherSerialInput.daemon = True
@@ -189,14 +192,14 @@ class Console(object):
 				self.previousByteCount = 0
 				self.refresherSerialInput.start()
 
-			if self.checkEventsFlag and not internal_reset:
+			if self.checkEventsFlag:
 				self.refresherCheckEvents = threading.Thread(
 					target=app.utils.functions.thread_timer, args=(self._check_events, self.checkEventsRefreshFrequency))
 				self.refresherCheckEvents.daemon = True
 				self.refresherCheckEvents.name = '_check_events'
 				self.refresherCheckEvents.start()
 
-			if self.serialOutputFlag and not internal_reset:
+			if self.serialOutputFlag:
 				app.utils.functions.verbose(
 					['\nSerial Output On, self.encodePacketFlag', self.encodePacketFlag], self.printProductionInfo)
 				self.refresherSerialOutput = threading.Thread(
@@ -205,7 +208,7 @@ class Console(object):
 				self.refresherSerialOutput.name = '_serial_output'
 				self.refresherSerialOutput.start()
 
-			if self.serverThreadFlag and not internal_reset:
+			if self.serverThreadFlag:
 				self.serverThread = threading.Thread(target=self._socket_server)
 				self.serverThread.daemon = True
 				self.serverThread.start()
@@ -764,8 +767,8 @@ class Console(object):
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
 	print "ON"
-	sport = 'MPMULTISPORT1-football'
-	jumpers = 'B000'
+	sport = 'MPBASKETBALL1'
+	jumpers = '0000'
 	print 'sport', sport, 'jumpers', jumpers
 
 	c = Config()
@@ -773,8 +776,8 @@ def test():
 	c.write_option_jumpers(jumpers)
 
 	Console(
-		check_events_flag=True, serial_input_flag=False, serial_input_type='',
-		serial_output_flag=True, encode_packet_flag=True, server_thread_flag=False)
+		check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
+		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False)
 	while 1:
 		time.sleep(2)
 		# break
