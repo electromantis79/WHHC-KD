@@ -28,7 +28,6 @@ class KeypadMapping(object):
 
 	def __init__(self, game, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_flag=False):
 		self.funcString = ''
-		self.keyPressFlag = False
 		self.reverseHomeAndGuest = reverse_home_and_guest
 		self.keypad3150 = keypad3150
 		self.MMBasketball = mm_basketball
@@ -197,10 +196,9 @@ class KeypadMapping(object):
 		"""
 		# PUBLIC method
 		self.funcString = self.Keypad_Keys[key_pressed]  # find function name
-		print 'funcString: ', self.funcString
-		print "Pressed Key: %s" % key_pressed
+		print "Key mapped %s" % key_pressed, 'to funcString "%s"' % self.funcString
+		print "Called", str(self.gameFuncDict[self.funcString])
 		self.gameFuncDict[self.funcString]()  # call game function
-		self.keyPressFlag = True
 		return game, self.funcString
 
 	def _test_all_buttons(self, game):

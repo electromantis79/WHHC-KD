@@ -632,7 +632,7 @@ class Console(object):
 		# PUBLIC
 		self.keyPressedFlag = True
 		self.quickKeysPressedList.append(key_pressed)
-		print '\nConsole key pressed', key_pressed, 'self.quickKeysPressedList', self.quickKeysPressedList
+		print '\nConsole key pressed', key_pressed, 'of self.quickKeysPressedList', self.quickKeysPressedList
 
 	# THREADS ------------------------------------------
 
