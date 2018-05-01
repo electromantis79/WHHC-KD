@@ -26,13 +26,13 @@ class KeypadMapping(object):
 		*Value* = Pointer to game.[*functionName*]
 	"""
 
-	def __init__(self, game, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_baseball=False):
+	def __init__(self, game, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_flag=False):
 		self.funcString = ''
 		self.keyPressFlag = False
 		self.reverseHomeAndGuest = reverse_home_and_guest
 		self.keypad3150 = keypad3150
 		self.MMBasketball = mm_basketball
-		self.WHHBaseball = whh_baseball
+		self.WHHFlag = whh_flag
 
 		self.gameFuncDict = {
 			'guestScorePlusTen': game.guestScorePlusTen, 'guestScorePlusOne': game.guestScorePlusOne,
@@ -126,8 +126,8 @@ class KeypadMapping(object):
 
 		all_keypad_keys = app.utils.reads.readMP_Keypad_Layouts()
 
-		# Update with MPCRICKET1, MPRACETRACK1, STAT keypads
-		self.Keypad_Keys = {}
+		# Select keypad map section ----------------------
+
 		sport_list = [
 			'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
 			'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1',
@@ -156,8 +156,10 @@ class KeypadMapping(object):
 		# 30 in list, 2 per line
 		# pos=1 MPBASEBALL1, pos=21: MPGENERIC, pos=18: MPRACETRACK1 all MP_BASESOFT_CX4
 
-		position = sport_list.index(game.gameData['sport'])
-		loop_list = [
+		sport_list_index = sport_list.index(game.gameData['sport'])
+
+		# This list corresponds to the sport list
+		standard_and_reverse_teams_list = [
 			(0, 1), (8, 9), (4, 5), (27, 27), (27, 27),
 			(27, 27), (27, 27), (10, 11), (12, 13), (14, 15),
 			(6, 7), (24, 25), (18, 19), (20, 21), (16, 17),
@@ -165,19 +167,25 @@ class KeypadMapping(object):
 			(12, 13), (8, 9), (28, 28), (2, 3), (22, 23),
 			(29, 29), (30, 30)]
 
-		# Need to make MM Combos work on simulator
-		if position == 10 and self.keypad3150:
-			position = 23
-		elif position == 11 and self.MMBasketball:
-			position = 24
-		elif game.gameData['sportType'] == 'baseball' and self.WHHBaseball:
-			position = 25
-		elif self.WHHBaseball:
-			position = 26
-		if not self.reverseHomeAndGuest:
-			self.keypadName = keypad_list[loop_list[position][0]]
+		# Handle flags
+		if sport_list_index == 10 and self.keypad3150:
+			sport_list_index = 23
+		elif sport_list_index == 11 and self.MMBasketball:
+			sport_list_index = 24
+		elif self.WHHFlag:
+			if game.gameData['sportType'] == 'baseball':
+				sport_list_index = 25
+			elif game.gameData['sportType'] == 'football':
+				sport_list_index = 26
+
+		# Handle reverse keypad
+		if self.reverseHomeAndGuest:
+			self.keypadName = keypad_list[standard_and_reverse_teams_list[sport_list_index][1]]
 		else:
-			self.keypadName = keypad_list[loop_list[position][1]]
+			self.keypadName = keypad_list[standard_and_reverse_teams_list[sport_list_index][0]]
+
+		# Create key map dictionary
+		print 'Keypad Name', self.keypadName
 		self.Keypad_Keys = all_keypad_keys[self.keypadName]
 
 	def map_(self, game, key_pressed):
@@ -190,7 +198,7 @@ class KeypadMapping(object):
 		# PUBLIC method
 		self.funcString = self.Keypad_Keys[key_pressed]  # find function name
 		print 'funcString: ', self.funcString
-		print "Pressed Key:%s" % key_pressed
+		print "Pressed Key: %s" % key_pressed
 		self.gameFuncDict[self.funcString]()  # call game function
 		self.keyPressFlag = True
 		return game, self.funcString

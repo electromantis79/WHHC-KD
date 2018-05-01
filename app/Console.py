@@ -253,11 +253,11 @@ class Console(object):
 			# Handle a key press
 			if self.keyPressedFlag:
 				self.keyPressedFlag = False
-				print 'checkEvents key pressed'
+				# print 'checkEvents key pressed'
 
 				# Handle multiple incoming button presses
 				for keyPressed in self.quickKeysPressedList:
-					print 'keyPressed=', keyPressed
+					# print 'keyPressed =', keyPressed
 
 					# Handle byte pair
 					try:
@@ -620,19 +620,19 @@ class Console(object):
 
 	# PUBLIC FUNCTIONS --------------------------------
 
-	def set_keypad(self, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_baseball=False):
+	def set_keypad(self, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_flag=False):
 		"""Sets the keypad."""
 		# PUBLIC
 		self.keyMap = app.keypad_mapping.KeypadMapping(
 			self.game, reverse_home_and_guest=reverse_home_and_guest, keypad3150=keypad3150,
-			mm_basketball=mm_basketball, whh_baseball=whh_baseball)
+			mm_basketball=mm_basketball, whh_flag=whh_flag)
 
 	def key_pressed(self, key_pressed):
 		"""Simulates pressing a key."""
 		# PUBLIC
 		self.keyPressedFlag = True
 		self.quickKeysPressedList.append(key_pressed)
-		print 'Console key pressed', key_pressed, self.quickKeysPressedList
+		print '\nConsole key pressed', key_pressed, 'self.quickKeysPressedList', self.quickKeysPressedList
 
 	# THREADS ------------------------------------------
 
@@ -767,7 +767,7 @@ class Console(object):
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
 	print "ON"
-	sport = 'MPBASKETBALL1'
+	sport = 'MPBASEBALL1'
 	jumpers = '0000'
 	print 'sport', sport, 'jumpers', jumpers
 
@@ -775,9 +775,11 @@ def test():
 	c.write_sport(sport)
 	c.write_option_jumpers(jumpers)
 
-	Console(
+	cons = Console(
 		check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
-		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False)
+		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=True)
+	cons.set_keypad(whh_flag=True)
+
 	while 1:
 		time.sleep(2)
 		# break
