@@ -87,7 +87,7 @@ class Console(object):
 		self.broadcastFlag = False
 		self.broadcastString = ''
 		self.modeLogger = None
-		self.create_rotating_log('mode')
+		self._create_rotating_log('mode')
 
 		self.dataUpdateIndex = 1
 
@@ -109,7 +109,7 @@ class Console(object):
 
 	# INIT Functions
 
-	def create_rotating_log(self, log_name):
+	def _create_rotating_log(self, log_name):
 		"""
 		Creates a rotating log
 		"""
@@ -250,6 +250,8 @@ class Console(object):
 			if self.serverThreadFlag:
 				self.serverThread = threading.Thread(target=self._socket_server)
 				self.serverThread.daemon = True
+				self.mode = self.LISTENING_MODE
+				self.modeLogger.info(self.modeNameDict[self.mode])
 				self.serverThread.start()
 	# THREADS
 
@@ -289,50 +291,15 @@ class Console(object):
 		if not self.checkEventsActiveFlag:
 			self.checkEventsActiveFlag = True
 
-			# Handle a key press
-			if self.keyPressedFlag:
-				self.keyPressedFlag = False
-				# print 'checkEvents key pressed'
-
-				# Handle multiple incoming button presses
-				for keyPressed in self.quickKeysPressedList:
-					# print 'keyPressed =', keyPressed
-
-					# Handle byte pair
-					try:
-						# Received byte pair is in key map format
-						self.game, funcString = self.keyMap.map_(self.game, keyPressed)
-						# self.game = self.lcd.Map(self.game, funcString)
-						self.send_state_change_over_network(funcString)
-
-					except:
-						# Non-keyMap data received
-						if keyPressed == '@':
-							# If received the resend symbol resend
-							self.send_state_change_over_network(None)
-						else:
-							# This are handles all other cases of data received
-							try:
-								# Special display of rssi for testing
-								self.command = int(keyPressed)
-								self.commandFlag = True
-								self.addrMap.rssi = self.command
-								self.addrMap.rssiFlag = self.commandFlag
-							except:
-								pass
-
-				# Clear keys pressed list
-				self.quickKeysPressedList = []
-
-			# self.timeEvents()  # DO we need anything here?
-
-			# self.dataEvents()  # DO we need anything here?
-
-			# Update the new data in addrMap wordDict
-			self._update_mp_words_dict()
-
-			# Prepare data for the output thread
-			self._update_mp_serial_string()
+			if self.mode == self.LISTENING_MODE:
+				pass
+			elif self.mode == self.DISCOVERED_MODE:
+				self.mode = self.CONNECTED_MODE
+				self.modeLogger.info(self.modeNameDict[self.mode])
+			elif self.mode == self.TRANSFER_MODE:
+				pass
+			elif self.mode == self.CONNECTED_MODE:
+				self._connected_mode()
 
 			# Time measurement for testing
 			toc = time.time()
@@ -353,6 +320,52 @@ class Console(object):
 			self.checkEventsActiveFlag = False
 
 		# End Check Events --------------------------------------------------------------------
+
+	def _connected_mode(self):
+		# Handle a key press
+		if self.keyPressedFlag:
+			self.keyPressedFlag = False
+			# print 'checkEvents key pressed'
+
+			# Handle multiple incoming button presses
+			for keyPressed in self.quickKeysPressedList:
+				# print 'keyPressed =', keyPressed
+
+				# Handle byte pair
+				try:
+					# Received byte pair is in key map format
+					self.game, funcString = self.keyMap.map_(self.game, keyPressed)
+					# self.game = self.lcd.Map(self.game, funcString)
+					self.send_state_change_over_network(funcString)
+
+				except:
+					# Non-keyMap data received
+					if keyPressed == '@':
+						# If received the resend symbol resend
+						self.send_state_change_over_network(None)
+					else:
+						# This are handles all other cases of data received
+						try:
+							# Special display of rssi for testing
+							self.command = int(keyPressed)
+							self.commandFlag = True
+							self.addrMap.rssi = self.command
+							self.addrMap.rssiFlag = self.commandFlag
+						except:
+							pass
+
+			# Clear keys pressed list
+			self.quickKeysPressedList = []
+
+		# self.timeEvents()  # DO we need anything here?
+
+		# self.dataEvents()  # DO we need anything here?
+
+		# Update the new data in addrMap wordDict
+		self._update_mp_words_dict()
+
+		# Prepare data for the output thread
+		self._update_mp_serial_string()
 
 	def send_state_change_over_network(self, func_string):
 		if self.game.clockDict['periodClock'].running:
@@ -736,6 +749,11 @@ class Console(object):
 					print "[%s, %s] is connected" % (sockfd, addr)
 					message = "[%s:%s] entered our chatting room\n" % (sockfd, addr)
 					socket_list = self._broadcast(server_socket, message, socket_list)
+					print socket_list
+					if len(socket_list) == 2:
+						self.mode = self.DISCOVERED_MODE
+						self.modeLogger.info(self.modeNameDict[self.mode])
+						self.master_socket = sock
 
 				else:
 					# process data received from client
