@@ -14,6 +14,8 @@
 
 import threading
 import time
+import logging
+from logging.handlers import RotatingFileHandler
 
 import app.utils.functions
 import app.utils.reads
@@ -29,6 +31,14 @@ class Console(object):
 	"""
 	Builds a console object only geared to convert MP data to ASCII data.
 	"""
+
+	BOOT_UP_MODE = 0
+	LISTENING_MODE = 1
+	DISCOVERED_MODE = 2
+	TRANSFER_MODE = 3
+	CONNECTED_MODE = 4
+
+	modeNameDict = {0: 'BOOT_UP_MODE', 1: 'LISTENING_MODE', 2: 'DISCOVERED_MODE', 3: 'TRANSFER_MODE', 4: 'CONNECTED_MODE'}
 
 	def __init__(
 			self, check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
@@ -76,6 +86,8 @@ class Console(object):
 		self.keyPressedFlag = False
 		self.broadcastFlag = False
 		self.broadcastString = ''
+		self.modeLogger = None
+		self.create_rotating_log('mode')
 
 		self.dataUpdateIndex = 1
 
@@ -84,19 +96,45 @@ class Console(object):
 		self.game = None
 		self.keyMap = None
 		self.addrMap = None
+		self.blankMap = None
+		self.lampMap = None
 		self.MPWordDict = None
 		self.previousMPWordDict = None
 		self.mp = None
 		self.sp = None
 		self.priorityListEmech = []
+		self.mode = None
 
 		self.reset()
 
 	# INIT Functions
 
+	def create_rotating_log(self, log_name):
+		"""
+		Creates a rotating log
+		"""
+		self.modeLogger = logging.getLogger(log_name + " log")
+		self.modeLogger.setLevel(logging.DEBUG)
+
+		# add a rotating handler
+		handler = RotatingFileHandler(log_name + '.log', maxBytes=4096, backupCount=5)
+		handler.setLevel(logging.DEBUG)
+
+		# create formatter
+		formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+
+		# add formatter to handler
+		handler.setFormatter(formatter)
+
+		# add handler to logger
+		self.modeLogger.addHandler(handler)
+
 	def reset(self, internal_reset=0):
 		"""Resets the console to a new game."""
 		app.utils.functions.verbose(['\nConsole Reset'], self.printProductionInfo)
+
+		self.mode = self.BOOT_UP_MODE
+		self.modeLogger.info(self.modeNameDict[self.mode])
 
 		# Create Game object
 		self.configDict = app.utils.reads.read_config()
@@ -104,15 +142,16 @@ class Console(object):
 			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
 		self.set_keypad()
-
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
 			self.printProductionInfo)
 
 		self.addrMap = app.address_mapping.AddressMapping(game=self.game)
 		self.addrMap.map()
-		self.MPWordDict = dict(self.addrMap.wordsDict)
-		self.previousMPWordDict = dict(self.addrMap.wordsDict)
+		self.blankMap = app.address_mapping.BlanktestMapping(game=self.game)
+		self.lampMap = app.address_mapping.LamptestMapping(game=self.game)
+		self.MPWordDict = dict(self.blankMap.wordsDict)
+		self.previousMPWordDict = dict(self.blankMap.wordsDict)
 
 		self.mp = app.mp_data_handler.MpDataHandler()
 
@@ -350,8 +389,13 @@ class Console(object):
 		self.broadcastFlag = True
 
 	def _update_mp_words_dict(self):
-		self.addrMap.map()
-		self.MPWordDict = dict(self.addrMap.wordsDict)
+		if self.game.gameSettings['blankTestFlag']:
+			self.MPWordDict = dict(self.blankMap.wordsDict)
+		elif self.game.gameSettings['lampTestFlag']:
+			self.MPWordDict = dict(self.lampMap.wordsDict)
+		else:
+			self.addrMap.map()
+			self.MPWordDict = dict(self.addrMap.wordsDict)
 
 	def _update_mp_serial_string(self):
 		# Check for changes in data
