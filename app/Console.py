@@ -87,6 +87,7 @@ class Console(object):
 		self.broadcastFlag = False
 		self.broadcastString = ''
 		self.modeLogger = None
+		self.master_socket = None
 		self._create_rotating_log('mode')
 
 		self.dataUpdateIndex = 1
@@ -117,7 +118,7 @@ class Console(object):
 		self.modeLogger.setLevel(logging.DEBUG)
 
 		# add a rotating handler
-		handler = RotatingFileHandler(log_name + '.log', maxBytes=4096, backupCount=5)
+		handler = RotatingFileHandler(log_name + '.log', maxBytes=50000, backupCount=5)
 		handler.setLevel(logging.DEBUG)
 
 		# create formatter
@@ -151,7 +152,10 @@ class Console(object):
 		self.blankMap = app.address_mapping.BlanktestMapping(game=self.game)
 		self.lampMap = app.address_mapping.LamptestMapping(game=self.game)
 		self.MPWordDict = dict(self.blankMap.wordsDict)
+
 		self.previousMPWordDict = dict(self.blankMap.wordsDict)
+		for addr in self.previousMPWordDict:
+			self.previousMPWordDict[addr] = 666666
 
 		self.mp = app.mp_data_handler.MpDataHandler()
 
@@ -250,9 +254,11 @@ class Console(object):
 			if self.serverThreadFlag:
 				self.serverThread = threading.Thread(target=self._socket_server)
 				self.serverThread.daemon = True
-				self.mode = self.LISTENING_MODE
-				self.modeLogger.info(self.modeNameDict[self.mode])
 				self.serverThread.start()
+			else:
+				self.mode = self.CONNECTED_MODE
+				self.modeLogger.info(self.modeNameDict[self.mode])
+
 	# THREADS
 
 	def _serial_input(self):
@@ -291,13 +297,16 @@ class Console(object):
 		if not self.checkEventsActiveFlag:
 			self.checkEventsActiveFlag = True
 
-			if self.mode == self.LISTENING_MODE:
+			if self.mode == self.BOOT_UP_MODE:
+				self._update_mp_serial_string()
+			elif self.mode == self.LISTENING_MODE:
 				pass
 			elif self.mode == self.DISCOVERED_MODE:
-				self.mode = self.CONNECTED_MODE
+				self.mode = self.TRANSFER_MODE
 				self.modeLogger.info(self.modeNameDict[self.mode])
 			elif self.mode == self.TRANSFER_MODE:
-				pass
+				self.mode = self.CONNECTED_MODE
+				self.modeLogger.info(self.modeNameDict[self.mode])
 			elif self.mode == self.CONNECTED_MODE:
 				self._connected_mode()
 
@@ -329,7 +338,7 @@ class Console(object):
 
 			# Handle multiple incoming button presses
 			for keyPressed in self.quickKeysPressedList:
-				# print 'keyPressed =', keyPressed
+				self.modeLogger.info(keyPressed + ' received')
 
 				# Handle byte pair
 				try:
@@ -416,6 +425,10 @@ class Console(object):
 			for address in self.MPWordDict.keys():
 				if self.previousMPWordDict[address] != self.MPWordDict[address]:
 					self.dirtyDict[address] = self.MPWordDict[address]
+		elif self.mode == self.BOOT_UP_MODE and len(self.dirtyDict) == 0:
+			self.mode = self.LISTENING_MODE
+			self.modeLogger.info(self.modeNameDict[self.mode])
+
 		self.previousMPWordDict = dict(self.MPWordDict)
 
 		# Print dirty list
@@ -711,6 +724,8 @@ class Console(object):
 		print 'Starting:', p.name, p.pid
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		while self.mode == self.BOOT_UP_MODE:
+			time.sleep(1)
 		try:
 			server_socket.bind((h_o_s_t, p_o_r_t))
 		except socket.error as err:
@@ -733,7 +748,9 @@ class Console(object):
 		# add server socket object to the list of readable connections
 		socket_list.append(server_socket)
 
-		print "Chat server started on port " + str(p_o_r_t)
+		start_message = "Chat server started on port " + str(p_o_r_t)
+		print start_message
+		self.modeLogger.info(start_message)
 
 		while 1:
 
@@ -743,17 +760,20 @@ class Console(object):
 
 			for sock in ready_to_read:
 				# a new connection request received
+				print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
 				if sock == server_socket:
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
 					print "[%s, %s] is connected" % (sockfd, addr)
-					message = "[%s:%s] entered our chatting room\n" % (sockfd, addr)
-					socket_list = self._broadcast(server_socket, message, socket_list)
-					print socket_list
-					if len(socket_list) == 2:
+					message = "[%s:%s] entered our chatting room" % (sockfd, addr)
+					socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
+					if self.master_socket is None:
 						self.mode = self.DISCOVERED_MODE
 						self.modeLogger.info(self.modeNameDict[self.mode])
-						self.master_socket = sock
+						self.modeLogger.info("[%s:%s] joined first" % (sockfd, addr))
+						self.master_socket = sockfd
+					else:
+						self.modeLogger.info("[%s:%s] joined" % (sockfd, addr))
 
 				else:
 					# process data received from client
@@ -761,28 +781,35 @@ class Console(object):
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
 						if data:
-							# there is something in the socket
-							self.key_pressed(data)
-							socket_list = self._broadcast(server_socket, data, socket_list)
-						else:
-							# remove the socket that's broken
-							if sock in socket_list:
-								socket_list.remove(sock)
+							if self.master_socket is None:
+								self.master_socket = sock
+								self.mode = self.DISCOVERED_MODE
+								self.modeLogger.info(self.modeNameDict[self.mode])
 
+							# there is something in the socket
+							if sock == self.master_socket:
+								print 'master', sock, self.master_socket
+								self.key_pressed(data)
+							else:
+								print 'other', sock, self.master_socket
+
+							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
+						else:
 							# at this stage, no data means probably the connection has been broken
-							message = "[%s] is offline\n" % sock
-							socket_list = self._broadcast(server_socket, message, socket_list)
+							message = "[%s] is offline, no data" % sock
+							socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
 					# exception
 					except:
-						message = "[%s] is offline\n" % sock
-						socket_list = self._broadcast(server_socket, message, socket_list)
-						continue
+						message = "[%s] is offline, exception" % sock
+						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
+			# Broadcast triggered from check_events
 			if self.broadcastFlag:
 				self.broadcastFlag = False
-				socket_list = self._broadcast(server_socket, self.broadcastString, socket_list)
+				socket_list = self._broadcast_or_remove(server_socket, self.broadcastString, socket_list)
 				self.broadcastString = ''
+
 			time.sleep(.1)
 
 		server_socket.close()
@@ -809,8 +836,7 @@ class Console(object):
 				server.join()
 		'''
 
-	@staticmethod
-	def _broadcast(server_socket, message, socket_list):
+	def _broadcast_or_remove(self, server_socket, message, socket_list):
 		# broadcast chat messages to all connected clients
 		for socket in socket_list:
 			# send the message only to peer
@@ -818,7 +844,12 @@ class Console(object):
 				try:
 					socket.send(message)
 				except:
+					self.modeLogger.info(message)
 					# broken socket connection
+					if socket == self.master_socket:
+						self.master_socket = None
+						self.mode = self.LISTENING_MODE
+						self.modeLogger.info(self.modeNameDict[self.mode])
 					socket.close()
 					# broken socket, remove it
 					if socket in socket_list:
