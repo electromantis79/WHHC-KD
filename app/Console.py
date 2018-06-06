@@ -12,10 +12,14 @@
 
 """
 
+import os
 import threading
 import time
 import logging
 from logging.handlers import RotatingFileHandler
+from flask import Flask, flash, request, redirect, url_for
+from flask import send_from_directory
+from werkzeug.utils import secure_filename
 
 import app.utils.functions
 import app.utils.reads
@@ -25,6 +29,12 @@ import app.serial_IO.serial_packet
 import app.keypad_mapping
 
 from sys import platform as _platform
+
+UPLOAD_FOLDER = '/Repos/WHHC-node/app/uploads'
+ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
+
+api = Flask(__name__)
+api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 class Console(object):
@@ -715,7 +725,7 @@ class Console(object):
 		import sys
 		import multiprocessing
 
-		h_o_s_t = ''
+		h_o_s_t = '192.168.8.1'
 		socket_list = []
 		receive_buffer = 4096
 		p_o_r_t = 60032
@@ -857,6 +867,49 @@ class Console(object):
 		return socket_list
 
 
+@api.route("/hello")
+def hello_world():
+	return "Hello, World"
+
+
+def allowed_file(filename):
+	return '.' in filename and \
+		filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@api.route('/uploads/<filename>')
+def uploaded_file(filename):
+	return send_from_directory(api.config['UPLOAD_FOLDER'], filename)
+
+
+@api.route('/', methods=['GET', 'POST'])
+def upload_file():
+	if request.method == 'POST':
+		# check if the post request has the file part
+		if 'file' not in request.files:
+			flash('No file part')
+			return redirect(request.url)
+		file_ = request.files['file']
+		# if user does not select file, browser also
+		# submit an empty part without filename
+		if file_.filename == '':
+			flash('No selected file')
+			return redirect(request.url)
+		if file_ and allowed_file(file_.filename):
+			filename = secure_filename(file_.filename)
+			file_.save(os.path.join(api.config['UPLOAD_FOLDER'], filename))
+			return redirect(url_for('uploaded_file', filename=filename))
+	return '''
+	<!doctype html>
+	<title>Upload new File</title>
+	<h1>Upload new File</h1>
+	<form method=post enctype=multipart/form-data>
+		<input type=file name=file>
+		<input type=submit value=Upload>
+	</form>
+	'''
+
+
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
 	print "ON"
@@ -873,9 +926,14 @@ def test():
 		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=True)
 	cons.set_keypad(whh_flag=True)
 
-	while 1:
-		time.sleep(2)
-		# break
+	h_o_s_t = '192.168.8.1'
+	p_o_r_t = 60050
+	start_message = "API server started on port " + str(p_o_r_t)
+	print start_message
+	cons.modeLogger.info(start_message)
+
+	api.run(host=h_o_s_t, debug=False, port=p_o_r_t)
+
 
 	# SPORT_LIST = [
 	# 'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
