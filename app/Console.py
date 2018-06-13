@@ -351,13 +351,42 @@ class Console(object):
 				self.modeLogger.info(keyPressed + ' received')
 
 				# Handle byte pair
-				try:
+				if len(keyPressed) == 3:
 					# Received byte pair is in key map format
-					self.game, funcString = self.keyMap.map_(self.game, keyPressed)
-					# self.game = self.lcd.Map(self.game, funcString)
-					self.send_state_change_over_network(funcString)
+					last_byte = keyPressed[-1]
+					byte_pair = keyPressed[:2]
 
-				except:
+					# Check for byte pair
+					if self.keyMap.check_for_byte_pair(byte_pair):
+
+						# Check for Up or Down byte
+						if last_byte == 'D' or last_byte == 'U':
+
+							if last_byte == 'D':
+								direction = '_DOWN'
+							elif last_byte == 'U':
+								direction = '_UP'
+
+							# Trigger most keys here on down press
+							self.game, funcString = self.keyMap.map_(self.game, keyPressed[:2], direction=direction)
+							# self.game = self.lcd.Map(self.game, funcString)
+							# self.send_state_change_over_network(funcString)
+
+							# Effects after button and menu are handled
+							if funcString == 'periodClockOnOff' and direction == '_DOWN' and self.game.clockDict['periodClock'].running:
+								print("Don't stop clock but send LED off")
+
+							elif funcString == 'mode':
+								if direction == '_DOWN':
+									print('=== ENTER Command State ===')
+								elif direction == '_UP':
+									print('Reset Command Timer')
+						else:
+							print('\nOnly accepts U or D, No action performed with', byte_pair)
+					else:
+						print('\n', byte_pair, 'byte_pair not in key map')
+				else:
+					print('\nDid not receive 3 bytes in ', keyPressed)
 					# Non-keyMap data received
 					if keyPressed == '@':
 						# If received the resend symbol resend
@@ -770,7 +799,7 @@ class Console(object):
 
 			for sock in ready_to_read:
 				# a new connection request received
-				print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
+				#print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
 				if sock == server_socket:
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
@@ -798,7 +827,7 @@ class Console(object):
 
 							# there is something in the socket
 							if sock == self.master_socket:
-								print 'master', sock, self.master_socket
+								#print 'master', sock, self.master_socket
 								self.key_pressed(data)
 							else:
 								print 'other', sock, self.master_socket

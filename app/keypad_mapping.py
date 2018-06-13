@@ -33,6 +33,7 @@ class KeypadMapping(object):
 		self.MMBasketball = mm_basketball
 		self.WHHFlag = whh_flag
 
+		# gameFuncDict = Key(button name) : Value(game function called)
 		self.gameFuncDict = {
 			'guestScorePlusTen': game.guestScorePlusTen, 'guestScorePlusOne': game.guestScorePlusOne,
 			'NewGame':  game.NewGame, 'homeScorePlusTen': game.homeScorePlusTen, 'homeScorePlusOne': game.homeScorePlusOne,
@@ -185,9 +186,36 @@ class KeypadMapping(object):
 
 		# Create key map dictionary
 		print 'Keypad Name', self.keypadName
-		self.Keypad_Keys = all_keypad_keys[self.keypadName]
+		down_string = '_DOWN'
+		up_string = '_UP'
+		self.Keypad_Keys = {down_string: None, up_string: None}
+		print(self.keypadName+down_string, all_keypad_keys.keys())
 
-	def map_(self, game, key_pressed):
+		if self.keypadName+down_string in all_keypad_keys:
+			self.Keypad_Keys[down_string] = all_keypad_keys[self.keypadName+down_string]
+		else:
+			self.Keypad_Keys[down_string] = all_keypad_keys[self.keypadName]
+
+		if self.keypadName+up_string in all_keypad_keys:
+			self.Keypad_Keys[up_string] = all_keypad_keys[self.keypadName+up_string]
+		else:
+			self.Keypad_Keys[up_string] = None
+
+		print(self.Keypad_Keys)
+
+	def get_func_string(self, key_pressed, direction='_DOWN'):
+		if direction is not None:
+			return self.Keypad_Keys[direction][key_pressed]
+		else:
+			return ''
+
+	def check_for_byte_pair(self, byte_pair):
+		if byte_pair in self.Keypad_Keys['_DOWN']:
+			return 1
+		else:
+			return 0
+
+	def map_(self, game, key_pressed, direction='_DOWN'):
 		"""
 		Matches grid location to function name
 		All combinations of B through F with 8 through 1
@@ -195,7 +223,7 @@ class KeypadMapping(object):
 		Sets the keyPressFlag used by the Menu_Class
 		"""
 		# PUBLIC method
-		self.funcString = self.Keypad_Keys[key_pressed]  # find function name
+		self.funcString = self.get_func_string(key_pressed, direction=direction)
 		print "Key mapped %s" % key_pressed, 'to funcString "%s"' % self.funcString
 		print "Called", str(self.gameFuncDict[self.funcString])
 		self.gameFuncDict[self.funcString]()  # call game function
