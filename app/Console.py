@@ -27,6 +27,7 @@ import app.address_mapping
 import app.mp_data_handler
 import app.serial_IO.serial_packet
 import app.keypad_mapping
+import app.menu
 
 from sys import platform as _platform
 
@@ -106,6 +107,7 @@ class Console(object):
 		self.configDict = None
 		self.game = None
 		self.keyMap = None
+		self.menu = None
 		self.addrMap = None
 		self.blankMap = None
 		self.lampMap = None
@@ -156,6 +158,7 @@ class Console(object):
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
 			self.printProductionInfo)
+		self.menu = app.menu.MenuEventHandler(self.game)
 
 		self.addrMap = app.address_mapping.AddressMapping(game=self.game)
 		self.addrMap.map()
@@ -368,15 +371,15 @@ class Console(object):
 								direction = '_UP'
 
 							# Trigger most keys here on down press
-							self.game, funcString = self.keyMap.map_(self.game, keyPressed[:2], direction=direction)
-							# self.game = self.lcd.Map(self.game, funcString)
-							# self.send_state_change_over_network(funcString)
+							func_string = self.keyMap.map_(keyPressed[:2], direction=direction)
+							self.menu.map_(func_string)
+							# self.send_state_change_over_network(func_string)
 
 							# Effects after button and menu are handled
-							if funcString == 'periodClockOnOff' and direction == '_DOWN' and self.game.clockDict['periodClock'].running:
+							if func_string == 'periodClockOnOff' and direction == '_DOWN' and self.game.clockDict['periodClock'].running:
 								print("Don't stop clock but send LED off")
 
-							elif funcString == 'mode':
+							elif func_string == 'mode':
 								if direction == '_DOWN':
 									print('=== ENTER Command State ===')
 								elif direction == '_UP':
