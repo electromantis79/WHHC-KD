@@ -201,7 +201,7 @@ class MenuEventHandler(object):
 		if self.funcString in self.funcDict:
 			self.funcDict[self.funcString]()
 		else:
-			app.utils.functions.verbose(['\nNot in self.funcDict!!!!'])
+			app.utils.functions.verbose(['\nNot in menu.funcDict!!!!'])
 
 	def _mod_menu_num(self, operator='+', value=1):
 		"""Modifies the current menu number."""

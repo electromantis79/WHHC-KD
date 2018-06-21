@@ -28,6 +28,7 @@ import app.mp_data_handler
 import app.serial_IO.serial_packet
 import app.keypad_mapping
 import app.menu
+import app.led_sequences
 
 from sys import platform as _platform
 
@@ -103,6 +104,7 @@ class Console(object):
 		self.modeLogger = None
 		self.master_socket = None
 		self._create_rotating_log('mode')
+		self.LedDict = {'L1': '0', 'L2': '0', 'L3': '0', 'L4': '0', 'L5': '0', 'L6': '0', 'L7': '0'}
 
 		self.dataUpdateIndex = 1
 
@@ -120,6 +122,7 @@ class Console(object):
 		self.sp = None
 		self.priorityListEmech = []
 		self.mode = None
+		self.led_sequence = None
 
 		self.reset()
 
@@ -161,6 +164,7 @@ class Console(object):
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
 			self.printProductionInfo)
+		self.led_sequence = app.led_sequences.LedSequences(led_dict=self.LedDict)
 		self.menu = app.menu.MenuEventHandler(self.game)
 
 		self.addrMap = app.address_mapping.AddressMapping(game=self.game)
@@ -368,25 +372,41 @@ class Console(object):
 						# Check for Up or Down byte
 						if last_byte == 'D' or last_byte == 'U':
 
+							# Define button type without direction
+							button_type = self.keyMap.get_func_string(byte_pair, direction='_BOTH')
+							print('Button type =', button_type)
+
+							# Define direction
 							if last_byte == 'D':
 								direction = '_DOWN'
 							elif last_byte == 'U':
 								direction = '_UP'
 
 							# Trigger most keys here on down press
-							func_string = self.keyMap.map_(keyPressed[:2], direction=direction)
+							func_string = self.keyMap.map_(byte_pair, direction=direction)
+
+							# Handle menus
 							self.menu.map_(func_string)
-							# self.send_state_change_over_network(func_string)
 
 							# Effects after button and menu are handled
-							if func_string == 'periodClockOnOff' and direction == '_DOWN' and self.game.clockDict['periodClock'].running:
-								print("Don't stop clock but send LED off")
+							if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+								if direction == '_DOWN':
+									print("Don't stop clock but send LED off")
+									self.led_sequence.set_led('L5', '0')
 
-							elif func_string == 'mode':
+								if direction == '_UP':
+									print("Start clock and send LED on")
+									self.led_sequence.set_led('L5', '1')
+
+							elif button_type == 'mode':
 								if direction == '_DOWN':
 									print('=== ENTER Command State ===')
 								elif direction == '_UP':
 									print('Reset Command Timer')
+
+							# send_state_change_over_network
+							self.send_state_change_over_network()
+
 						else:
 							print('\nOnly accepts U or D, No action performed with', byte_pair)
 					else:
@@ -396,7 +416,7 @@ class Console(object):
 					# Non-keyMap data received
 					if keyPressed == '@':
 						# If received the resend symbol resend
-						self.send_state_change_over_network(None)
+						self.send_state_change_over_network()
 					else:
 						# This are handles all other cases of data received
 						try:
@@ -421,38 +441,8 @@ class Console(object):
 		# Prepare data for the output thread
 		self._update_mp_serial_string()
 
-	def send_state_change_over_network(self, func_string):
-		if self.game.clockDict['periodClock'].running:
-			self.broadcastString += 'P1'
-		else:
-			self.broadcastString += 'P0'
-
-		if 'delayOfGameClock' in self.game.clockDict:
-			if self.game.clockDict['delayOfGameClock'].running:
-				self.broadcastString += 'D1'
-			else:
-				self.broadcastString += 'D0'
-
-		if 'segmentTimer' in self.game.clockDict:
-			if self.game.clockDict['segmentTimer'].running:
-				self.broadcastString += 'T1'
-			else:
-				self.broadcastString += 'T0'
-
-		if 'shotClock' in self.game.clockDict:
-			if self.game.clockDict['shotClock'].running:
-				self.broadcastString += 'S1'
-			else:
-				self.broadcastString += 'S0'
-
-		if self.game.gameSettings['inningBot']:
-			self.broadcastString += 'IB'
-		else:
-			self.broadcastString += 'IT'
-
-		if func_string is None:
-			self.broadcastString += '@'
-
+	def send_state_change_over_network(self):
+		self.broadcastString += self.led_sequence.get_led_dict_string()
 		self.broadcastFlag = True
 
 	def _update_mp_words_dict(self):
@@ -802,13 +792,14 @@ class Console(object):
 			# print(tic-self.startTime)
 
 			# get the list sockets which are ready to be read through select
-			# 4th arg, time_out  = 0 : poll and never block
-			ready_to_read, ready_to_write, in_error = select.select(socket_list, [], [], 0)
+			ready_to_read, ready_to_write, in_error = select.select(
+				socket_list, [], [], 0)  # 4th arg, time_out  = 0 : poll and never block
 
+			# Handle newly received data
 			for sock in ready_to_read:
-				# a new connection request received
 				# print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
 				if sock == server_socket:
+					# a new connection request received
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
 					print "[%s, %s] is connected" % (sockfd, addr)
@@ -851,10 +842,13 @@ class Console(object):
 						message = "[%s] is offline, exception" % sock
 						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
-			# Broadcast triggered from check_events
+			# Broadcast data triggered from check_events
 			if self.broadcastFlag:
 				self.broadcastFlag = False
+
 				socket_list = self._broadcast_or_remove(server_socket, self.broadcastString, socket_list)
+
+				# Clear broadcastString
 				self.broadcastString = ''
 
 			toc = time.time()

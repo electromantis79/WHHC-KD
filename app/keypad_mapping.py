@@ -207,7 +207,16 @@ class KeypadMapping(object):
 	def get_func_string(self, key_pressed, direction='_DOWN'):
 		# PUBLIC method
 		if direction is not None:
-			return self.Keypad_Keys[direction][key_pressed]
+			if direction == '_BOTH':
+				both = [self.Keypad_Keys['_UP'][key_pressed], self.Keypad_Keys['_DOWN'][key_pressed]]
+				func_string = None
+				for x, each in enumerate(both):
+					if both[x] != 'None':
+						func_string = both[x]
+
+				return func_string
+			else:
+				return self.Keypad_Keys[direction][key_pressed]
 		else:
 			return ''
 
