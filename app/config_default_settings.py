@@ -31,7 +31,6 @@ class Config:
 		self.configDict = {}
 		self.configFile = {}
 		self.userConfigDict = {}
-		self.keypadType = None
 		self._process_selection()
 
 	def _process_selection(self):
@@ -75,8 +74,6 @@ class Config:
 		elif self.fileType == 'user':
 			self.configDict = app.utils.configobj.ConfigObj('userConfig')  # All values and keys are in string format
 		self.configDict['sport'] = sport
-		self.keypadType = sport[0:2]
-		self.configDict['keypadType'] = self.keypadType
 		self.configDict.write()
 
 	def write_server(self, server):
@@ -107,21 +104,23 @@ class Config:
 
 		self.configDict['Version'] = 999
 		self.configDict['sport'] = 'MPLINESCORE5'  # needs user control and new instance definition for change
-		self.configDict['model'] = 'LX1750'
-		self.configDict['boardColor'] = 'COMPANY_LOGO'
-		self.configDict['captionColor'] = 'WHITE'
-		self.configDict['stripeColor'] = 'WHITE'
-		self.configDict['LEDcolor'] = 'RED'
-		self.configDict['keypadType'] = self.configDict['sport'][0:2]
+
 		self.configDict['optionJumpers'] = '0000'
 		self.configDict['MPLX3450Flag'] = False
 		self.configDict['BOUNCETIME'] = 100
 		self.configDict['splashTime'] = 3
 
+		# UI variables
+		self.configDict['model'] = 'LX1750'
+		self.configDict['boardColor'] = 'COMPANY_LOGO'
+		self.configDict['captionColor'] = 'WHITE'
+		self.configDict['stripeColor'] = 'WHITE'
+		self.configDict['LEDcolor'] = 'RED'
+
 		# adhoc_tranceiver self.config variables
 		self.configDict['SERVER'] = True
-		self.configDict['HOST'] = '192.168.1.1'
-		self.configDict['port'] = 60032
+		self.configDict['scoreNetHostAddress'] = '192.168.8.1'
+		self.configDict['socketServerPort'] = 60032
 		self.configDict['Baud'] = 115200
 
 		# THIS SECTION BUILDS THE self.config OBJECT THAT IS WRITTEN TO THE FILE
@@ -140,7 +139,7 @@ class Config:
 			if self.configFile[key] == 'False' or self.configFile[key] == 'True':
 				self.configDict[key] = app.utils.functions.tf(self.configFile[key])
 			elif (
-					key == 'HOST' or key == 'sport' or key == 'model' or key == 'optionJumpers'
+					key == 'scoreNetHostAddress' or key == 'sport' or key == 'model' or key == 'optionJumpers'
 					or key == 'boardColor' or key == 'captionColor' or key == 'stripeColor'):
 				self.configDict[key] = self.configFile[key]
 			elif self.configFile[key].find('.') != -1:

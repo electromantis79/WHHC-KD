@@ -190,7 +190,7 @@ class KeypadMapping(object):
 		down_string = '_DOWN'
 		up_string = '_UP'
 		self.Keypad_Keys = {down_string: None, up_string: None}
-		print(self.keypadName+down_string, all_keypad_keys.keys())
+		# print(self.keypadName+down_string, all_keypad_keys.keys())
 
 		if self.keypadName+down_string in all_keypad_keys:
 			self.Keypad_Keys[down_string] = all_keypad_keys[self.keypadName+down_string]
@@ -202,7 +202,7 @@ class KeypadMapping(object):
 		else:
 			self.Keypad_Keys[up_string] = None
 
-		print(self.Keypad_Keys)
+		# print(self.Keypad_Keys)
 
 	def get_func_string(self, key_pressed, direction='_DOWN'):
 		# PUBLIC method

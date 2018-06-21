@@ -5,7 +5,6 @@ HOST = 192.168.1.1
 SERVER = True
 LEDcolor = RED
 BOUNCETIME = 100
-keypadType = MP
 Version = 999
 optionJumpers = 0000
 MPLX3450Flag = False

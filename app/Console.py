@@ -53,7 +53,7 @@ class Console(object):
 
 	def __init__(
 			self, check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
-			serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False):
+			serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False, whh_flag=False):
 		self.initTime = time.time()
 
 		self.checkEventsFlag = check_events_flag
@@ -62,6 +62,7 @@ class Console(object):
 		self.serialOutputFlag = serial_output_flag
 		self.encodePacketFlag = encode_packet_flag
 		self.serverThreadFlag = server_thread_flag
+		self.whh_flag = whh_flag
 
 		# Print Flags
 		self.printProductionInfo = True
@@ -77,6 +78,8 @@ class Console(object):
 		self.serialInputRefreshFrequency = 0.1
 		self.serialOutputRefreshFrequency = 0.1
 		self.checkEventsRefreshFrequency = 0.1
+		self.socketServerFrequency = 0.1
+		self.startTime = time.time()
 
 		# Variables that don't need resetting through internal reset
 		self.className = 'console'
@@ -154,7 +157,7 @@ class Console(object):
 		if internal_reset:
 			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
-		self.set_keypad()
+		self.set_keypad(whh_flag=self.whh_flag)
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
 			self.printProductionInfo)
@@ -757,10 +760,10 @@ class Console(object):
 		import sys
 		import multiprocessing
 
-		h_o_s_t = '192.168.8.1'
+		h_o_s_t = self.configDict['scoreNetHostAddress']
 		socket_list = []
 		receive_buffer = 4096
-		p_o_r_t = 60032
+		p_o_r_t = self.configDict['socketServerPort']
 
 		p = multiprocessing.current_process()
 		print 'Starting:', p.name, p.pid
@@ -795,6 +798,8 @@ class Console(object):
 		self.modeLogger.info(start_message)
 
 		while 1:
+			tic = time.time()
+			# print(tic-self.startTime)
 
 			# get the list sockets which are ready to be read through select
 			# 4th arg, time_out  = 0 : poll and never block
@@ -802,7 +807,7 @@ class Console(object):
 
 			for sock in ready_to_read:
 				# a new connection request received
-				#print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
+				# print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
 				if sock == server_socket:
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
@@ -830,7 +835,7 @@ class Console(object):
 
 							# there is something in the socket
 							if sock == self.master_socket:
-								#print 'master', sock, self.master_socket
+								# print 'master', sock, self.master_socket
 								self.key_pressed(data)
 							else:
 								print 'other', sock, self.master_socket
@@ -852,7 +857,9 @@ class Console(object):
 				socket_list = self._broadcast_or_remove(server_socket, self.broadcastString, socket_list)
 				self.broadcastString = ''
 
-			time.sleep(.1)
+			toc = time.time()
+			elapse = toc - tic
+			time.sleep(self.socketServerFrequency-elapse)
 
 		server_socket.close()
 		'''
@@ -955,8 +962,8 @@ def test():
 
 	cons = Console(
 		check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
-		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=True)
-	cons.set_keypad(whh_flag=True)
+		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=True,
+		whh_flag=True)
 
 	h_o_s_t = '192.168.8.1'
 	p_o_r_t = 60050

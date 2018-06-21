@@ -37,7 +37,6 @@ class Game(object):
 		# Classes and attributes
 		self.gameData['sportType'] = "GENERIC"
 		self.gameData['sport'] = self.configDict['sport']
-		self.gameData['keypadType'] = self.configDict['keypadType']
 		self.gameData['optionJumpers'] = self.configDict['optionJumpers']
 		self.gameData['Version'] = self.configDict['Version']
 
@@ -1083,9 +1082,9 @@ class Baseball(Game):
 			self.gameData['sportType'] = 'linescore'
 			self.gameSettings['hoursFlag'] = True
 
-		if self.gameData['keypadType'] == 'MM':
+		if self.gameData['sport'][0:2] == 'MM':
 			self.gameSettings['baseballPeriodClockMaxSeconds'] = self.gameSettings['MM_baseballPeriodClockMaxSeconds']
-		elif self.gameData['keypadType'] == 'MP':
+		else:
 			self.gameSettings['baseballPeriodClockMaxSeconds'] = self.gameSettings['MP_baseballPeriodClockMaxSeconds']
 
 		self.set_game_data('singlePitchCount', self.get_team_data(self.home, 'pitchCount'), places=3)
@@ -1151,9 +1150,9 @@ class Football(Game):
 
 		self.gameData['sportType'] = 'football'
 
-		if self.gameData['keypadType'] == 'MM':
+		if self.gameData['sport'][0:2] == 'MM':
 			self.gameSettings['footballPeriodClockMaxSeconds'] = self.gameSettings['MM_footballPeriodClockMaxSeconds']
-		elif self.gameData['keypadType'] == 'MP':
+		else:
 			self.gameSettings['footballPeriodClockMaxSeconds'] = self.gameSettings['MP_footballPeriodClockMaxSeconds']
 
 		if self.gameData['quarter'] == 4:
@@ -1293,9 +1292,9 @@ class Basketball(Game):
 
 		self._add_team_name_data()
 
-		if self.gameData['keypadType'] == 'MM':
+		if self.gameData['sport'][0:2] == 'MM':
 			self.basketballPeriodClockMaxSeconds = (self.gameSettings['MM_basketballPeriodClockMaxSeconds'])
-		elif self.gameData['keypadType'] == 'MP':
+		else:
 			self.basketballPeriodClockMaxSeconds = (self.gameSettings['MP_basketballPeriodClockMaxSeconds'])
 
 		self.gameSettings['periodClockTenthsFlag'] = True
