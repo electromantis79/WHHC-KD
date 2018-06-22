@@ -44,13 +44,13 @@ class LedSequences(object):
 			read = self.timer.read_ms()
 			if 0 <= read < 1000:
 				print('All LEDs = OFF', read, 'ms')
-			elif 1000 <= read < 1750:
+			elif 1000 <= read < 1800:
 				print('[Clock Running] = ON', read, 'ms')
-			elif 1750 <= read < 3000:
+			elif 1800 <= read < 3000:
 				print('[Clock Running] = OFF', read, 'ms')
-			elif 3000 <= read < 3750:
+			elif 3000 <= read < 3800:
 				print('[Clock Running] = ON', read, 'ms')
-			elif 3750 <= read:
+			elif 3800 <= read:
 				print('[Clock Running] = OFF', read, 'ms')
 				self.timer.reset()
 				print('time_of_day_sequence END')
