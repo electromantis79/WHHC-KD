@@ -386,7 +386,7 @@ class Console(object):
 							func_string = self.keyMap.map_(byte_pair, direction=direction)
 
 							# Handle menus
-							self.menu.map_(func_string)
+							self.menu.map_(func_string, direction=direction)
 
 							# Effects after button and menu are handled
 							if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:

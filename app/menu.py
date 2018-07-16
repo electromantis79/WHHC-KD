@@ -36,6 +36,7 @@ class MenuEventHandler(object):
 		self.teamNameNumpadFlagCount = 0
 
 		self.currentData = None
+		self.direction = None
 
 		self.menuTimerFlag = False
 		self.NewGameMenu = 1
@@ -175,10 +176,11 @@ class MenuEventHandler(object):
 
 	# Externally callable methods
 
-	def map_(self, func_string='None'):
+	def map_(self, func_string='None', direction=None):
 		"""Main function called when there is a key press event to update the LCD screen."""
 		app.utils.functions.verbose(['\nMap---'], self.verbose)
 		self.funcString = func_string
+		self.direction = direction
 
 		# Call the function - This is the area to control if this func_string has a menu or only uses it in certain cases
 		self.call_function()
@@ -257,6 +259,7 @@ class MenuEventHandler(object):
 
 		self.currentMenuString = ''
 		self.funcString = ''
+		self.direction = None
 		self.teamNameString = ''
 		self.teamNameNumpadFlag = False
 		self.teamNameNumpadTimerFlag = False
@@ -312,6 +315,8 @@ class MenuEventHandler(object):
 		self.currentMenuString = self.funcString
 
 		# Do stuff
+		if self.currentMenuString == 'mode':
+			self.game.gameSettings['commandState'] = True
 
 		self.menuTimerFlag = True
 

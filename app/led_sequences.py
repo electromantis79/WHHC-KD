@@ -41,7 +41,7 @@ class LedSequences(object):
 		Repeat toggling the [Clock Running] LED until KD enters Connected Dark Sequence or until RD exits Time of Day Mode
 		"""
 		if enable:
-			read = self.timer.read_ms()
+			read = self.timer.currentTime() * 1000
 			if 0 <= read < 1000:
 				print('All LEDs = OFF', read, 'ms')
 			elif 1000 <= read < 1800:
@@ -52,6 +52,6 @@ class LedSequences(object):
 				print('[Clock Running] = ON', read, 'ms')
 			elif 3800 <= read:
 				print('[Clock Running] = OFF', read, 'ms')
-				self.timer.reset()
+				self.timer.reset_()
 				print('time_of_day_sequence END')
 		return enable
