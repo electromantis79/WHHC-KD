@@ -181,18 +181,29 @@ class AddressMapping(object):
 
 		# Check for any flag changes
 		if self.sport == 'MPBASEBALL1' or self.sport == 'MMBASEBALL3':
-			if under_minute:
-				if self.game.gameSettings['2D_Clock']:
-					alts = self._format_alts(alts, [2, 21], 2)
+			if self.game.gameSettings['whh_flag']:
+				if self.game.gameSettings['timeOfDayClockEnable']:
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 4)
+				elif under_minute:
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 6)
+				else:
+					alts = self._format_alts(alts, [6, 7, 8], 5)
+				alts = self._format_alts(alts, [5], 5)
+
 			else:
-				if self.game.gameSettings['2D_Clock']:
-					alts = self._format_alts(alts, [1, 2, 21, 22], 2)
-			if self.game.gameSettings['hoursFlagJumper'] and self.game.gameSettings['2D_Clock']:
-				alts = self._format_alts(alts, [3, 23], 2)
-			if self.game.gameSettings['scoreTo19Flag']:
-				alts = self._format_alts(alts, [5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28], 2)
-			if self.game.gameSettings['timeOfDayClockEnable']:
-				alts = self._format_alts(alts, [1, 2, 21, 22], 4)
+				if under_minute:
+					if self.game.gameSettings['2D_Clock']:
+						alts = self._format_alts(alts, [2, 21], 2)
+				else:
+					if self.game.gameSettings['2D_Clock']:
+						alts = self._format_alts(alts, [1, 2, 21, 22], 2)
+
+				if self.game.gameSettings['hoursFlagJumper'] and self.game.gameSettings['2D_Clock']:
+					alts = self._format_alts(alts, [3, 23], 2)
+				if self.game.gameSettings['scoreTo19Flag']:
+					alts = self._format_alts(alts, [5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28], 2)
+				if self.game.gameSettings['timeOfDayClockEnable']:
+					alts = self._format_alts(alts, [1, 2, 21, 22], 4)
 
 		elif self.sport == 'MPLINESCORE5':
 			if self.game.gameSettings['clock_3D_or_less_Flag'] and not under_minute:
@@ -342,7 +353,7 @@ class AddressMapping(object):
 			try:
 				self.addressMapDict[addressTup[0]] = self.fullAddressMapDict[addressTup[0]][addressTup[1]]
 			except:
-				print 'alts', alts, 'Not in address map'
+				print 'alts', addressTup, 'Not in address map'
 
 		# Sort the players on a stat board
 		if self.statFlag and 0:  # 0 for ASCII 2 MP converter

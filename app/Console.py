@@ -160,6 +160,7 @@ class Console(object):
 		if internal_reset:
 			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
+		self.game.gameSettings['whh_flag'] = self.whh_flag
 		self.set_keypad(whh_flag=self.whh_flag)
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
@@ -382,8 +383,12 @@ class Console(object):
 							elif last_byte == 'U':
 								direction = '_UP'
 
+							# Get default function string for menu active case
+							func_string = self.keyMap.get_func_string(byte_pair, direction=direction)
+
 							# Trigger most keys here on down press
-							func_string = self.keyMap.map_(byte_pair, direction=direction)
+							if not self.game.gameSettings['menuFlag']:
+								func_string = self.keyMap.map_(byte_pair, direction=direction)
 
 							# Handle menus
 							self.menu.map_(func_string, direction=direction)
@@ -404,8 +409,8 @@ class Console(object):
 								elif direction == '_UP':
 									print('Reset Command Timer')
 
-							# send_state_change_over_network
-							self.send_state_change_over_network()
+							# send_led_state_over_network
+							self.send_led_state_over_network()
 
 						else:
 							print('\nOnly accepts U or D, No action performed with', byte_pair)
@@ -416,7 +421,7 @@ class Console(object):
 					# Non-keyMap data received
 					if keyPressed == '@':
 						# If received the resend symbol resend
-						self.send_state_change_over_network()
+						self.send_led_state_over_network()
 					else:
 						# This are handles all other cases of data received
 						try:
@@ -441,7 +446,7 @@ class Console(object):
 		# Prepare data for the output thread
 		self._update_mp_serial_string()
 
-	def send_state_change_over_network(self):
+	def send_led_state_over_network(self):
 		self.broadcastString += self.led_sequence.get_led_dict_string()
 		self.broadcastFlag = True
 
