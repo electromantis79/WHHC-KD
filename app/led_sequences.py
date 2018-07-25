@@ -25,13 +25,16 @@ class LedSequences(object):
 		return string
 
 	def set_led(self, key, value):
+		# Example - key = 'L5' for led 5 (topLed), value = '1' or '0'
 		self.LedDict[key] = value
 
 	def battery_test(self, enable=False):
 		"""Continue this method while in this mode (until timeout)"""
 		if enable:
 			print('[Signal Strength] = OFF')
+			self.set_led('L6', '0')
 			print('[Battery  Strength] = ON')
+			self.set_led('L7', '1')
 			print('[Bar 1], [Bar 2], [Bar 3], [Bar 4] show battery strength')
 			print('battery_test_sequence END')
 		return enable
