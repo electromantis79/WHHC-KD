@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -116,4 +116,4 @@ class Team(object):
 				self.teamData[data_name + 'Units'] = value % 10
 				self.teamData[data_name] = value
 		else:
-			print 'Failed to set %s value of %d.' % (data_name, value)
+			print('Failed to set %s value of %d.' % (data_name, value))
