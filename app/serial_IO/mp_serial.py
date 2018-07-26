@@ -44,7 +44,7 @@ class MpSerialHandler(object):
 			import serial
 			port_name = '/dev/ttyS0'
 		else:
-			print ("Don't work on windows yet")
+			print("Don't work on windows yet")
 			return  # Needed to skip the rest of __init__
 
 		# Select input type
@@ -57,7 +57,7 @@ class MpSerialHandler(object):
 			self.timeout = 0.008
 
 		# Setup serial port
-		print ('port_name', port_name)
+		print('port_name', port_name)
 		# 2400 baud is for wifi demo to match MIC revision used, normally 38400
 		self.ser = serial.Serial(port=port_name, baudrate=2400, bytesize=8, timeout=self.timeout)
 
@@ -74,13 +74,13 @@ class MpSerialHandler(object):
 			"""Handles serial input."""
 
 			if self.verboseFlag:
-				print ('---- self.previousLowByte', self.previousLowByte)
+				print('---- self.previousLowByte', self.previousLowByte)
 			try:
 
 				data_out = bytearray(self.ser.read(1))
 
 				if self.verboseFlag:
-					print ('data_out', data_out)
+					print('data_out', data_out)
 				for x, byte in enumerate(data_out):
 					if byte > 127:
 						byte_type = 'high'
@@ -91,23 +91,23 @@ class MpSerialHandler(object):
 						byte_type = 'low'
 						self.previousLowByte = byte
 					if self.verboseFlag:
-						print (byte)
+						print(byte)
 
 				if self.verboseFlag and data_out:
-					print (byte_type, byte)
-					print ('self.receiveList', self.receiveList)
+					print(byte_type, byte)
+					print('self.receiveList', self.receiveList)
 					if self.ser.inWaiting():
-						print (self.ser.inWaiting(), 'bytes in buffer')
+						print(self.ser.inWaiting(), 'bytes in buffer')
 
 			except:
-				print ('ERROR _serial_input function')
+				print('ERROR _serial_input function')
 
 			if self.verboseFlag:
-				print ('---')
+				print('---')
 
 		elif self.serialInputType == 'ASCII':
 			if self.verboseFlag:
-				print ('ASCII')
+				print('ASCII')
 			try:
 				self.packet = self.ser.read(self.maxBytes)
 
@@ -115,16 +115,16 @@ class MpSerialHandler(object):
 				if self.sp.etn_check(self.packet):
 					self.ETNpacketList.append(self.packet)
 				if self.verboseFlag and len(self.ETNpacketList) > 0:
-					print ('-----len(self.ETNpacketList', len(self.ETNpacketList))
+					print('-----len(self.ETNpacketList', len(self.ETNpacketList))
 
 			except:
-				print ('ERROR _serial_input function')
+				print('ERROR _serial_input function')
 			if self.verboseFlag:
-				print (self.packet)
+				print(self.packet)
 
 	def serial_output(self, data):
 		"""Handles serial output."""
 		try:
 			self.ser.write(data)
 		except:
-			print ('ERROR serial output function')
+			print('ERROR serial output function')

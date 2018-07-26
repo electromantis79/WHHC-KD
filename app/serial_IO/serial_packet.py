@@ -67,7 +67,7 @@ class SerialPacket (object):
 			# Inspect packet for correct format
 			self.etn_check(packet)
 			if self.printETNData and self.ETNFlag:
-				print 'stored_name'
+				print('stored_name')
 
 			length_check_ = self._length_check(packet)
 			checksum_check_ = self._checksum_check(packet)
@@ -76,11 +76,11 @@ class SerialPacket (object):
 					or packet[-1] != chr(0x04) or not checksum_check_):
 
 				if self.printCorruption and packet:
-					print 'Packet Corruption'
-					print 'self._length_check(string)', length_check_
-					print 'Start Byte check with packet[0]!=chr(0x01)', packet[0] != chr(0x01)
-					print 'Stop Byte check with packet[-1]!=chr(0x04)', packet[-1] != chr(0x04)
-					print 'self.checksumByte() returns', checksum_check_
+					print('Packet Corruption')
+					print('self._length_check(string)', length_check_)
+					print('Start Byte check with packet[0]!=chr(0x01)', packet[0] != chr(0x01))
+					print('Stop Byte check with packet[-1]!=chr(0x04)', packet[-1] != chr(0x04))
+					print('self.checksumByte() returns', checksum_check_)
 
 				return 0
 
@@ -191,8 +191,8 @@ class SerialPacket (object):
 			return_value = packet
 
 		if print_string:
-			print return_value
-			print 'length', len(return_value)
+			print(return_value)
+			print('length', len(return_value))
 
 		return return_value
 
@@ -250,12 +250,12 @@ class SerialPacket (object):
 
 		if len(packet) != packet_length:
 			if self.printCorruption:
-				print 'Packet Length Error'
-				print 'len(packet), packet_length = ', len(packet), packet_length
-				print 'packet "', packet, '"END\n'
+				print('Packet Length Error')
+				print('len(packet), packet_length = ', len(packet), packet_length)
+				print('packet "', packet, '"END\n')
 
 			if len(packet) > packet_length:
-				print 'packet received greater than current length default\n'
+				print('packet received greater than current length default\n')
 				self.large_packet_flag = True
 
 			return 0
@@ -913,9 +913,9 @@ class SerialPacket (object):
 			justify_check = self.game.get_team_data(team, 'justify') != justify
 
 			if self.printETNData:
-				print 'stored_name', stored_name, 'name', name, 'font', font, 'justify', justify
-				print 'team', team, 'name_check', name_check, 'font_check', font_check, 'justify_check', justify_check
-				print
+				print('stored_name', stored_name, 'name', name, 'font', font, 'justify', justify)
+				print('team', team, 'name_check', name_check, 'font_check', font_check, 'justify_check', justify_check)
+				print()
 
 			if name_check or font_check or justify_check:
 				self.ETNChangeFlag = True
@@ -1208,7 +1208,7 @@ class SerialPacket (object):
 				'scoreInn'+str(inning+1), min_value_not_blanked=self.game.get_team_data(
 					team, 'scoreInn' + str(inning + 1)) > 9, team=team)
 			string += str(scoreInn)
-		self.decodePacket = self._string_eater(self.decodePacket, places=len(range(15)))
+		self.decodePacket = self._string_eater(self.decodePacket, places=len(list(range(15))))
 		return string
 
 	def _team_penalty_player_number_clock_string(self, string, team, packet=None):
@@ -1661,12 +1661,12 @@ class SerialPacket (object):
 			if packet and check_sum != packet[-2]:
 				# Error
 				if self.printCorruption:
-					print 'Check Sum Failed'
-					print 'ord(check_sum), packet[-2]=', ord(check_sum), ord(packet[-2])
-					print
+					print('Check Sum Failed')
+					print('ord(check_sum), packet[-2]=', ord(check_sum), ord(packet[-2]))
+					print()
 				return 0
 			else:
 				return 1
 		except:
-			print 'check_sum try failed', packet
+			print('check_sum try failed', packet)
 			return 0
