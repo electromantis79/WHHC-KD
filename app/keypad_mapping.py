@@ -37,13 +37,17 @@ class KeypadMapping(object):
 		# gameFuncDict = Key(button name) : Value(game function called)
 		self.gameFuncDict = {
 			'guestScorePlusTen': self.game.guestScorePlusTen, 'guestScorePlusOne': self.game.guestScorePlusOne,
-			'NewGame':  self.game.NewGame, 'homeScorePlusTen': self.game.homeScorePlusTen, 'homeScorePlusOne': self.game.homeScorePlusOne,
+			'NewGame':  self.game.NewGame, 'homeScorePlusTen': self.game.homeScorePlusTen,
+			'homeScorePlusOne': self.game.homeScorePlusOne,
 			'secondsMinusOne': self.game.secondsMinusOne, 'minutesMinusOne': self.game.minutesMinusOne,
-			'periodClockOnOff': self.game.periodClockOnOff, 'quartersPlusOne': self.game.quartersPlusOne, 'setClock': self.game.setClock,
-			'setClockTenthSec': self.game.setClockTenthSec, 'tenthSecOnOff': self.game.tenthSecOnOff, 'clockUpDown': self.game.clockUpDown,
+			'periodClockOnOff': self.game.periodClockOnOff, 'quartersPlusOne': self.game.quartersPlusOne,
+			'setClock': self.game.setClock,
+			'setClockTenthSec': self.game.setClockTenthSec, 'tenthSecOnOff': self.game.tenthSecOnOff,
+			'clockUpDown': self.game.clockUpDown,
 			'autoHorn': self.game.autoHorn, 'timeOfDay': self.game.timeOfDay, 'timeOutTimer': self.game.timeOutTimer,
 			'possession': self.game.possession, 'secondsPlusOne': self.game.secondsPlusOne, 'horn': self.game.Horn,
-			'setHomeScore': self.game.setHomeScore, 'setGuestScore': self.game.setGuestScore, 'setGuestFunctions': self.game.setGuestFunctions,
+			'setHomeScore': self.game.setHomeScore, 'setGuestScore': self.game.setGuestScore,
+			'setGuestFunctions': self.game.setGuestFunctions,
 			'setHomeFunctions': self.game.setHomeFunctions, 'guestShotsPlusOne': self.game.guestShotsPlusOne,
 			'homeShotsPlusOne': self.game.homeShotsPlusOne, 'periodClockReset': self.game.periodClockReset,
 			'handheldButton1': self.game.handheldButton1, 'handheldButton2': self.game.handheldButton2,
@@ -51,8 +55,10 @@ class KeypadMapping(object):
 			'mode': self.game.blank, 'blank': self.game.blank, 'None': self.game.blank, '': self.game.blank}
 
 		self.gameFuncDict.update({
-			'Number_7_ABC': self.game.Number_7_ABC, 'Number_8_DEF': self.game.Number_8_DEF, 'Number_9_GHI': self.game.Number_9_GHI,
-			'Number_5_MNO': self.game.Number_5_MNO, 'Number_6_PQR': self.game.Number_6_PQR, 'Number_1_STU': self.game.Number_1_STU,
+			'Number_7_ABC': self.game.Number_7_ABC, 'Number_8_DEF': self.game.Number_8_DEF,
+			'Number_9_GHI': self.game.Number_9_GHI,
+			'Number_5_MNO': self.game.Number_5_MNO, 'Number_6_PQR': self.game.Number_6_PQR,
+			'Number_1_STU': self.game.Number_1_STU,
 			'Number_2_VWX': self.game.Number_2_VWX, 'Number_3_YZ': self.game.Number_3_YZ, 'Number_4_JKL': self.game.Number_4_JKL,
 			'Number_0_&-.!': self.game.Number_0, 'clear': self.game.clear_, 'enter': self.game.enter_})
 
@@ -87,7 +93,8 @@ class KeypadMapping(object):
 		# Basketball
 		self.gameFuncDict.update({
 			'guestTeamFoulsPlusOne': self.game.guestTeamFoulsPlusOne, 'homeTeamFoulsPlusOne': self.game.homeTeamFoulsPlusOne,
-			'homeBonus': self.game.homeBonusPlusOne, 'playerMatchGame': self.game.playerMatchGame, 'playerFoul': self.game.playerFoul,
+			'homeBonus': self.game.homeBonusPlusOne, 'playerMatchGame': self.game.playerMatchGame,
+			'playerFoul': self.game.playerFoul,
 			'guestBonus': self.game.guestBonusPlusOne, 'setHomeTimeOuts': self.game.setHomeTimeOuts,
 			'setGuestTimeOuts': self.game.setGuestTimeOuts})
 
@@ -101,14 +108,18 @@ class KeypadMapping(object):
 		# Baseball or Linescore
 		self.gameFuncDict.update({
 			'flashHitIndicator': self.game.clear_FlashHit, 'flashErrorIndicator': self.game.enter_FlashError,
-			'ballsPlusOne': self.game.ballsPlusOne, 'strikesPlusOne': self.game.strikesPlusOne, 'outsPlusOne': self.game.outsPlusOne,
-			'inningsPlusOne': self.game.inningsPlusOne, 'teamAtBat': self.game.teamAtBat, 'setPitchCounts': self.game.setPitchCounts,
+			'ballsPlusOne': self.game.ballsPlusOne, 'strikesPlusOne': self.game.strikesPlusOne,
+			'outsPlusOne': self.game.outsPlusOne,
+			'inningsPlusOne': self.game.inningsPlusOne, 'teamAtBat': self.game.teamAtBat,
+			'setPitchCounts': self.game.setPitchCounts,
 			'setBatterNumber': self.game.setBatterNumber, 'guestPitchesPlusOne': self.game.guestPitchesPlusOne,
 			'homePitchesPlusOne': self.game.homePitchesPlusOne, 'clear_FlashHit': self.game.clear_FlashHit,
 			'enter_FlashError': self.game.enter_FlashError, 'assignError': self.game.assignError,
 			'singlePitchesPlusOne': self.game.singlePitchesPlusOne, 'setTotalRuns': self.game.setTotalRuns,
-			'setTotalHits': self.game.setTotalHits, 'setTotalErrors': self.game.setTotalErrors, 'setRuns_Innings': self.game.setRuns_Innings,
-			'incInningTop_Bot': self.game.incInningTop_Bot, 'runsPlusOne': self.game.runsPlusOne, 'hitsPlusOne': self.game.hitsPlusOne,
+			'setTotalHits': self.game.setTotalHits, 'setTotalErrors': self.game.setTotalErrors,
+			'setRuns_Innings': self.game.setRuns_Innings,
+			'incInningTop_Bot': self.game.incInningTop_Bot, 'runsPlusOne': self.game.runsPlusOne,
+			'hitsPlusOne': self.game.hitsPlusOne,
 			'errorsPlusOne': self.game.errorsPlusOne, 'setInningTop_Bot': self.game.setInningTop_Bot,
 			'guestScoreMinusOne': self.game.guestScoreMinusOne, 'homeScoreMinusOne': self.game.homeScoreMinusOne})
 
@@ -116,7 +127,8 @@ class KeypadMapping(object):
 		self.gameFuncDict.update({
 			'addPlayer': self.game.addPlayer, 'deletePlayer': self.game.deletePlayer, 'displaySize': self.game.displaySize,
 			'editPlayer': self.game.editPlayer, 'fouls_digsMinusOne': self.game.fouls_digsMinusOne,
-			'fouls_digsPlusOne': self.game.fouls_digsPlusOne, 'nextPlayer': self.game.nextPlayer, 'subPlayer': self.game.subPlayer,
+			'fouls_digsPlusOne': self.game.fouls_digsPlusOne, 'nextPlayer': self.game.nextPlayer,
+			'subPlayer': self.game.subPlayer,
 			'points_killsMinusOne': self.game.points_killsMinusOne, 'points_killsPlusOne': self.game.points_killsPlusOne,
 			'previousPlayer': self.game.previousPlayer, 'guest_homeSwitch': self.game.guest_homeSwitch})
 
@@ -186,7 +198,7 @@ class KeypadMapping(object):
 			self.keypadName = keypad_list[standard_and_reverse_teams_list[sport_list_index][0]]
 
 		# Create key map dictionary
-		print 'Keypad Name', self.keypadName
+		print('Keypad Name', self.keypadName)
 		down_string = '_DOWN'
 		up_string = '_UP'
 		self.Keypad_Keys = {down_string: None, up_string: None}
@@ -236,7 +248,7 @@ class KeypadMapping(object):
 		"""
 		# PUBLIC method
 		self.funcString = self.get_func_string(key_pressed, direction=direction)
-		print "Key mapped %s" % key_pressed, 'to funcString "%s"' % self.funcString
-		print "Called", str(self.gameFuncDict[self.funcString])
+		print("Key mapped %s" % key_pressed, 'to funcString "%s"' % self.funcString)
+		print("Called", str(self.gameFuncDict[self.funcString]))
 		self.gameFuncDict[self.funcString]()  # call game function
 		return self.funcString
