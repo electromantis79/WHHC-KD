@@ -142,11 +142,11 @@ class Game(object):
 
 	def get_player_data(self, team, data_name, player_id=None, player_number=None):
 		if player_id is None and player_number is None:
-			print team, data_name, 'player_id=None, player_number=None'
+			print(team, data_name, 'player_id=None, player_number=None')
 		elif player_id is not None:
 			return self.teamsDict[team].playersDict[player_id].playerData[data_name]
 		elif player_number is not None:
-			for player_id in self.teamsDict[team].playersDict.keys():
+			for player_id in list(self.teamsDict[team].playersDict.keys()):
 				if self.teamsDict[team].playersDict[player_id].playerData['playerNumber'] == player_number:
 					return player_id
 		else:
@@ -187,10 +187,10 @@ class Game(object):
 				else:
 					player_data[data_name] = value
 			else:
-				print 'Failed to set '+team, data_name, 'value of', value
-				print 'places', places, 'player', player, 'player_data', player_data
+				print('Failed to set '+team, data_name, 'value of', value)
+				print('places', places, 'player', player, 'player_data', player_data)
 		else:
-			print 'Player %s is not in self.teamsDict[team].playersDict.' % player
+			print('Player %s is not in self.teamsDict[team].playersDict.' % player)
 
 	def set_team_data(self, team, data_name, value, places=2):
 		team_data = self.teamsDict[team].teamData
@@ -215,11 +215,11 @@ class Game(object):
 				else:
 					team_data[data_name] = value
 			else:
-				print 'Failed to set %s %s value of %d.' % (team, data_name, value)
-				print 'places', places, 'team_data', team_data
+				print('Failed to set %s %s value of %d.' % (team, data_name, value))
+				print('places', places, 'team_data', team_data)
 		else:
-				print 'Failed to set %s %s value of None.' % (team, data_name)
-				print 'places', places, 'team_data', team_data
+				print('Failed to set %s %s value of None.' % (team, data_name))
+				print('places', places, 'team_data', team_data)
 
 	def set_game_data(self, data_name, value, places=2):
 		if places == 3:
@@ -242,7 +242,7 @@ class Game(object):
 			else:
 				self.gameData[data_name] = value
 		else:
-			print 'Failed to set %s value of %d.' % (data_name, value)
+			print('Failed to set %s value of %d.' % (data_name, value))
 
 	def set_clock_data(self, clock_name, data_name, value, places=2):
 
@@ -262,7 +262,7 @@ class Game(object):
 			else:
 				clock_data[data_name] = value
 		else:
-			print 'Failed to set %s %s value of %d.' % (clock_name, data_name, value)
+			print('Failed to set %s %s value of %d.' % (clock_name, data_name, value))
 
 	def mod_player_data(self, team, player, data_name, modulus_value=100, operator='+', mod_value=1, places=2):
 		player_data = self.teamsDict[team].playersDict[player].playerData
@@ -410,14 +410,14 @@ class Game(object):
 	def Horn(self):
 		if self.gameSettings['periodHornEnable']:
 			if self.gameSettings['endOfTimeOutTimerHornEnable'] and self.gameData['sportType'] == 'football':
-				print '\a\aHORN ON'
+				print('\a\aHORN ON')
 				self.gameData['periodHorn'] = True
 			elif self.gameSettings['endOfPeriodHornEnable']:
-				print '\a\aHORN ON'
+				print('\a\aHORN ON')
 				self.gameData['periodHorn'] = True
 			if self.gameSettings['visualHornEnable']:
 				self.gameData['visualHornIndicator1'] = True
-				print 'VISUAL HORN ON'
+				print('VISUAL HORN ON')
 				if self.gameData['sportType'] == 'basketball' or self.gameData['sportType'] == 'hockey':
 					self.gameData['visualHornIndicator2'] = True
 			threading.Timer(self.gameSettings['periodHornFlashDuration'], self.hornOff).start()
@@ -425,29 +425,29 @@ class Game(object):
 	def shotHorn(self):
 		if self.gameSettings['shotClockHornEnable']:
 			if self.gameSettings['endOfShotClockHornEnable']:
-				print '\a\aSHOT CLOCK HORN ON'
+				print('\a\aSHOT CLOCK HORN ON')
 				self.gameData['shotClockHorn'] = True
 			threading.Timer(self.gameSettings['shotClockHornFlashDuration'], self.shotHornOff).start()
 
 	def delayOfGameHorn(self):
 		if self.gameSettings['delayOfGameHornEnable']:
-			print '\a\aDELAY OF GAME CLOCK HORN ON'
+			print('\a\aDELAY OF GAME CLOCK HORN ON')
 			self.gameData['delayOfGameHorn'] = True
 			threading.Timer(self.gameSettings['delayOfGameHornFlashDuration'], self.delayOfGameHornOff).start()
 
 	def hornOff(self):
-		print '\aHORNS OFF'
+		print('\aHORNS OFF')
 		self.gameData['periodHorn'] = False
 		self.gameData['visualHornIndicator1'] = False
 		if self.gameData['sportType'] == 'basketball':
 			self.gameData['visualHornIndicator2'] = False
 
 	def shotHornOff(self):
-		print '\aSHOT CLOCK HORN OFF'
+		print('\aSHOT CLOCK HORN OFF')
 		self.gameData['shotClockHorn'] = False
 
 	def delayOfGameHornOff(self):
-		print '\aDELAY OF GAME CLOCK HORN OFF'
+		print('\aDELAY OF GAME CLOCK HORN OFF')
 		self.gameData['delayOfGameHorn'] = False
 
 	def periodClockOnOff(self):
@@ -463,7 +463,7 @@ class Game(object):
 			clock_name = 'periodClock'
 
 		if self.gameSettings['precisionEnable'] or self.gameSettings['lampTestFlag'] or self.gameSettings['blankTestFlag']:
-			print 'periodClockOnOff button not active'
+			print('periodClockOnOff button not active')
 			return
 
 		else:
@@ -472,7 +472,7 @@ class Game(object):
 				if self.gameData['sport'] == 'MPBASKETBALL1' or self.gameData['sportType'] == 'hockey':
 					self.clockDict['shotClock'].start_()
 					if self.gameData['sportType'] == 'hockey':
-						for clock_name in self.clockDict.keys():
+						for clock_name in list(self.clockDict.keys()):
 							if clock_name[:7] == 'penalty':
 								self.clockDict[clock_name].start_()
 			else:
@@ -480,7 +480,7 @@ class Game(object):
 				if self.gameData['sport'] == 'MPBASKETBALL1' or self.gameData['sportType'] == 'hockey':
 					self.clockDict['shotClock'].stop_()
 					if self.gameData['sportType'] == 'hockey':
-							for clock_name in self.clockDict.keys():
+							for clock_name in list(self.clockDict.keys()):
 								if clock_name[:7] == 'penalty':
 									self.clockDict[clock_name].stop_()
 
@@ -999,7 +999,7 @@ class Game(object):
 	def nextPlayer(self):
 		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)
 		not_active_list = []
-		for playerID in self.teamsDict[team].playersDict.keys():
+		for playerID in list(self.teamsDict[team].playersDict.keys()):
 			player_number = self.get_player_data(team, 'playerNumber', player_id=playerID)
 			player_active = self.get_player_data(team, 'playerActive', player_id=playerID)
 			if player_number != '  ' and not player_active:
@@ -1038,7 +1038,7 @@ class Game(object):
 				self.gameSettings['statNumber'] = self.statNumberList[0]
 				self.gameSettings['playerNumber'] = not_active_list[self.notActiveIndex]
 		else:
-			print 'No players in roster'
+			print('No players in roster')
 
 	def previousPlayer(self):
 		active_player_list, team, team_name = app.utils.functions.active_player_list_select(self)
