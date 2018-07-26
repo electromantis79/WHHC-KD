@@ -16,13 +16,6 @@ import time
 
 from sys import platform as _platform
 
-# thread_timer related
-if _platform == "linux" or _platform == "linux2":
-	try:
-		import prctl
-	except:
-		pass
-
 
 class Clock(object):
 	"""
@@ -153,7 +146,7 @@ class Clock(object):
 					self.running = False
 					self.autoStop = True
 					self.refresher.pause()
-					print 'self.autoStop up', self.autoStop
+					print('self.autoStop up', self.autoStop)
 			else:
 				# Down counting clocks
 				self.currentTime = self.maxSeconds - elapse_time
@@ -168,7 +161,7 @@ class Clock(object):
 							self.autoStop = True
 							self.autoStop2 = True
 							self.refresher.pause()
-							print 'self.autoStop shotClock', self.autoStop2
+							print('self.autoStop shotClock', self.autoStop2)
 
 				elif self.currentTime < 0:
 					self._stop = time.time() - self._start
@@ -176,7 +169,7 @@ class Clock(object):
 					self.running = False
 					self.autoStop = True
 					self.refresher.pause()
-					print 'self.autoStop down', self.autoStop
+					print('self.autoStop down', self.autoStop)
 				else:
 					# Generic clock not stopping
 					pass
@@ -310,11 +303,6 @@ class ClockThread(threading.Thread):
 		self.period = period
 		self.clockName = name
 		self.name = name
-		if _platform == "linux" or _platform == "linux2":
-			try:
-				prctl.set_name(name)  # Used on BBB to show name of process in htop
-			except:
-				pass
 		# self.daemon=True TODO: check this
 		self.nextCall = 0.0
 		self.paused = True
@@ -339,7 +327,7 @@ class ClockThread(threading.Thread):
 				now = time.time()
 				time.sleep(self.nextCall-now)
 			except:
-
+				now = time.time()
 				while (self.nextCall-now) < 0:
 					self.nextCall = self.nextCall+self.period
 					count += 1
@@ -349,10 +337,10 @@ class ClockThread(threading.Thread):
 					now = time.time()
 					time.sleep(self.nextCall-now)
 				except:
-					print name, 'double except', stamp, 'count', count, self.nextCall-1486587172, self.nextCall-now
+					print(name, 'double except', stamp, 'count', count, self.nextCall-1486587172, self.nextCall-now)
 					self.nextCall = self.nextCall+self.period*count
 					time.sleep(self.nextCall-now)
-		print 'Thread', name, 'killed'
+		print('Thread', name, 'killed')
 
 	def resume(self):
 		with self.state:
