@@ -125,7 +125,7 @@ class Config:
 
 		# THIS SECTION BUILDS THE self.config OBJECT THAT IS WRITTEN TO THE FILE
 
-		print "WROTE TO FILE"
+		print("WROTE TO FILE")
 
 		self.configDict.write()  # Create 'defaultConfig' file. Everything will be converted to strings
 		self.tic = time.time()
@@ -135,7 +135,7 @@ class Config:
 		self.toc = time.time()
 		self.configDict = {}
 
-		for key in self.configFile.keys():
+		for key in list(self.configFile.keys()):
 			if self.configFile[key] == 'False' or self.configFile[key] == 'True':
 				self.configDict[key] = app.utils.functions.tf(self.configFile[key])
 			elif (
@@ -144,12 +144,12 @@ class Config:
 				self.configDict[key] = self.configFile[key]
 			elif self.configFile[key].find('.') != -1:
 				self.configDict[key] = float(self.configFile[key])
-			elif unicode(self.configFile[key]).isdigit():
+			elif str(self.configFile[key]).isdigit():
 				self.configDict[key] = int(self.configFile[key])
-			elif unicode(self.configFile[key]).isalnum() or self.configFile[key].isalpha():
+			elif str(self.configFile[key]).isalnum() or self.configFile[key].isalpha():
 				self.configDict[key] = self.configFile[key]
 			else:
-				print self.configFile[key], 'format not recognized'
+				print(self.configFile[key], 'format not recognized')
 				raise Exception
 		self.tic = time.time()
 
@@ -172,19 +172,19 @@ def create_config_files():
 	Run this module with write_config_flag=True to create the defaultConfig file.
 	Next press enter to copy it to the userConfig file.
 	"""
-	print "ON"
+	print("ON")
 	write_config_flag = True
 	if write_config_flag:
 		app.utils.misc.silent_remove('defaultConfig')
 	c = Config(write_config_flag, 'default')
 	app.utils.misc.print_dict(c.__dict__)
-	print "%f seconds to run config file setup." % (c.tic - c.toc)
-	raw_input()
+	print("%f seconds to run config file setup." % (c.tic - c.toc))
+	input()
 
 	app.utils.misc.silent_remove('userConfig')
 	c.user_equals_default()
 	app.utils.misc.print_dict(c.__dict__)
-	print "%f seconds to run config file setup." % (c.tic - c.toc)
+	print("%f seconds to run config file setup." % (c.tic - c.toc))
 
 
 if __name__ == '__main__':
