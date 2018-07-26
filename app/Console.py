@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+# !/usr/bin/env python3
 #  -*- coding: utf-8 -*-
 
 """
@@ -196,7 +196,7 @@ class Console(object):
 			key = 'Stat'
 		else:
 			key = '402'
-		print 'Priority Key = ', key
+		print('Priority Key = ', key)
 		# Add code here for getting to the other priorities
 
 		# All known priorities
@@ -232,19 +232,19 @@ class Console(object):
 		# self.priority_list_emech = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,
 		# 23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
 		else:
-			priority_list_emech = range(32)
+			priority_list_emech = list(range(32))
 		return priority_list_emech
 
 	def _setup_threads(self, internal_reset):
 		# Platform Dependencies
 		if (_platform == "linux" or _platform == "linux2") and not internal_reset:
-			print 'Platform is', _platform
+			print('Platform is', _platform)
 			if self.serialInputFlag or self.serialOutputFlag:
 				app.utils.functions.verbose(['\nSerial Port On'], self.printProductionInfo)
 
-				import serial_IO.mp_serial
+				import app.serial_IO.mp_serial
 
-				self.s = serial_IO.mp_serial.MpSerialHandler(
+				self.s = app.serial_IO.mp_serial.MpSerialHandler(
 					serial_input_type=self.serialInputType, game=self.game, verbose_flag=self.serial_input_verbose_flag)
 
 			if self.serialInputFlag:
@@ -286,7 +286,7 @@ class Console(object):
 		if self.printInputTimeFlag:
 			tic = time.time()
 			init_elapse = tic-self.initTime
-			print '(serial Input %s)' % init_elapse
+			print('(serial Input %s)' % init_elapse)
 
 		self.s.serial_input()
 
@@ -294,21 +294,21 @@ class Console(object):
 		if self.printTimesFlag or self.verboseDiagnostic:
 			tic = time.time()
 			init_elapse = tic-self.initTime
-			print '(-----------serial Output %s)' % init_elapse
+			print('(-----------serial Output %s)' % init_elapse)
 
 		try:
 			self.s.serial_output(self.serialString)
 			if self.verboseDiagnostic:
-				print 'Serial Output', self.serialString
+				print('Serial Output', self.serialString)
 		except:
 			if not (_platform == "win32" or _platform == "darwin"):
-				print 'Serial Output Error', self.serialString
+				print('Serial Output Error', self.serialString)
 
 	def _check_events(self):
 		tic = time.time()
 		if self.printTimesFlag or self.verboseDiagnostic:
 			init_elapse = tic-self.initTime
-			print '(-----_check_events %s)' % init_elapse
+			print('(-----_check_events %s)' % init_elapse)
 
 		# This is how the check events function is called when not on linux
 		if (_platform == "win32" or _platform == "darwin") and self.checkEventsFlag:
@@ -335,15 +335,15 @@ class Console(object):
 			toc = time.time()
 			elapse = (toc-tic)
 			if elapse > self.checkEventsRefreshFrequency or self.print_check_events_elapse_time_flag:
-				print '_check_events elapse', elapse*1000, ' ms'
-				print
+				print('_check_events elapse', elapse*1000, ' ms')
+				print()
 
 			# Time testing area for finding frequency of over period events
 			if self.count_events_time_flag:
 				self.count_event_time += 1
 				if elapse > self.checkEventsRefreshFrequency:
 					self.count_event_time_list.append((self.count_event_time, elapse))
-					print '----------self.count_event_time =', self.count_event_time_list
+					print('----------self.count_event_time =', self.count_event_time_list)
 					self.count_event_time = 0
 				self.check_events_over_period_flag = True
 
@@ -375,7 +375,7 @@ class Console(object):
 
 							# Define button type without direction
 							button_type = self.keyMap.get_func_string(byte_pair, direction='_BOTH')
-							print('Button type =', button_type)
+							print(('Button type =', button_type))
 
 							# Define direction
 							if last_byte == 'D':
@@ -413,11 +413,11 @@ class Console(object):
 							self.send_led_state_over_network()
 
 						else:
-							print('\nOnly accepts U or D, No action performed with', byte_pair)
+							print(('\nOnly accepts U or D, No action performed with', byte_pair))
 					else:
-						print('\n', byte_pair, 'byte_pair not in key map')
+						print(('\n', byte_pair, 'byte_pair not in key map'))
 				else:
-					print('\nDid not receive 3 bytes in ', keyPressed)
+					print(('\nDid not receive 3 bytes in ', keyPressed))
 					# Non-keyMap data received
 					if keyPressed == '@':
 						# If received the resend symbol resend
@@ -461,8 +461,8 @@ class Console(object):
 
 	def _update_mp_serial_string(self):
 		# Check for changes in data
-		if cmp(self.MPWordDict, self.previousMPWordDict) != 0:
-			for address in self.MPWordDict.keys():
+		if self.MPWordDict != self.previousMPWordDict:
+			for address in list(self.MPWordDict.keys()):
 				if self.previousMPWordDict[address] != self.MPWordDict[address]:
 					self.dirtyDict[address] = self.MPWordDict[address]
 		elif self.mode == self.BOOT_UP_MODE and len(self.dirtyDict) == 0:
@@ -473,7 +473,7 @@ class Console(object):
 
 		# Print dirty list
 		if len(self.dirtyDict) and self.verboseDiagnostic:
-			print '\n---self.dirtyDict', self.dirtyDict, '\nlength', len(self.dirtyDict)
+			print('\n---self.dirtyDict', self.dirtyDict, '\nlength', len(self.dirtyDict))
 
 		# Clear send list
 		self.sendList = []
@@ -493,7 +493,7 @@ class Console(object):
 						if self.verboseDiagnostic:
 							# Print info for dirty words
 							group, bank, word, i_bit, numeric_data = self.mp.decode(self.dirtyDict[addr])
-							print (
+							print(
 								'group', group, 'bank', bank, 'word', word, 'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 								'i_bit', i_bit, 'data', bin(numeric_data), bin(self.dirtyDict[addr]))
 							
@@ -509,12 +509,12 @@ class Console(object):
 					
 					if self.verboseDiagnostic:
 						# Print info for remaining words
-						print (
+						print(
 							'self.dataUpdateIndex', self.dataUpdateIndex, 'self.priorityListEmech[self.dataUpdateIndex]',
 							self.priorityListEmech[self.dataUpdateIndex-1])
 						group, bank, word, i_bit, numeric_data = self.mp.decode(
 							self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
-						print (
+						print(
 							'group', group, 'bank', bank, 'word', word, 'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 							'i_bit', i_bit, 'data', bin(numeric_data), bin(self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]]),
 							self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
@@ -531,7 +531,7 @@ class Console(object):
 					if self.verboseDiagnostic:
 						# Print info for remaining words
 						group, bank, word, i_bit, numeric_data = self.mp.decode(self.MPWordDict[self.dataUpdateIndex])
-						print (
+						print(
 							'group', group, 'bank', bank, 'word', word,
 							'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 							'i_bit', i_bit, 'data', bin(numeric_data), bin(self.MPWordDict[self.dataUpdateIndex]),
@@ -607,7 +607,7 @@ class Console(object):
 		length = len(name)
 		pairs_list = []
 		if length:
-			addr_length = range(int(length / 2))
+			addr_length = list(range(int(length / 2)))
 
 			for address in addr_length:
 				left_etn_byte = name[address * 2]
@@ -655,7 +655,7 @@ class Console(object):
 		length = len(name)
 		pairs_list = []
 		if length:
-			addr_length = range(int(length / 2))
+			addr_length = list(range(int(length / 2)))
 
 			for address in addr_length:
 				left_etn_byte = name[address * 2]
@@ -742,7 +742,7 @@ class Console(object):
 		# PUBLIC
 		self.keyPressedFlag = True
 		self.quickKeysPressedList.append(key_pressed)
-		print '\nConsole key pressed', key_pressed, 'of self.quickKeysPressedList', self.quickKeysPressedList
+		print('\nConsole key pressed', key_pressed, 'of self.quickKeysPressedList', self.quickKeysPressedList)
 
 	# THREADS ------------------------------------------
 
@@ -761,7 +761,7 @@ class Console(object):
 		p_o_r_t = self.configDict['socketServerPort']
 
 		p = multiprocessing.current_process()
-		print 'Starting:', p.name, p.pid
+		print('Starting:', p.name, p.pid)
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		while self.mode == self.BOOT_UP_MODE:
@@ -769,7 +769,7 @@ class Console(object):
 		try:
 			server_socket.bind((h_o_s_t, p_o_r_t))
 		except socket.error as err:
-			print 'errno', err.errno
+			print('errno', err.errno)
 			if err.errno == 98:
 				# This means we already have a server
 				connected = 0
@@ -789,7 +789,7 @@ class Console(object):
 		socket_list.append(server_socket)
 
 		start_message = "Chat server started on port " + str(p_o_r_t)
-		print start_message
+		print(start_message)
 		self.modeLogger.info(start_message)
 
 		while 1:
@@ -807,7 +807,7 @@ class Console(object):
 					# a new connection request received
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
-					print "[%s, %s] is connected" % (sockfd, addr)
+					print("[%s, %s] is connected" % (sockfd, addr))
 					message = "[%s:%s] entered our chatting room" % (sockfd, addr)
 					socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 					if self.master_socket is None:
@@ -834,7 +834,7 @@ class Console(object):
 								# print 'master', sock, self.master_socket
 								self.key_pressed(data)
 							else:
-								print 'other', sock, self.master_socket
+								print('other', sock, self.master_socket)
 
 							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
 						else:
@@ -950,10 +950,10 @@ def upload_file():
 
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
-	print "ON"
+	print("ON")
 	sport = 'MPBASEBALL1'
 	jumpers = '0000'
-	print 'sport', sport, 'jumpers', jumpers
+	print('sport', sport, 'jumpers', jumpers)
 
 	c = Config()
 	c.write_sport(sport)
@@ -967,7 +967,7 @@ def test():
 	h_o_s_t = '192.168.8.1'
 	p_o_r_t = 60050
 	start_message = "API server started on port " + str(p_o_r_t)
-	print start_message
+	print(start_message)
 	cons.modeLogger.info(start_message)
 
 	api.run(host=h_o_s_t, debug=False, port=p_o_r_t)
@@ -981,5 +981,5 @@ def test():
 
 
 if __name__ == '__main__':
-	from config_default_settings import Config
+	from .config_default_settings import Config
 	test()
