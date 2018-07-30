@@ -237,6 +237,7 @@ class Console(object):
 
 	def _setup_threads(self, internal_reset):
 		# Platform Dependencies
+		import app.utils.functions
 		if (_platform == "linux" or _platform == "linux2") and not internal_reset:
 			print('Platform is', _platform)
 			if self.serialInputFlag or self.serialOutputFlag:
@@ -981,5 +982,5 @@ def test():
 
 
 if __name__ == '__main__':
-	from .config_default_settings import Config
+	from app.config_default_settings import Config
 	test()

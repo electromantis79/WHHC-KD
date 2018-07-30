@@ -102,8 +102,8 @@ class Team(object):
 
 	def _set_data(self, data_name, value, places=2):
 		if places == 3:
-			self.teamData[data_name + 'Hundreds'] = value / 100
-			self.teamData[data_name + 'Tens'] = value / 10 % 10
+			self.teamData[data_name + 'Hundreds'] = value // 100
+			self.teamData[data_name + 'Tens'] = value // 10 % 10
 			self.teamData[data_name + 'Units'] = value % 10
 			self.teamData[data_name] = value
 		elif places == 2:
@@ -112,7 +112,7 @@ class Team(object):
 				self.teamData[data_name + 'Units'] = 15
 				self.teamData[data_name] = value
 			else:
-				self.teamData[data_name + 'Tens'] = value / 10
+				self.teamData[data_name + 'Tens'] = value // 10
 				self.teamData[data_name + 'Units'] = value % 10
 				self.teamData[data_name] = value
 		else:

@@ -16,7 +16,8 @@
 class MpDataHandler(object):
 	"""Creates an object to manipulate MP style data."""
 
-	def __init__(self):
+	def __init__(self, verbose=False):
+		self.verbose = verbose
 		self.data = 0x0
 		self.addr = 0
 		self.blankType = ''
@@ -32,7 +33,6 @@ class MpDataHandler(object):
 		self.LH_Word = 0
 		self.seg_addr = 0
 		self.segmentData = ''
-		self.verbose = False
 		self.pass3_4Flag = False
 		self.bitwise_Flag = False
 		self.statFlag = False

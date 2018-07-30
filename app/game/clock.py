@@ -25,7 +25,7 @@ class Clock(object):
 			self, count_up=False, max_seconds=86399.999, resolution=0.01,
 			hours_flag=False, clock_name='generic', internal_clock=False):
 		self.countUp = count_up
-		self.maxSeconds = max_seconds  # must be in seconds
+		self.maxSeconds = float(max_seconds)  # must be in seconds
 		self.resolution = resolution
 		self.hoursFlag = hours_flag
 		self.clockName = clock_name
@@ -113,16 +113,16 @@ class Clock(object):
 
 			self.hours = hours
 			self.timeUnitsDict['hoursUnits'] = self.hours % 10
-			self.timeUnitsDict['hoursTens'] = self.hours / 10
+			self.timeUnitsDict['hoursTens'] = self.hours // 10
 			self.timeUnitsDict['PM'] = self.PM
 
 			self.minutes = minutes
 			self.timeUnitsDict['minutesUnits'] = self.minutes % 10
-			self.timeUnitsDict['minutesTens'] = self.minutes / 10
+			self.timeUnitsDict['minutesTens'] = self.minutes // 10
 
 			self.seconds = seconds
 			self.timeUnitsDict['secondsUnits'] = self.seconds % 10
-			self.timeUnitsDict['secondsTens'] = self.seconds / 10
+			self.timeUnitsDict['secondsTens'] = self.seconds // 10
 
 			self.timeUnitsDict['daysUnits'] = 0
 			self.timeUnitsDict['daysTens'] = 0
@@ -185,9 +185,9 @@ class Clock(object):
 			self.hours = int(self.currentTime/(60*60))-self.days*24
 
 			self.timeUnitsDict['hoursUnits'] = self.hours % 10
-			self.timeUnitsDict['hoursTens'] = self.hours / 10
+			self.timeUnitsDict['hoursTens'] = self.hours // 10
 			self.timeUnitsDict['daysUnits'] = self.days % 10
-			self.timeUnitsDict['daysTens'] = self.days / 10
+			self.timeUnitsDict['daysTens'] = self.days // 10
 
 			self.minutes = int(self.currentTime/60)-self.hours*60-self.days*60*24
 			self.seconds = int(self.currentTime - self.minutes*60-self.hours*60*60-self.days*60*60*24)
@@ -209,11 +209,11 @@ class Clock(object):
 		self.timeUnitsDict['tenths_hundredths'] = self.tenths_hundredths
 
 		self.timeUnitsDict['hundredthsUnits'] = self.tenths_hundredths % 10
-		self.timeUnitsDict['tenthsUnits'] = self.tenths_hundredths / 10
+		self.timeUnitsDict['tenthsUnits'] = self.tenths_hundredths // 10
 		self.timeUnitsDict['secondsUnits'] = self.seconds % 10
-		self.timeUnitsDict['secondsTens'] = self.seconds / 10
+		self.timeUnitsDict['secondsTens'] = self.seconds // 10
 		self.timeUnitsDict['minutesUnits'] = self.minutes % 10
-		self.timeUnitsDict['minutesTens'] = self.minutes / 10
+		self.timeUnitsDict['minutesTens'] = self.minutes // 10
 
 		if (self.timeUnitsDict['tenthsUnits'] % 10) > 4:
 			self.timeUnitsDict['blinky'] = True

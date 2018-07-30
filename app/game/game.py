@@ -168,8 +168,8 @@ class Game(object):
 		if player in self.teamsDict[team].playersDict:
 			player_data = self.teamsDict[team].playersDict[player].playerData
 			if places == 3:
-				player_data[data_name + 'Hundreds'] = value / 100
-				player_data[data_name + 'Tens'] = value / 10 % 10
+				player_data[data_name + 'Hundreds'] = value // 100
+				player_data[data_name + 'Tens'] = value // 10 % 10
 				player_data[data_name + 'Units'] = value % 10
 				player_data[data_name] = value
 			elif places == 2:
@@ -178,7 +178,7 @@ class Game(object):
 					player_data[data_name + 'Units'] = value[1]
 					player_data[data_name] = value
 				else:
-					player_data[data_name + 'Tens'] = value / 10
+					player_data[data_name + 'Tens'] = value // 10
 					player_data[data_name + 'Units'] = value % 10
 					player_data[data_name] = value
 			elif places == 1:
@@ -196,8 +196,8 @@ class Game(object):
 		team_data = self.teamsDict[team].teamData
 		if value is not None:
 			if places == 3:
-				team_data[data_name + 'Hundreds'] = value / 100
-				team_data[data_name + 'Tens'] = value / 10 % 10
+				team_data[data_name + 'Hundreds'] = value // 100
+				team_data[data_name + 'Tens'] = value // 10 % 10
 				team_data[data_name + 'Units'] = value % 10
 				team_data[data_name] = value
 			elif places == 2:
@@ -206,7 +206,7 @@ class Game(object):
 					team_data[data_name + 'Units'] = 15
 					team_data[data_name] = value
 				else:
-					team_data[data_name + 'Tens'] = value / 10
+					team_data[data_name + 'Tens'] = value // 10
 					team_data[data_name + 'Units'] = value % 10
 					team_data[data_name] = value
 			elif places == 1:
@@ -223,8 +223,8 @@ class Game(object):
 
 	def set_game_data(self, data_name, value, places=2):
 		if places == 3:
-			self.gameData[data_name + 'Hundreds'] = value / 100
-			self.gameData[data_name + 'Tens'] = value / 10 % 10
+			self.gameData[data_name + 'Hundreds'] = value // 100
+			self.gameData[data_name + 'Tens'] = value // 10 % 10
 			self.gameData[data_name + 'Units'] = value % 10
 			self.gameData[data_name] = value
 		elif places == 2:
@@ -233,7 +233,7 @@ class Game(object):
 				self.gameData[data_name + 'Units'] = 15
 				self.gameData[data_name] = value
 			else:
-				self.gameData[data_name + 'Tens'] = value / 10
+				self.gameData[data_name + 'Tens'] = value // 10
 				self.gameData[data_name + 'Units'] = value % 10
 				self.gameData[data_name] = value
 		elif places == 1:
@@ -248,12 +248,12 @@ class Game(object):
 
 		clock_data = self.clockDict[clock_name].timeUnitsDict
 		if places == 3:
-			clock_data[data_name + 'Hundreds'] = value / 100
-			clock_data[data_name + 'Tens'] = value / 10 % 10
+			clock_data[data_name + 'Hundreds'] = value // 100
+			clock_data[data_name + 'Tens'] = value // 10 % 10
 			clock_data[data_name + 'Units'] = value % 10
 			clock_data[data_name] = value
 		elif places == 2:
-			clock_data[data_name + 'Tens'] = value / 10
+			clock_data[data_name + 'Tens'] = value // 10
 			clock_data[data_name + 'Units'] = value % 10
 			clock_data[data_name] = value
 		elif places == 1:
@@ -274,16 +274,16 @@ class Game(object):
 			elif operator == '*':
 				player_data[data_name] = (player_data[data_name] * mod_value) % modulus_value
 			elif operator == '/':
-				player_data[data_name] = (player_data[data_name] / mod_value) % modulus_value
+				player_data[data_name] = (player_data[data_name] // mod_value) % modulus_value
 			elif operator == 'toggle':
 				player_data[data_name] = not player_data[data_name]
 				places = 0
 			if places == 3:
-				player_data[data_name + 'Hundreds'] = player_data[data_name] / 100
-				player_data[data_name + 'Tens'] = player_data[data_name] / 10 % 10
+				player_data[data_name + 'Hundreds'] = player_data[data_name] // 100
+				player_data[data_name + 'Tens'] = player_data[data_name] // 10 % 10
 				player_data[data_name + 'Units'] = player_data[data_name] % 10
 			elif places == 2:
-				player_data[data_name + 'Tens'] = player_data[data_name] / 10
+				player_data[data_name + 'Tens'] = player_data[data_name] // 10
 				player_data[data_name + 'Units'] = player_data[data_name] % 10
 
 	def mod_team_data(self, team, data_name, modulus_value=100, operator='+', mod_value=1, places=2):
@@ -295,16 +295,16 @@ class Game(object):
 		elif operator == '*':
 			team_data[data_name] = (team_data[data_name] * mod_value) % modulus_value
 		elif operator == '/':
-			team_data[data_name] = (team_data[data_name] / mod_value) % modulus_value
+			team_data[data_name] = (team_data[data_name] // mod_value) % modulus_value
 		elif operator == 'toggle':
 			team_data[data_name] = not team_data[data_name]
 			places = 0
 		if places == 3:
-			team_data[data_name + 'Hundreds'] = team_data[data_name] / 100
-			team_data[data_name + 'Tens'] = team_data[data_name] / 10 % 10
+			team_data[data_name + 'Hundreds'] = team_data[data_name] // 100
+			team_data[data_name + 'Tens'] = team_data[data_name] // 10 % 10
 			team_data[data_name + 'Units'] = team_data[data_name] % 10
 		elif places == 2:
-			team_data[data_name + 'Tens'] = team_data[data_name] / 10
+			team_data[data_name + 'Tens'] = team_data[data_name] // 10
 			team_data[data_name + 'Units'] = team_data[data_name] % 10
 
 	def mod_game_data(self, data_name, modulus_value=100, operator='+', mod_value=1, places=2):
@@ -315,16 +315,16 @@ class Game(object):
 		elif operator == '*':
 			self.gameData[data_name] = (self.gameData[data_name] * mod_value) % modulus_value
 		elif operator == '/':
-			self.gameData[data_name] = (self.gameData[data_name] / mod_value) % modulus_value
+			self.gameData[data_name] = (self.gameData[data_name] // mod_value) % modulus_value
 		elif operator == 'toggle':
 			self.gameData[data_name] = not self.gameData[data_name]
 			places = 0
 		if places == 3:
-			self.gameData[data_name + 'Hundreds'] = self.gameData[data_name] / 100
-			self.gameData[data_name + 'Tens'] = self.gameData[data_name] / 10 % 10
+			self.gameData[data_name + 'Hundreds'] = self.gameData[data_name] // 100
+			self.gameData[data_name + 'Tens'] = self.gameData[data_name] // 10 % 10
 			self.gameData[data_name + 'Units'] = self.gameData[data_name] % 10
 		elif places == 2:
-			self.gameData[data_name + 'Tens'] = self.gameData[data_name] / 10
+			self.gameData[data_name + 'Tens'] = self.gameData[data_name] // 10
 			self.gameData[data_name + 'Units'] = self.gameData[data_name] % 10
 
 	def mod_clock_data(self, clock_name, data_name, operator='+', modulus_value=60, mod_value=1, places=2):
@@ -337,16 +337,16 @@ class Game(object):
 		elif operator == '*':
 			clock_data[data_name] = (clock_data[data_name] * mod_value) % modulus_value
 		elif operator == '/':
-			clock_data[data_name] = (clock_data[data_name] / mod_value) % modulus_value
+			clock_data[data_name] = (clock_data[data_name] // mod_value) % modulus_value
 		elif operator == 'toggle':
 			clock_data[data_name] = not clock_data[data_name]
 			places = 0
 		if places == 3:
-			clock_data[data_name + 'Hundreds'] = clock_data[data_name] / 100
-			clock_data[data_name + 'Tens'] = clock_data[data_name] / 10 % 10
+			clock_data[data_name + 'Hundreds'] = clock_data[data_name] // 100
+			clock_data[data_name + 'Tens'] = clock_data[data_name] // 10 % 10
 			clock_data[data_name + 'Units'] = clock_data[data_name] % 10
 		elif places == 2:
-			clock_data[data_name + 'Tens'] = clock_data[data_name] / 10
+			clock_data[data_name + 'Tens'] = clock_data[data_name] // 10
 			clock_data[data_name + 'Units'] = clock_data[data_name] % 10
 
 	# Keypad methods
