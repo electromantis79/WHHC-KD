@@ -125,6 +125,6 @@ class MpSerialHandler(object):
 	def serial_output(self, data):
 		"""Handles serial output."""
 		try:
-			self.ser.write(data)
+			self.ser.write(bytes(data, 'UTF-8'))
 		except:
-			print('ERROR serial output function')
+			print('ERROR serial output function', data)
