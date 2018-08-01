@@ -300,7 +300,7 @@ class Console(object):
 		try:
 			self.s.serial_output(self.serialString)
 			if self.verboseDiagnostic:
-				print('Serial Output', self.serialString)
+				print('Serial Output', self.serialString, 'length', len(self.serialString))
 		except:
 			if not (_platform == "win32" or _platform == "darwin"):
 				print('Serial Output Error', self.serialString)
@@ -507,7 +507,7 @@ class Console(object):
 		if self.MP_StreamRefreshFlag and not self.ETNSendListFlag:
 			for x in range(space_left):
 				if self.game.gameData['sportType'] == 'stat':
-					
+
 					self.sendList.append(self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
 					
 					if self.verboseDiagnostic:
@@ -529,8 +529,8 @@ class Console(object):
 				else:
 					
 					self.sendList.append(self.MPWordDict[self.dataUpdateIndex])
-					# print 'self.dataUpdateIndex',self.dataUpdateIndex
-					
+					# print('self.dataUpdateIndex', self.dataUpdateIndex)
+
 					if self.verboseDiagnostic:
 						# Print info for remaining words
 						group, bank, word, i_bit, numeric_data = self.mp.decode(self.MPWordDict[self.dataUpdateIndex])
@@ -553,10 +553,10 @@ class Console(object):
 			self.ETNSendListFlag = False
 
 		# Create string for transport
-		serial_string = ''
+		serial_string = b''
 		for word in self.sendList:
-			first_byte = chr((word & 0xFF00) >> 8)
-			second_byte = chr((word & 0xFF))
+			first_byte = int((word & 0xFF00) >> 8).to_bytes(1, 'big')
+			second_byte = int((word & 0xFF)).to_bytes(1, 'big')
 			serial_string += first_byte+second_byte
 		self.serialString = serial_string
 
