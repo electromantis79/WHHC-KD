@@ -69,7 +69,7 @@ class Console(object):
 		self.printProductionInfo = True
 		self.printTimesFlag = False
 		self.printInputTimeFlag = False
-		self.verboseDiagnostic = False
+		self.verboseDiagnostic = True
 		self.serial_input_verbose_flag = False
 		self.print_check_events_elapse_time_flag = False
 
@@ -423,6 +423,7 @@ class Console(object):
 					if keyPressed == '@':
 						# If received the resend symbol resend
 						self.send_led_state_over_network()
+					'''
 					else:
 						# This are handles all other cases of data received
 						try:
@@ -433,6 +434,7 @@ class Console(object):
 							self.addrMap.rssiFlag = self.commandFlag
 						except:
 							pass
+					'''
 
 			# Clear keys pressed list
 			self.quickKeysPressedList = []
@@ -824,6 +826,7 @@ class Console(object):
 					try:
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
+						data = data.decode("utf-8")
 						if data:
 							if self.master_socket is None:
 								self.master_socket = sock
@@ -891,9 +894,10 @@ class Console(object):
 			# send the message only to peer
 			if socket != server_socket:
 				try:
-					socket.send(message)
+					socket.send(bytes(message, "utf8"))
 				except:
 					self.modeLogger.info(message)
+					print('broken socket connection', message)
 					# broken socket connection
 					if socket == self.master_socket:
 						self.master_socket = None
