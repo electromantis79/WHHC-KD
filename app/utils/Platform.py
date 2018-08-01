@@ -22,10 +22,10 @@ import platform
 import re
 
 # Platform identification constants.
-UNKNOWN          = 0
-RASPBERRY_PI     = 1
+UNKNOWN = 0
+RASPBERRY_PI = 1
 BEAGLEBONE_BLACK = 2
-MINNOWBOARD      = 3
+MINNOWBOARD = 3
 
 
 def platform_detect():
@@ -111,7 +111,7 @@ def pi_version():
 
 
 def test():
-    print platform_detect()
+    print(platform_detect())
 
 
 if __name__ == '__main__':

@@ -87,7 +87,7 @@ class AddressMapping(object):
 			self.wordListAddr = self.wordListAddrStat
 		else:
 			self.statFlag = False
-			self.wordListAddr = range(1, 33)
+			self.wordListAddr = list(range(1, 33))
 
 		self.mp = app.mp_data_handler.MpDataHandler()
 		self.wordsDict = dict.fromkeys(self.wordListAddr, 0)
@@ -132,7 +132,7 @@ class AddressMapping(object):
 			try:
 				self.addressMapDict[address] = self.fullAddressMapDict[address][1]
 			except:
-				print 'Error', address, self.addressMapDict
+				print('Error', address, self.addressMapDict)
 
 	# startup methods end
 
@@ -165,7 +165,7 @@ class AddressMapping(object):
 		if 'periodClock' in self.game.clockDict:
 
 			self.tempClockDict.clear()
-			for clocks in self.game.clockDict.keys():
+			for clocks in list(self.game.clockDict.keys()):
 				self.tempClockDict[clocks] = dict(self.game.clockDict[clocks].timeUnitsDict)
 
 			if (
@@ -181,18 +181,29 @@ class AddressMapping(object):
 
 		# Check for any flag changes
 		if self.sport == 'MPBASEBALL1' or self.sport == 'MMBASEBALL3':
-			if under_minute:
-				if self.game.gameSettings['2D_Clock']:
-					alts = self._format_alts(alts, [2, 21], 2)
+			if self.game.gameSettings['whh_flag']:
+				if self.game.gameSettings['timeOfDayClockEnable']:
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 4)
+				elif under_minute:
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 6)
+				else:
+					alts = self._format_alts(alts, [6, 7, 8], 5)
+				alts = self._format_alts(alts, [5], 5)
+
 			else:
-				if self.game.gameSettings['2D_Clock']:
-					alts = self._format_alts(alts, [1, 2, 21, 22], 2)
-			if self.game.gameSettings['hoursFlagJumper'] and self.game.gameSettings['2D_Clock']:
-				alts = self._format_alts(alts, [3, 23], 2)
-			if self.game.gameSettings['scoreTo19Flag']:
-				alts = self._format_alts(alts, [5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28], 2)
-			if self.game.gameSettings['timeOfDayClockEnable']:
-				alts = self._format_alts(alts, [1, 2, 21, 22], 4)
+				if under_minute:
+					if self.game.gameSettings['2D_Clock']:
+						alts = self._format_alts(alts, [2, 21], 2)
+				else:
+					if self.game.gameSettings['2D_Clock']:
+						alts = self._format_alts(alts, [1, 2, 21, 22], 2)
+
+				if self.game.gameSettings['hoursFlagJumper'] and self.game.gameSettings['2D_Clock']:
+					alts = self._format_alts(alts, [3, 23], 2)
+				if self.game.gameSettings['scoreTo19Flag']:
+					alts = self._format_alts(alts, [5, 6, 7, 8, 9, 10, 11, 12, 25, 26, 27, 28], 2)
+				if self.game.gameSettings['timeOfDayClockEnable']:
+					alts = self._format_alts(alts, [1, 2, 21, 22], 4)
 
 		elif self.sport == 'MPLINESCORE5':
 			if self.game.gameSettings['clock_3D_or_less_Flag'] and not under_minute:
@@ -342,7 +353,7 @@ class AddressMapping(object):
 			try:
 				self.addressMapDict[addressTup[0]] = self.fullAddressMapDict[addressTup[0]][addressTup[1]]
 			except:
-				print 'alts', alts, 'Not in address map'
+				print('alts', addressTup, 'Not in address map')
 
 		# Sort the players on a stat board
 		if self.statFlag and 0:  # 0 for ASCII 2 MP converter
@@ -398,7 +409,7 @@ class AddressMapping(object):
 		blank_type = self.addressMapDict[address]['BLANK_TYPE']
 		segment_data = self.addressMapDict[address]['SEGMENT_DATA']
 		if self.verbose:
-			print group, bank, word, i_bit, h_bit, high_nibble, low_nibble, blank_type, segment_data
+			print(group, bank, word, i_bit, h_bit, high_nibble, low_nibble, blank_type, segment_data)
 
 		# Prepare values for encoding
 		i_bit = self._i_bit_format(i_bit)  # string to int
@@ -410,7 +421,7 @@ class AddressMapping(object):
 		segment_data = self._segment_data_format(segment_data)  # string to int
 
 		if self.verbose:
-			print group, bank, word, i_bit, h_bit, high_nibble, low_nibble, blank_type, segment_data
+			print(group, bank, word, i_bit, h_bit, high_nibble, low_nibble, blank_type, segment_data)
 		return group, bank, word, i_bit, h_bit, high_nibble, low_nibble, blank_type, segment_data
 
 	# Formatting Functions
@@ -781,7 +792,7 @@ class AddressMapping(object):
 			low_nibble = 0
 
 		if self.verbose or 0:
-			print (
+			print(
 				'\n_nibble_format(after) - high_nibble, low_nibble, blank_type, word, addr_word_number -- \n',
 				high_nibble, low_nibble, blank_type, word, addr_word_number)
 		return high_nibble, low_nibble, blank_type
@@ -935,7 +946,7 @@ class AddressMapping(object):
 		elif segment_data == 'bc_detect':
 			segment_data = 0
 		else:
-			print 'Address Map spreadsheet has a segment data value not handled yet'
+			print('Address Map spreadsheet has a segment data value not handled yet')
 
 		if segment_data == '':
 			segment_data = None
@@ -1006,7 +1017,7 @@ class AddressMapping(object):
 		"""
 		# PUBLIC method
 		if self.verbose:
-			print '--------------word_list---------------', word_list
+			print('--------------word_list---------------', word_list)
 
 		address_word_list = self._select_address_word_list()
 
@@ -1016,11 +1027,11 @@ class AddressMapping(object):
 			addr = self.mp.gbw_to_mp_address(group, bank, word) + 1
 			decode_data = addr, group, bank, word, i_bit, numeric_data
 			if self.verbose:
-				print '\naddr:', addr, group, bank, word, 'I:', i_bit, 'Data:', numeric_data, bin(numeric_data)
+				print('\naddr:', addr, group, bank, word, 'I:', i_bit, 'Data:', numeric_data, bin(numeric_data))
 
 			if self._tunnel_check(word, numeric_data):
 				if self.verbose:
-					print 'tunnel_check True'
+					print('tunnel_check True')
 				# Tunneling data
 				app.utils.functions.verbose(['word', word], self.verboseTunnel)
 				if word == 1:
@@ -1033,7 +1044,7 @@ class AddressMapping(object):
 
 			elif self.quantumDimmingTunnel or self.quantumETNTunnel:
 				if self.verbose:
-					print 'self.quantumDimmingTunnel or self.quantumETNTunnel'
+					print('self.quantumDimmingTunnel or self.quantumETNTunnel')
 				app.utils.functions.verbose(['word', word], self.verboseTunnel)
 				if word == 1:
 					if not (0xaa <= numeric_data < 0xf0):
@@ -1114,7 +1125,7 @@ class AddressMapping(object):
 			else:
 				# Normal data
 				if self.verbose:
-					print 'normal un_map'
+					print('normal un_map')
 				if addr in address_word_list:
 					# Handle persistent alt selection
 					alt = 1
@@ -1164,7 +1175,7 @@ class AddressMapping(object):
 								alt = 2
 
 					if self.verbose:
-						print 'alt', alt
+						print('alt', alt)
 
 					# Shift address for stat home team
 					if self.statFlag:
@@ -1288,7 +1299,7 @@ class AddressMapping(object):
 				if change_flag:
 
 					# Change sport
-					from config_default_settings import Config
+					from app.config_default_settings import Config
 					c = Config()
 					c.write_sport(sport)
 
@@ -1340,7 +1351,7 @@ class AddressMapping(object):
 				else:
 					self._set_data(i_bit_name, i_bit, i_bit_team)
 					if self.verbose:
-						print 'i_bit_name', i_bit_name, 'saved'
+						print('i_bit_name', i_bit_name, 'saved')
 
 				# Special cases not to save H Bit --------------------
 				hockey_27_28 = (addr == 27 or addr == 28) and self.game.gameData['sport'] == 'MPHOCKEY_LX1'
@@ -1353,7 +1364,7 @@ class AddressMapping(object):
 				else:
 					self._set_data(h_bit_name, h_bit, h_bit_team)
 					if self.verbose:
-						print 'h_bit_name', h_bit_name, 'saved'
+						print('h_bit_name', h_bit_name, 'saved')
 
 				# Special cases not to save High Nibble -------------------
 				# Not used
@@ -1361,18 +1372,18 @@ class AddressMapping(object):
 				# Special cases not to save Low Nibble --------------------
 				self._set_data(low_nibble_name, low_data, low_nibble_team)
 				if self.verbose:
-					print 'low_nibble_name', low_nibble_name, 'saved'
+					print('low_nibble_name', low_nibble_name, 'saved')
 
 				if self.verbose:
-					print (
+					print(
 						'addr', addr, 'i_bit_team', i_bit_team, 'i_bit_name', i_bit_name, i_bit,
 						'h_bit_team', h_bit_team, 'h_bit_name', h_bit_name, h_bit)
-					print (
+					print(
 						'low_nibble_team', low_nibble_team, 'low_nibble_name', low_nibble_name, low_data)
 			else:
 				# Decode segment data's storage value
 				if self.verbose:
-					print 'segment_data', segment_data
+					print('segment_data', segment_data)
 				h_bit_team = self._team_extract(h_bit_name)
 
 				data_names = self._check_period_clock_state(decode_data, data_names, high_data, low_data, h_bit=h_bit)
@@ -1388,13 +1399,13 @@ class AddressMapping(object):
 				else:
 					self._set_data(h_bit_name, h_bit, h_bit_team)
 					if self.verbose:
-						print 'h_bit_name', h_bit_name, 'saved'
+						print('h_bit_name', h_bit_name, 'saved')
 
 				# Area for all custom decoding, try to use data from a better location if possible
 				if self.game.gameData['sportType'] == 'basketball':
 					if segment_data == 'home_ace_PossBonus':
 						if self.verbose:
-							print bin(numeric_data), bin(0b00010000 & numeric_data), 0b00000001 & numeric_data
+							print(bin(numeric_data), bin(0b00010000 & numeric_data), 0b00000001 & numeric_data)
 						if 0b00000001 & numeric_data:
 							self._set_data('teamTwoPossession', True, self.game.home)
 						elif 0b00000001 & numeric_data == 0:
@@ -1407,7 +1418,7 @@ class AddressMapping(object):
 							self._set_data('teamTwoBonus', 0, self.game.home)
 					if segment_data == 'guest_ace_PossBonus':
 						if self.verbose:
-							print bin(numeric_data), 0b00000000 & numeric_data, 0b00000001 & numeric_data
+							print(bin(numeric_data), 0b00000000 & numeric_data, 0b00000001 & numeric_data)
 						if 0b00000001 & numeric_data:
 							self._set_data('teamOnePossession', True, self.game.guest)
 						elif 0b00000000 & numeric_data == 0:
@@ -1474,7 +1485,7 @@ class AddressMapping(object):
 			else:
 				self._set_data(i_bit_name, i_bit, i_bit_team)
 				if self.verbose:
-					print 'i_bit_name', i_bit_name, 'saved'
+					print('i_bit_name', i_bit_name, 'saved')
 
 			# Special cases not to save High Nibble ----------------
 			soc_soc_18 = addr == 18 and self.game.gameData['sport'] == 'MPSOCCER_LX1-soccer'
@@ -1488,7 +1499,7 @@ class AddressMapping(object):
 			else:
 				self._set_data(high_nibble_name, high_data, high_nibble_team)
 				if self.verbose:
-					print 'high_nibble_name', high_nibble_name, 'saved'
+					print('high_nibble_name', high_nibble_name, 'saved')
 
 			# Special cases not to save Low Nibble ------------------
 			# soc_soc_18_and_not_e_jumper is above
@@ -1499,11 +1510,11 @@ class AddressMapping(object):
 			else:
 				self._set_data(low_nibble_name, low_data, low_nibble_team)
 				if self.verbose:
-					print 'low_nibble_name', low_nibble_name, 'saved'
+					print('low_nibble_name', low_nibble_name, 'saved')
 
 			if self.verbose:
-				print 'addr', addr, 'i_bit_team', i_bit_team, 'i_bit_name', i_bit_name, i_bit
-				print (
+				print('addr', addr, 'i_bit_team', i_bit_team, 'i_bit_name', i_bit_name, i_bit)
+				print(
 					'high_nibble_team', high_nibble_team, 'high_nibble_name', high_nibble_name, high_data,
 					'low_nibble_team', low_nibble_team, 'low_nibble_name', low_nibble_name, low_data)
 
@@ -1537,9 +1548,9 @@ class AddressMapping(object):
 				self._set_data('minutesTens', 0)
 				self._set_data('minutesUnits', 0)
 				if self.verbose:
-					print 'self.tenthsTransitionFlag=True and set minutes to zero'
-					print '\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit
-					print 'high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data
+					print('self.tenthsTransitionFlag=True and set minutes to zero')
+					print('\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit)
+					print('high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data)
 
 			elif (
 					(line5_and_c_jumper or multibase_or_3450base_c_jumper)
@@ -1548,9 +1559,9 @@ class AddressMapping(object):
 				self.tenthsTransitionFlag = False
 				self._set_data('tenthsUnits', 0)
 				if self.verbose:
-					print 'self.tenthsTransitionFlag=False and set tenthsUnits to zero'
-					print '\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit
-					print 'high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data
+					print('self.tenthsTransitionFlag=False and set tenthsUnits to zero')
+					print('\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit)
+					print('high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data)
 
 		# Tenths received
 		elif high_nibble_name == 'tenthsUnits':
@@ -1562,9 +1573,9 @@ class AddressMapping(object):
 				self.tenthsTransitionFlag = False
 				self._set_data('tenthsUnits', 0)
 				if self.verbose:
-					print 'self.tenthsTransitionFlag=False and set tenthsUnits to zero'
-					print '\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit
-					print 'high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data
+					print('self.tenthsTransitionFlag=False and set tenthsUnits to zero')
+					print('\naddr', addr, 'i_bit_name', i_bit_name, i_bit, 'h_bit_name', h_bit_name, h_bit)
+					print('high_nibble_name', high_nibble_name, high_data, 'low_nibble_name', low_nibble_name, low_data)
 
 		return data_names
 
@@ -1583,11 +1594,11 @@ class AddressMapping(object):
 					self.game.set_team_data(team, 'TIMER' + timer_number + '_PLAYER_NUMBER' + place, value, places=1)
 				elif name[:5] == 'colon':
 					if self.verbose:
-						print 'skip penalty timer colons'
+						print('skip penalty timer colons')
 				else:
 					clock_name = 'penalty'+str(timer_number)+'_'+team_string+'_'+name
 					if self.verbose:
-						print clock_name
+						print(clock_name)
 					self.game.set_game_data(clock_name, value, places=1)
 			else:
 				name = self._trim_team_name(name)
@@ -1596,7 +1607,7 @@ class AddressMapping(object):
 			self.game.set_game_data('periodClock_' + name, value, places=1)
 
 		else:
-			print 'FAIL'
+			print('FAIL')
 
 
 class LamptestMapping(AddressMapping):

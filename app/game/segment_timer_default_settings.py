@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -76,7 +76,7 @@ class SegmentTimerSettings:
 		self.segmentTimerSettings['restoreProgramFlag'] = 1
 
 		# THIS SECTION BUILDS THE self.config OBJECT THAT IS WRITTEN TO THE FILE
-		print "WROTE TO FILE"
+		print("WROTE TO FILE")
 
 		self.segmentTimerSettings.write()  # Create 'config' file. Everything will be converted to strings
 		self.tic = time.time()
@@ -84,19 +84,19 @@ class SegmentTimerSettings:
 	def _read_all(self):
 		# Read all configurations from file and store in object
 		self.toc = time.time()
-		for key in self.segmentTimerSettingsFile.keys():
+		for key in list(self.segmentTimerSettingsFile.keys()):
 			if self.segmentTimerSettingsFile[key] == 'False' or self.segmentTimerSettingsFile[key] == 'True':
 				self.segmentTimerSettings[key] = app.utils.functions.tf(self.segmentTimerSettingsFile[key])
 			elif self.segmentTimerSettingsFile[key].find('.') != -1:
 				self.segmentTimerSettings[key] = float(self.segmentTimerSettingsFile[key])
-			elif unicode(self.segmentTimerSettingsFile[key]).isdigit():
+			elif str(self.segmentTimerSettingsFile[key]).isdigit():
 				self.segmentTimerSettings[key] = int(self.segmentTimerSettingsFile[key])
-			elif unicode(self.segmentTimerSettingsFile[key]).isalnum() or self.segmentTimerSettingsFile[key].isalpha():
+			elif str(self.segmentTimerSettingsFile[key]).isalnum() or self.segmentTimerSettingsFile[key].isalpha():
 				self.segmentTimerSettings[key] = self.segmentTimerSettingsFile[key]
 			elif self.segmentTimerSettingsFile[key] == '':
 				self.segmentTimerSettings[key] = self.segmentTimerSettingsFile[key]
 			else:
-				print self.segmentTimerSettingsFile[key], 'format not recognized'
+				print(self.segmentTimerSettingsFile[key], 'format not recognized')
 				raise Exception
 		self.tic = time.time()
 
@@ -120,19 +120,19 @@ def create_settings_files():
 	Run this module with writeConfigFlag=True to create the segmentTimerDefaultSettings file.
 	Next press enter to copy it to the segmentTimerUserSettings file.
 	"""
-	print "ON"
+	print("ON")
 	write_segment_timer_settings_flag = True
 	if write_segment_timer_settings_flag:
 		app.utils.misc.silent_remove('game/segmentTimerDefaultSettings')
 	g = SegmentTimerSettings(write_segment_timer_settings_flag, 'default')
 	app.utils.misc.print_dict(g.__dict__)
-	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc)
-	raw_input()
+	print("%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc))
+	input()
 	app.utils.misc.silent_remove('game/segmentTimerUserSettings')
 	g.user_equals_default()
 	app.utils.misc.print_dict(g.__dict__)
 
-	print "%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc)
+	print("%f seconds to run 'segmentTimerSettings' file setup." % (g.tic - g.toc))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -16,7 +16,8 @@
 class MpDataHandler(object):
 	"""Creates an object to manipulate MP style data."""
 
-	def __init__(self):
+	def __init__(self, verbose=False):
+		self.verbose = verbose
 		self.data = 0x0
 		self.addr = 0
 		self.blankType = ''
@@ -32,7 +33,6 @@ class MpDataHandler(object):
 		self.LH_Word = 0
 		self.seg_addr = 0
 		self.segmentData = ''
-		self.verbose = False
 		self.pass3_4Flag = False
 		self.bitwise_Flag = False
 		self.statFlag = False
@@ -55,9 +55,9 @@ class MpDataHandler(object):
 		self.LH_Word = (self.lowByte << 8) | self.highByte
 
 		if self.verbose:
-			print (
+			print((
 				"LH Word:0x%02X%02X" % (self.lowByte, self.highByte), bin(self.LH_Word), self.LH_Word,
-				"GBWD: G%d B%d W%d %s" % (self.group, self.bank, self.word, bin(self.data)))
+				"GBWD: G%d B%d W%d %s" % (self.group, self.bank, self.word, bin(self.data))))
 
 		return self.LH_Word
 
@@ -66,7 +66,7 @@ class MpDataHandler(object):
 			segments = list(segments.lower())
 		except:
 			if self.verbose:
-				print '_segments_change received segment value', segments
+				print('_segments_change received segment value', segments)
 
 		self.segData = 0b00000000
 		if segments is not None:
@@ -94,7 +94,7 @@ class MpDataHandler(object):
 		if digit is not None:
 			if not seg_lookup:
 				if self.verbose:
-					print "segDecode:%2d" % digit
+					print("segDecode:%2d" % digit)
 				segment_table = [  # HGFEDCBA
 					0b00111111,  # 0 = ABCDEF
 					0b00000110,  # 1 =  BC
@@ -134,11 +134,11 @@ class MpDataHandler(object):
 					'AEFG'  # F
 				]
 				if self.verbose:
-					print "Inverse segDecode:", segment_table[digit]
+					print("Inverse segDecode:", segment_table[digit])
 			try:
 				digit = segment_table[digit]
 			except:
-				print 'segment_decode ERROR digit =', digit
+				print('segment_decode ERROR digit =', digit)
 		return digit
 
 	def _value_range_check(self):
@@ -146,23 +146,23 @@ class MpDataHandler(object):
 		high_out = (self.highNibble > 15 or self.highNibble < 0)
 		low_out = (self.lowNibble > 15 or self.lowNibble < 0)
 		if high_out or low_out:
-			print (
+			print((
 				'addr:', self.gbw_to_mp_address(self.group, self.bank, self.word) + 1, 'I:', self.I_Bit,
 				'H:', self.H_Bit, 'highNibble:', self.highNibble, 'lowNibble:', self.lowNibble, 'blankType:',
-				self.blankType, 'segmentData:', self.segmentData)
+				self.blankType, 'segmentData:', self.segmentData))
 
 		if high_out and low_out:
 			# Example - self.highNibble = 0b01000000
 			# Example - self.lowNibble = 0b01000000
-			print 'Error: highNibble and lowNibble value out of range (0-15)dec'
+			print('Error: highNibble and lowNibble value out of range (0-15)dec')
 			return 0
 		elif high_out:
 			# Example - self.highNibble = 0b01000000
-			print 'Error: highNibble value out of range (0-15)dec'
+			print('Error: highNibble value out of range (0-15)dec')
 			return 0
 		elif low_out:
 			# Example - self.lowNibble = 0b01000000
-			print 'Error: lowNibble value out of range (0-15)dec'
+			print('Error: lowNibble value out of range (0-15)dec')
 			return 0
 		else:
 			return 1
@@ -173,11 +173,11 @@ class MpDataHandler(object):
 		if self.bitwise_Flag:
 			value = 0x0
 			if self.verbose:
-				print 'value 0'
+				print('value 0')
 		else:
 			value = 0xf
 			if self.verbose:
-				print 'value f'
+				print('value f')
 		return value
 
 	def _blank_check(self):
@@ -200,11 +200,11 @@ class MpDataHandler(object):
 		elif self.blankType == 'H':
 			self.highNibble = self._check_next(units=self.highNibble, tens=None, hundreds_flag=None)
 		elif self.blankType == 'HL':
-			self.highNibble, self.lowNibble = self._check_next(units=self.lowNibble, tens=self.highNibble,
-															   hundreds_flag=None)
+			self.highNibble, self.lowNibble = self._check_next(
+				units=self.lowNibble, tens=self.highNibble,	hundreds_flag=None)
 		elif self.blankType == 'LH':
-			self.lowNibble, self.highNibble = self._check_next(units=self.highNibble, tens=self.lowNibble,
-															   hundreds_flag=None)
+			self.lowNibble, self.highNibble = self._check_next(
+				units=self.highNibble, tens=self.lowNibble, hundreds_flag=None)
 		elif self.blankType == 'IbL':
 			self.I_Bit, self.lowNibble = self._check_next(units=self.lowNibble, tens=None, hundreds_flag=self.I_Bit)
 		elif self.blankType == 'IbH':
@@ -263,7 +263,7 @@ class MpDataHandler(object):
 		# Check higher place values and blank accordingly
 
 		if units is None:
-			print ('You have to give me a units value to use this function!!!!')
+			print('You have to give me a units value to use this function!!!!')
 			raise Exception
 
 		if hundreds_flag is None:
@@ -302,7 +302,7 @@ class MpDataHandler(object):
 
 				if units == 0:
 					units = self._blank()
-				print 'Do I ever use this?, from MpDataHandler._check_next'
+				print('Do I ever use this?, from MpDataHandler._check_next')
 
 				return hundreds_flag, units
 			else:
@@ -331,10 +331,10 @@ class MpDataHandler(object):
 		self.pass3_4Flag = pass3_4_flag
 
 		if self.verbose:
-			print (
+			print((
 				'addr:', self.gbw_to_mp_address(group, bank, word) + 1, 'I:', i_bit, 'H:', h_bit,
 				'high_nibble', high_nibble, 'low_nibble', low_nibble, 'blank_type', blank_type,
-				'segment_data', segment_data, 'stat_flag', stat_flag, 'pass3_4_flag', pass3_4_flag)
+				'segment_data', segment_data, 'stat_flag', stat_flag, 'pass3_4_flag', pass3_4_flag))
 
 		# Clear data
 		self.data = 0x0
@@ -346,7 +346,7 @@ class MpDataHandler(object):
 			# Process segment data
 
 			if self.verbose:
-				print 'segment_data'
+				print('segment_data')
 
 			self._segments_change(segment_data)  # Only accepts A-G characters, not case sensitive
 
@@ -359,7 +359,7 @@ class MpDataHandler(object):
 			# Do not change data if word 3 or 4
 
 			if self.verbose:
-				print 'pass3_4_flag'
+				print('pass3_4_flag')
 
 			if word == 1 or word == 2:  # BCD
 				self._blank_check()
@@ -367,13 +367,13 @@ class MpDataHandler(object):
 			elif word == 3 or word == 4:  # bitwise
 				self.data = self.lowNibble
 			else:
-				print "ERROR - word must be int 1, 2, 3, or 4\n"
+				print("ERROR - word must be int 1, 2, 3, or 4\n")
 
 		elif self.statFlag:
 			# Process stat style data
 
 			if self.verbose:
-				print 'stat_flag'
+				print('stat_flag')
 
 			if self._value_range_check():  # If out of range skip formatting data
 				if word == 1 or word == 2 or word == 3:  # BCD
@@ -382,13 +382,13 @@ class MpDataHandler(object):
 				elif word == 4:  # bitwise
 					pass
 				else:
-					print "ERROR - word must be int 1, 2, 3, or 4\n"
+					print("ERROR - word must be int 1, 2, 3, or 4\n")
 
 		else:
 			# Normal Operation
 
 			if self.verbose:
-				print 'Normal Operation'
+				print('Normal Operation')
 
 			if self._value_range_check():  # If out of range skip formatting data
 				if word == 1 or word == 2:  # BCD
@@ -418,7 +418,7 @@ class MpDataHandler(object):
 					else:
 						self.data = self.data & 0x17f
 				else:
-					print "ERROR - word must be int 1, 2, 3, or 4\n"
+					print("ERROR - word must be int 1, 2, 3, or 4\n")
 
 		# Add I bit to self.data -----
 		if i_bit:

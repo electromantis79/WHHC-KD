@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+# !/usr/bin/env python3
 #  -*- coding: utf-8 -*-
 
 """
@@ -28,6 +28,7 @@ import app.mp_data_handler
 import app.serial_IO.serial_packet
 import app.keypad_mapping
 import app.menu
+import app.led_sequences
 
 from sys import platform as _platform
 
@@ -53,7 +54,7 @@ class Console(object):
 
 	def __init__(
 			self, check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
-			serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False):
+			serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False, whh_flag=False):
 		self.initTime = time.time()
 
 		self.checkEventsFlag = check_events_flag
@@ -62,6 +63,7 @@ class Console(object):
 		self.serialOutputFlag = serial_output_flag
 		self.encodePacketFlag = encode_packet_flag
 		self.serverThreadFlag = server_thread_flag
+		self.whh_flag = whh_flag
 
 		# Print Flags
 		self.printProductionInfo = True
@@ -77,6 +79,8 @@ class Console(object):
 		self.serialInputRefreshFrequency = 0.1
 		self.serialOutputRefreshFrequency = 0.1
 		self.checkEventsRefreshFrequency = 0.1
+		self.socketServerFrequency = 0.1
+		self.startTime = time.time()
 
 		# Variables that don't need resetting through internal reset
 		self.className = 'console'
@@ -100,6 +104,7 @@ class Console(object):
 		self.modeLogger = None
 		self.master_socket = None
 		self._create_rotating_log('mode')
+		self.LedDict = {'L1': '0', 'L2': '0', 'L3': '0', 'L4': '0', 'L5': '0', 'L6': '0', 'L7': '0'}
 
 		self.dataUpdateIndex = 1
 
@@ -117,6 +122,7 @@ class Console(object):
 		self.sp = None
 		self.priorityListEmech = []
 		self.mode = None
+		self.led_sequence = None
 
 		self.reset()
 
@@ -154,10 +160,12 @@ class Console(object):
 		if internal_reset:
 			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
-		self.set_keypad()
+		self.game.gameSettings['whh_flag'] = self.whh_flag
+		self.set_keypad(whh_flag=self.whh_flag)
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
 			self.printProductionInfo)
+		self.led_sequence = app.led_sequences.LedSequences(led_dict=self.LedDict)
 		self.menu = app.menu.MenuEventHandler(self.game)
 
 		self.addrMap = app.address_mapping.AddressMapping(game=self.game)
@@ -188,7 +196,7 @@ class Console(object):
 			key = 'Stat'
 		else:
 			key = '402'
-		print 'Priority Key = ', key
+		print('Priority Key = ', key)
 		# Add code here for getting to the other priorities
 
 		# All known priorities
@@ -224,19 +232,20 @@ class Console(object):
 		# self.priority_list_emech = [1,2,3,5,6,7,9,10,11,13,14,15,17,18,19,21,22,
 		# 23,33,34,35,37,38,39,41,42,43,45,46,47,49,50,51,53,54,55]
 		else:
-			priority_list_emech = range(32)
+			priority_list_emech = list(range(32))
 		return priority_list_emech
 
 	def _setup_threads(self, internal_reset):
 		# Platform Dependencies
+		import app.utils.functions
 		if (_platform == "linux" or _platform == "linux2") and not internal_reset:
-			print 'Platform is', _platform
+			print('Platform is', _platform)
 			if self.serialInputFlag or self.serialOutputFlag:
 				app.utils.functions.verbose(['\nSerial Port On'], self.printProductionInfo)
 
-				import serial_IO.mp_serial
+				import app.serial_IO.mp_serial
 
-				self.s = serial_IO.mp_serial.MpSerialHandler(
+				self.s = app.serial_IO.mp_serial.MpSerialHandler(
 					serial_input_type=self.serialInputType, game=self.game, verbose_flag=self.serial_input_verbose_flag)
 
 			if self.serialInputFlag:
@@ -278,7 +287,7 @@ class Console(object):
 		if self.printInputTimeFlag:
 			tic = time.time()
 			init_elapse = tic-self.initTime
-			print '(serial Input %s)' % init_elapse
+			print('(serial Input %s)' % init_elapse)
 
 		self.s.serial_input()
 
@@ -286,21 +295,21 @@ class Console(object):
 		if self.printTimesFlag or self.verboseDiagnostic:
 			tic = time.time()
 			init_elapse = tic-self.initTime
-			print '(-----------serial Output %s)' % init_elapse
+			print('(-----------serial Output %s)' % init_elapse)
 
 		try:
 			self.s.serial_output(self.serialString)
 			if self.verboseDiagnostic:
-				print 'Serial Output', self.serialString
+				print('Serial Output', self.serialString, 'length', len(self.serialString))
 		except:
 			if not (_platform == "win32" or _platform == "darwin"):
-				print 'Serial Output Error', self.serialString
+				print('Serial Output Error', self.serialString)
 
 	def _check_events(self):
 		tic = time.time()
 		if self.printTimesFlag or self.verboseDiagnostic:
 			init_elapse = tic-self.initTime
-			print '(-----_check_events %s)' % init_elapse
+			print('(-----_check_events %s)' % init_elapse)
 
 		# This is how the check events function is called when not on linux
 		if (_platform == "win32" or _platform == "darwin") and self.checkEventsFlag:
@@ -327,15 +336,15 @@ class Console(object):
 			toc = time.time()
 			elapse = (toc-tic)
 			if elapse > self.checkEventsRefreshFrequency or self.print_check_events_elapse_time_flag:
-				print '_check_events elapse', elapse*1000, ' ms'
-				print
+				print('_check_events elapse', elapse*1000, ' ms')
+				print()
 
 			# Time testing area for finding frequency of over period events
 			if self.count_events_time_flag:
 				self.count_event_time += 1
 				if elapse > self.checkEventsRefreshFrequency:
 					self.count_event_time_list.append((self.count_event_time, elapse))
-					print '----------self.count_event_time =', self.count_event_time_list
+					print('----------self.count_event_time =', self.count_event_time_list)
 					self.count_event_time = 0
 				self.check_events_over_period_flag = True
 
@@ -365,35 +374,56 @@ class Console(object):
 						# Check for Up or Down byte
 						if last_byte == 'D' or last_byte == 'U':
 
+							# Define button type without direction
+							button_type = self.keyMap.get_func_string(byte_pair, direction='_BOTH')
+							print(('Button type =', button_type))
+
+							# Define direction
 							if last_byte == 'D':
 								direction = '_DOWN'
 							elif last_byte == 'U':
 								direction = '_UP'
 
+							# Get default function string for menu active case
+							func_string = self.keyMap.get_func_string(byte_pair, direction=direction)
+
 							# Trigger most keys here on down press
-							func_string = self.keyMap.map_(keyPressed[:2], direction=direction)
-							self.menu.map_(func_string)
-							# self.send_state_change_over_network(func_string)
+							if not self.game.gameSettings['menuFlag']:
+								func_string = self.keyMap.map_(byte_pair, direction=direction)
+
+							# Handle menus
+							self.menu.map_(func_string, direction=direction)
 
 							# Effects after button and menu are handled
-							if func_string == 'periodClockOnOff' and direction == '_DOWN' and self.game.clockDict['periodClock'].running:
-								print("Don't stop clock but send LED off")
+							if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+								if direction == '_DOWN':
+									print("Don't stop clock but send LED off")
+									self.led_sequence.set_led('L5', '0')
 
-							elif func_string == 'mode':
+								if direction == '_UP':
+									print("Start clock and send LED on")
+									self.led_sequence.set_led('L5', '1')
+
+							elif button_type == 'mode':
 								if direction == '_DOWN':
 									print('=== ENTER Command State ===')
 								elif direction == '_UP':
 									print('Reset Command Timer')
+
+							# send_led_state_over_network
+							self.send_led_state_over_network()
+
 						else:
-							print('\nOnly accepts U or D, No action performed with', byte_pair)
+							print(('\nOnly accepts U or D, No action performed with', byte_pair))
 					else:
-						print('\n', byte_pair, 'byte_pair not in key map')
+						print(('\n', byte_pair, 'byte_pair not in key map'))
 				else:
-					print('\nDid not receive 3 bytes in ', keyPressed)
+					print(('\nDid not receive 3 bytes in ', keyPressed))
 					# Non-keyMap data received
 					if keyPressed == '@':
 						# If received the resend symbol resend
-						self.send_state_change_over_network(None)
+						self.send_led_state_over_network()
+					'''
 					else:
 						# This are handles all other cases of data received
 						try:
@@ -404,6 +434,7 @@ class Console(object):
 							self.addrMap.rssiFlag = self.commandFlag
 						except:
 							pass
+					'''
 
 			# Clear keys pressed list
 			self.quickKeysPressedList = []
@@ -418,38 +449,8 @@ class Console(object):
 		# Prepare data for the output thread
 		self._update_mp_serial_string()
 
-	def send_state_change_over_network(self, func_string):
-		if self.game.clockDict['periodClock'].running:
-			self.broadcastString += 'P1'
-		else:
-			self.broadcastString += 'P0'
-
-		if 'delayOfGameClock' in self.game.clockDict:
-			if self.game.clockDict['delayOfGameClock'].running:
-				self.broadcastString += 'D1'
-			else:
-				self.broadcastString += 'D0'
-
-		if 'segmentTimer' in self.game.clockDict:
-			if self.game.clockDict['segmentTimer'].running:
-				self.broadcastString += 'T1'
-			else:
-				self.broadcastString += 'T0'
-
-		if 'shotClock' in self.game.clockDict:
-			if self.game.clockDict['shotClock'].running:
-				self.broadcastString += 'S1'
-			else:
-				self.broadcastString += 'S0'
-
-		if self.game.gameSettings['inningBot']:
-			self.broadcastString += 'IB'
-		else:
-			self.broadcastString += 'IT'
-
-		if func_string is None:
-			self.broadcastString += '@'
-
+	def send_led_state_over_network(self):
+		self.broadcastString += self.led_sequence.get_led_dict_string()
 		self.broadcastFlag = True
 
 	def _update_mp_words_dict(self):
@@ -463,8 +464,8 @@ class Console(object):
 
 	def _update_mp_serial_string(self):
 		# Check for changes in data
-		if cmp(self.MPWordDict, self.previousMPWordDict) != 0:
-			for address in self.MPWordDict.keys():
+		if self.MPWordDict != self.previousMPWordDict:
+			for address in list(self.MPWordDict.keys()):
 				if self.previousMPWordDict[address] != self.MPWordDict[address]:
 					self.dirtyDict[address] = self.MPWordDict[address]
 		elif self.mode == self.BOOT_UP_MODE and len(self.dirtyDict) == 0:
@@ -475,7 +476,7 @@ class Console(object):
 
 		# Print dirty list
 		if len(self.dirtyDict) and self.verboseDiagnostic:
-			print '\n---self.dirtyDict', self.dirtyDict, '\nlength', len(self.dirtyDict)
+			print('\n---self.dirtyDict', self.dirtyDict, '\nlength', len(self.dirtyDict))
 
 		# Clear send list
 		self.sendList = []
@@ -495,7 +496,7 @@ class Console(object):
 						if self.verboseDiagnostic:
 							# Print info for dirty words
 							group, bank, word, i_bit, numeric_data = self.mp.decode(self.dirtyDict[addr])
-							print (
+							print(
 								'group', group, 'bank', bank, 'word', word, 'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 								'i_bit', i_bit, 'data', bin(numeric_data), bin(self.dirtyDict[addr]))
 							
@@ -506,17 +507,17 @@ class Console(object):
 		if self.MP_StreamRefreshFlag and not self.ETNSendListFlag:
 			for x in range(space_left):
 				if self.game.gameData['sportType'] == 'stat':
-					
+
 					self.sendList.append(self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
 					
 					if self.verboseDiagnostic:
 						# Print info for remaining words
-						print (
+						print(
 							'self.dataUpdateIndex', self.dataUpdateIndex, 'self.priorityListEmech[self.dataUpdateIndex]',
 							self.priorityListEmech[self.dataUpdateIndex-1])
 						group, bank, word, i_bit, numeric_data = self.mp.decode(
 							self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
-						print (
+						print(
 							'group', group, 'bank', bank, 'word', word, 'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 							'i_bit', i_bit, 'data', bin(numeric_data), bin(self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]]),
 							self.MPWordDict[self.priorityListEmech[self.dataUpdateIndex-1]])
@@ -528,12 +529,12 @@ class Console(object):
 				else:
 					
 					self.sendList.append(self.MPWordDict[self.dataUpdateIndex])
-					# print 'self.dataUpdateIndex',self.dataUpdateIndex
-					
+					# print('self.dataUpdateIndex', self.dataUpdateIndex)
+
 					if self.verboseDiagnostic:
 						# Print info for remaining words
 						group, bank, word, i_bit, numeric_data = self.mp.decode(self.MPWordDict[self.dataUpdateIndex])
-						print (
+						print(
 							'group', group, 'bank', bank, 'word', word,
 							'addr', self.mp.gbw_to_mp_address(group, bank, word) + 1,
 							'i_bit', i_bit, 'data', bin(numeric_data), bin(self.MPWordDict[self.dataUpdateIndex]),
@@ -552,10 +553,10 @@ class Console(object):
 			self.ETNSendListFlag = False
 
 		# Create string for transport
-		serial_string = ''
+		serial_string = b''
 		for word in self.sendList:
-			first_byte = chr((word & 0xFF00) >> 8)
-			second_byte = chr((word & 0xFF))
+			first_byte = int((word & 0xFF00) >> 8).to_bytes(1, 'big')
+			second_byte = int((word & 0xFF)).to_bytes(1, 'big')
 			serial_string += first_byte+second_byte
 		self.serialString = serial_string
 
@@ -609,7 +610,7 @@ class Console(object):
 		length = len(name)
 		pairs_list = []
 		if length:
-			addr_length = range(int(length / 2))
+			addr_length = list(range(int(length / 2)))
 
 			for address in addr_length:
 				left_etn_byte = name[address * 2]
@@ -657,7 +658,7 @@ class Console(object):
 		length = len(name)
 		pairs_list = []
 		if length:
-			addr_length = range(int(length / 2))
+			addr_length = list(range(int(length / 2)))
 
 			for address in addr_length:
 				left_etn_byte = name[address * 2]
@@ -744,7 +745,7 @@ class Console(object):
 		# PUBLIC
 		self.keyPressedFlag = True
 		self.quickKeysPressedList.append(key_pressed)
-		print '\nConsole key pressed', key_pressed, 'of self.quickKeysPressedList', self.quickKeysPressedList
+		print('\nConsole key pressed', key_pressed, 'of self.quickKeysPressedList', self.quickKeysPressedList)
 
 	# THREADS ------------------------------------------
 
@@ -757,13 +758,13 @@ class Console(object):
 		import sys
 		import multiprocessing
 
-		h_o_s_t = '192.168.8.1'
+		h_o_s_t = self.configDict['scoreNetHostAddress']
 		socket_list = []
 		receive_buffer = 4096
-		p_o_r_t = 60032
+		p_o_r_t = self.configDict['socketServerPort']
 
 		p = multiprocessing.current_process()
-		print 'Starting:', p.name, p.pid
+		print('Starting:', p.name, p.pid)
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		while self.mode == self.BOOT_UP_MODE:
@@ -771,7 +772,7 @@ class Console(object):
 		try:
 			server_socket.bind((h_o_s_t, p_o_r_t))
 		except socket.error as err:
-			print 'errno', err.errno
+			print('errno', err.errno)
 			if err.errno == 98:
 				# This means we already have a server
 				connected = 0
@@ -791,22 +792,25 @@ class Console(object):
 		socket_list.append(server_socket)
 
 		start_message = "Chat server started on port " + str(p_o_r_t)
-		print start_message
+		print(start_message)
 		self.modeLogger.info(start_message)
 
 		while 1:
+			tic = time.time()
+			# print(tic-self.startTime)
 
 			# get the list sockets which are ready to be read through select
-			# 4th arg, time_out  = 0 : poll and never block
-			ready_to_read, ready_to_write, in_error = select.select(socket_list, [], [], 0)
+			ready_to_read, ready_to_write, in_error = select.select(
+				socket_list, [], [], 0)  # 4th arg, time_out  = 0 : poll and never block
 
+			# Handle newly received data
 			for sock in ready_to_read:
-				# a new connection request received
-				#print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
+				# print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
 				if sock == server_socket:
+					# a new connection request received
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
-					print "[%s, %s] is connected" % (sockfd, addr)
+					print("[%s, %s] is connected" % (sockfd, addr))
 					message = "[%s:%s] entered our chatting room" % (sockfd, addr)
 					socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 					if self.master_socket is None:
@@ -822,6 +826,7 @@ class Console(object):
 					try:
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
+						data = data.decode("utf-8")
 						if data:
 							if self.master_socket is None:
 								self.master_socket = sock
@@ -830,10 +835,10 @@ class Console(object):
 
 							# there is something in the socket
 							if sock == self.master_socket:
-								#print 'master', sock, self.master_socket
+								# print 'master', sock, self.master_socket
 								self.key_pressed(data)
 							else:
-								print 'other', sock, self.master_socket
+								print('other', sock, self.master_socket)
 
 							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
 						else:
@@ -846,13 +851,18 @@ class Console(object):
 						message = "[%s] is offline, exception" % sock
 						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
-			# Broadcast triggered from check_events
+			# Broadcast data triggered from check_events
 			if self.broadcastFlag:
 				self.broadcastFlag = False
+
 				socket_list = self._broadcast_or_remove(server_socket, self.broadcastString, socket_list)
+
+				# Clear broadcastString
 				self.broadcastString = ''
 
-			time.sleep(.1)
+			toc = time.time()
+			elapse = toc - tic
+			time.sleep(self.socketServerFrequency-elapse)
 
 		server_socket.close()
 		'''
@@ -884,9 +894,10 @@ class Console(object):
 			# send the message only to peer
 			if socket != server_socket:
 				try:
-					socket.send(message)
+					socket.send(bytes(message, "utf8"))
 				except:
 					self.modeLogger.info(message)
+					print('broken socket connection', message)
 					# broken socket connection
 					if socket == self.master_socket:
 						self.master_socket = None
@@ -944,10 +955,10 @@ def upload_file():
 
 def test():
 	"""Runs the converter with the sport and jumper settings hardcoded in this function."""
-	print "ON"
+	print("ON")
 	sport = 'MPBASEBALL1'
 	jumpers = '0000'
-	print 'sport', sport, 'jumpers', jumpers
+	print('sport', sport, 'jumpers', jumpers)
 
 	c = Config()
 	c.write_sport(sport)
@@ -955,13 +966,13 @@ def test():
 
 	cons = Console(
 		check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
-		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=True)
-	cons.set_keypad(whh_flag=True)
+		serial_output_flag=True, encode_packet_flag=False, server_thread_flag=True,
+		whh_flag=True)
 
 	h_o_s_t = '192.168.8.1'
 	p_o_r_t = 60050
 	start_message = "API server started on port " + str(p_o_r_t)
-	print start_message
+	print(start_message)
 	cons.modeLogger.info(start_message)
 
 	api.run(host=h_o_s_t, debug=False, port=p_o_r_t)
@@ -975,5 +986,5 @@ def test():
 
 
 if __name__ == '__main__':
-	from config_default_settings import Config
+	from app.config_default_settings import Config
 	test()

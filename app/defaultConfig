@@ -5,7 +5,6 @@ boardColor = COMPANY_LOGO
 captionColor = WHITE
 stripeColor = WHITE
 LEDcolor = RED
-keypadType = MP
 optionJumpers = 0000
 MPLX3450Flag = False
 BOUNCETIME = 100

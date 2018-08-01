@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -19,13 +19,6 @@ import os
 import timeit
 
 from sys import platform as _platform
-
-# thread_timer related
-if _platform == "linux" or _platform == "linux2":
-	try:
-		import prctl
-	except:
-		pass
 
 SPORT_LIST = [
 	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
@@ -50,13 +43,7 @@ def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
 				next_call = next_call + period
 				count += 1
 			next_call = next_call + period * count
-			print 'thread_timer adjusted', start_time - align_time, 'seconds'
-
-	if _platform == "linux" or _platform == "linux2":
-		try:
-			prctl.set_name(passed_function.__name__)  # Used only for htop testing
-		except:
-			pass
+			print('thread_timer adjusted', start_time - align_time, 'seconds')
 
 	stamp = 0
 	while 1:
@@ -141,7 +128,7 @@ def select_sport_instance(config_dict, number_of_teams=2):
 		from app.game.game import Game
 		game = Game(config_dict, number_of_teams)
 	else:
-		print 'sport not in list'
+		print('sport not in list')
 		raise Exception
 	return game
 
@@ -189,9 +176,9 @@ def verbose(messages, enable=True):
 	if enable:
 		for x, message in enumerate(messages):
 			if x == len(messages) - 1:
-				print message
+				print(message)
 			else:
-				print message,
+				print(message, end=' ')
 
 
 def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
@@ -205,12 +192,12 @@ def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
 		end_time = time.time()
 		total_time = (end_time - start_time) * 1000
 		if total_time >= lower_limit * 1000:
-			print passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit)
+			print(passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit))
 	else:
 		result = passed_function()
 
 	if time_it:
 		t = timeit.Timer(passed_function, "print 'time_it'")
-		print t.timeit(1) * 1000, 'ms'
+		print(t.timeit(1) * 1000, 'ms')
 
 	return result

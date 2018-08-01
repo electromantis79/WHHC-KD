@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -16,13 +16,6 @@ import time
 
 from sys import platform as _platform
 
-# thread_timer related
-if _platform == "linux" or _platform == "linux2":
-	try:
-		import prctl
-	except:
-		pass
-
 
 class Clock(object):
 	"""
@@ -32,7 +25,7 @@ class Clock(object):
 			self, count_up=False, max_seconds=86399.999, resolution=0.01,
 			hours_flag=False, clock_name='generic', internal_clock=False):
 		self.countUp = count_up
-		self.maxSeconds = max_seconds  # must be in seconds
+		self.maxSeconds = float(max_seconds)  # must be in seconds
 		self.resolution = resolution
 		self.hoursFlag = hours_flag
 		self.clockName = clock_name
@@ -120,16 +113,16 @@ class Clock(object):
 
 			self.hours = hours
 			self.timeUnitsDict['hoursUnits'] = self.hours % 10
-			self.timeUnitsDict['hoursTens'] = self.hours / 10
+			self.timeUnitsDict['hoursTens'] = self.hours // 10
 			self.timeUnitsDict['PM'] = self.PM
 
 			self.minutes = minutes
 			self.timeUnitsDict['minutesUnits'] = self.minutes % 10
-			self.timeUnitsDict['minutesTens'] = self.minutes / 10
+			self.timeUnitsDict['minutesTens'] = self.minutes // 10
 
 			self.seconds = seconds
 			self.timeUnitsDict['secondsUnits'] = self.seconds % 10
-			self.timeUnitsDict['secondsTens'] = self.seconds / 10
+			self.timeUnitsDict['secondsTens'] = self.seconds // 10
 
 			self.timeUnitsDict['daysUnits'] = 0
 			self.timeUnitsDict['daysTens'] = 0
@@ -153,7 +146,7 @@ class Clock(object):
 					self.running = False
 					self.autoStop = True
 					self.refresher.pause()
-					print 'self.autoStop up', self.autoStop
+					print('self.autoStop up', self.autoStop)
 			else:
 				# Down counting clocks
 				self.currentTime = self.maxSeconds - elapse_time
@@ -168,7 +161,7 @@ class Clock(object):
 							self.autoStop = True
 							self.autoStop2 = True
 							self.refresher.pause()
-							print 'self.autoStop shotClock', self.autoStop2
+							print('self.autoStop shotClock', self.autoStop2)
 
 				elif self.currentTime < 0:
 					self._stop = time.time() - self._start
@@ -176,7 +169,7 @@ class Clock(object):
 					self.running = False
 					self.autoStop = True
 					self.refresher.pause()
-					print 'self.autoStop down', self.autoStop
+					print('self.autoStop down', self.autoStop)
 				else:
 					# Generic clock not stopping
 					pass
@@ -192,9 +185,9 @@ class Clock(object):
 			self.hours = int(self.currentTime/(60*60))-self.days*24
 
 			self.timeUnitsDict['hoursUnits'] = self.hours % 10
-			self.timeUnitsDict['hoursTens'] = self.hours / 10
+			self.timeUnitsDict['hoursTens'] = self.hours // 10
 			self.timeUnitsDict['daysUnits'] = self.days % 10
-			self.timeUnitsDict['daysTens'] = self.days / 10
+			self.timeUnitsDict['daysTens'] = self.days // 10
 
 			self.minutes = int(self.currentTime/60)-self.hours*60-self.days*60*24
 			self.seconds = int(self.currentTime - self.minutes*60-self.hours*60*60-self.days*60*60*24)
@@ -216,11 +209,11 @@ class Clock(object):
 		self.timeUnitsDict['tenths_hundredths'] = self.tenths_hundredths
 
 		self.timeUnitsDict['hundredthsUnits'] = self.tenths_hundredths % 10
-		self.timeUnitsDict['tenthsUnits'] = self.tenths_hundredths / 10
+		self.timeUnitsDict['tenthsUnits'] = self.tenths_hundredths // 10
 		self.timeUnitsDict['secondsUnits'] = self.seconds % 10
-		self.timeUnitsDict['secondsTens'] = self.seconds / 10
+		self.timeUnitsDict['secondsTens'] = self.seconds // 10
 		self.timeUnitsDict['minutesUnits'] = self.minutes % 10
-		self.timeUnitsDict['minutesTens'] = self.minutes / 10
+		self.timeUnitsDict['minutesTens'] = self.minutes // 10
 
 		if (self.timeUnitsDict['tenthsUnits'] % 10) > 4:
 			self.timeUnitsDict['blinky'] = True
@@ -310,11 +303,6 @@ class ClockThread(threading.Thread):
 		self.period = period
 		self.clockName = name
 		self.name = name
-		if _platform == "linux" or _platform == "linux2":
-			try:
-				prctl.set_name(name)  # Used on BBB to show name of process in htop
-			except:
-				pass
 		# self.daemon=True TODO: check this
 		self.nextCall = 0.0
 		self.paused = True
@@ -339,7 +327,7 @@ class ClockThread(threading.Thread):
 				now = time.time()
 				time.sleep(self.nextCall-now)
 			except:
-
+				now = time.time()
 				while (self.nextCall-now) < 0:
 					self.nextCall = self.nextCall+self.period
 					count += 1
@@ -349,10 +337,10 @@ class ClockThread(threading.Thread):
 					now = time.time()
 					time.sleep(self.nextCall-now)
 				except:
-					print name, 'double except', stamp, 'count', count, self.nextCall-1486587172, self.nextCall-now
+					print(name, 'double except', stamp, 'count', count, self.nextCall-1486587172, self.nextCall-now)
 					self.nextCall = self.nextCall+self.period*count
 					time.sleep(self.nextCall-now)
-		print 'Thread', name, 'killed'
+		print('Thread', name, 'killed')
 
 	def resume(self):
 		with self.state:

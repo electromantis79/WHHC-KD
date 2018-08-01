@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -17,36 +17,36 @@ def print_dict(dict_, print_dicts=True):
 	"""
 	Prints an alphabetized display of a dictionaries contents for debugging.
 	"""
-	keys = dict_.keys()
+	keys = list(dict_.keys())
 	values = []
 	keys.sort(key=str.lower)
 	for x in range(len(dict_)):
 		valuex = dict_[keys[x]]
 		values.append(valuex)
 	count = 0
-	print
+	print()
 	if print_dicts:
 		for x in range(len(dict_)):
 			if (
 					keys[x] == 'addrFuncDict' or keys[x] == 'funcDict'
 					or keys[x] == 'functionDict' or keys[x] == 'Menu_LCD_Text'
 					or keys[x] == 'fontDict' or keys[x] == 'gameFuncDict'):
-				print keys[x], ' = a huge dictionary...'
-				print
+				print(keys[x], ' = a huge dictionary...')
+				print()
 			else:
-				print keys[x], ' = ', values[x]
-				print
-		print
+				print(keys[x], ' = ', values[x])
+				print()
+		print()
 	else:
 		for x in range(len(dict_)):
 			try:
-				values[x].values()
+				list(values[x].values())
 			except:
-				print keys[x], ' = ', values[x]
+				print(keys[x], ' = ', values[x])
 				count += 1
-		print '\n', count, 'Individual Variables'
+		print('\n', count, 'Individual Variables')
 
-	print len(dict_), 'Variables including Dictionaries'
+	print(len(dict_), 'Variables including Dictionaries')
 
 
 def print_dicts_expanded(dict_, print_dict_=True):
@@ -55,17 +55,17 @@ def print_dicts_expanded(dict_, print_dict_=True):
 	then does again for each element in main dictionary.
 	"""
 	print_dict(dict_.__dict__, print_dicts=print_dict_)
-	print 'Main Dictionary'
-	raw_input()
+	print('Main Dictionary')
+	input()
 	for data in dict_.__dict__:
 		print('-----------------------------------')
 		try:
 			dict2 = vars(dict_)[data]
 			print_dict(dict2, print_dicts=print_dict_)
-			print 'Dictionary', data
+			print('Dictionary', data)
 		except:
-			print data, vars(dict_)[data]
-		raw_input()
+			print(data, vars(dict_)[data])
+		input()
 
 
 def silent_remove(filename):
@@ -87,7 +87,7 @@ def save_object_to_file(dictionary, dictionary_name):
 		config_obj = app.utils.configobj.ConfigObj(dictionary_name)
 		silent_remove(dictionary_name)
 	except:
-		print 'Object does not exist!'
+		print('Object does not exist!')
 		raise
 
 	try:
@@ -95,5 +95,5 @@ def save_object_to_file(dictionary, dictionary_name):
 		config_obj.update(dictionary)
 		config_obj.write()
 	except:
-		print 'Saving Object Failed!'
+		print('Saving Object Failed!')
 		raise
