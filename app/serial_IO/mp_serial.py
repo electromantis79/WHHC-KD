@@ -61,11 +61,6 @@ class MpSerialHandler(object):
 		# 2400 baud is for wifi demo to match MIC revision used, normally 38400
 		self.ser = serial.Serial(port=port_name, baudrate=2400, bytesize=8, timeout=self.timeout)
 
-		# TODO: Do I need these 3 lines?
-		self.ser.close()
-		self.ser.open()
-		self.ser.flushInput()
-
 	# PUBLIC methods
 
 	def serial_input(self):

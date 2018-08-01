@@ -69,7 +69,7 @@ class Console(object):
 		self.printProductionInfo = True
 		self.printTimesFlag = False
 		self.printInputTimeFlag = False
-		self.verboseDiagnostic = True
+		self.verboseDiagnostic = False
 		self.serial_input_verbose_flag = False
 		self.print_check_events_elapse_time_flag = False
 
