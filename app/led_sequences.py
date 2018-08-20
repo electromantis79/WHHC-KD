@@ -19,7 +19,7 @@ class LedSequences(object):
 		self.transfer_cycle_flag = False
 
 	def get_led_dict_string(self):
-		string = ''
+		string = '$'
 		for key in self.LedDict:
 			string += key + self.LedDict[key]
 		return string

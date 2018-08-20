@@ -840,7 +840,8 @@ class Console(object):
 							else:
 								print('other', sock, self.master_socket)
 
-							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
+							# '#' stands for main broadcast echo header
+							socket_list = self._broadcast_or_remove(server_socket, '#' + data, socket_list)
 						else:
 							# at this stage, no data means probably the connection has been broken
 							message = "[%s] is offline, no data" % sock
@@ -848,7 +849,7 @@ class Console(object):
 
 					# exception
 					except:
-						message = "[%s] is offline, exception" % sock
+						message = "exception from process received data"
 						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
 			# Broadcast data triggered from check_events
@@ -896,8 +897,10 @@ class Console(object):
 				try:
 					socket.send(bytes(message, "utf8"))
 				except:
+					message = 'broken socket connection', socket, message
+					print(message)
 					self.modeLogger.info(message)
-					print('broken socket connection', message)
+
 					# broken socket connection
 					if socket == self.master_socket:
 						self.master_socket = None
