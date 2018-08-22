@@ -16,6 +16,7 @@ import os
 import threading
 import time
 import logging
+import json
 from logging.handlers import RotatingFileHandler
 from flask import Flask, flash, request, redirect, url_for
 from flask import send_from_directory
@@ -97,8 +98,8 @@ class Console(object):
 		self.sendList = []
 		self.ETNSendList = []
 		self.ETNSendListFlag = False
-		self.quickKeysPressedList = []
-		self.keyPressedFlag = False
+		self.dataReceivedList = []
+		self.dataReceivedFlag = False
 		self.broadcastFlag = False
 		self.broadcastString = ''
 		self.modeLogger = None
@@ -354,73 +355,77 @@ class Console(object):
 
 	def _connected_mode(self):
 		# Handle a key press
-		if self.keyPressedFlag:
-			self.keyPressedFlag = False
-			# print 'checkEvents key pressed'
+		if self.dataReceivedFlag:
+			self.dataReceivedFlag = False
+			# print 'checkEvents data received'
 
 			# Handle multiple incoming button presses
-			for keyPressed in self.quickKeysPressedList:
-				self.modeLogger.info(keyPressed + ' received')
+			for data in self.dataReceivedList:
+				self.modeLogger.info(data + ' received')
+				if data[0] == '{':
+					data = json.loads(data)
+					print(data)
+					json_tree_fragment_dict = dict(data)
 
-				# Handle byte pair
-				if len(keyPressed) == 3:
-					# Received byte pair is in key map format
-					last_byte = keyPressed[-1]
-					byte_pair = keyPressed[:2]
+					# Handle fragment ------------------
 
-					# Check for byte pair
-					if self.keyMap.check_for_byte_pair(byte_pair):
+					# Check for fragment structure for button_objects
+					if 'button_objects' in json_tree_fragment_dict:
+						for button in json_tree_fragment_dict['button_objects']:
+							if json_tree_fragment_dict['button_objects'][button].keys() >= {'keymap_grid_value', 'event_state', 'event_flag'}:
+								if json_tree_fragment_dict['button_objects'][button]['event_flag']:
+									keymap_grid_value = json_tree_fragment_dict['button_objects'][button]['keymap_grid_value']
+									event_state = json_tree_fragment_dict['button_objects'][button]['event_state']
 
-						# Check for Up or Down byte
-						if last_byte == 'D' or last_byte == 'U':
+									# Format direction
+									if event_state == 'down':
+										direction = '_DOWN'
+									elif event_state == 'up':
+										direction = '_UP'
 
-							# Define button type without direction
-							button_type = self.keyMap.get_func_string(byte_pair, direction='_BOTH')
-							print(('Button type =', button_type))
+									# Define button type without direction
+									button_type = self.keyMap.get_func_string(keymap_grid_value, direction='_BOTH')
+									print(('Button type =', button_type))
 
-							# Define direction
-							if last_byte == 'D':
-								direction = '_DOWN'
-							elif last_byte == 'U':
-								direction = '_UP'
+									# Get default function string for menu active case
+									func_string = self.keyMap.get_func_string(keymap_grid_value, direction=direction)
 
-							# Get default function string for menu active case
-							func_string = self.keyMap.get_func_string(byte_pair, direction=direction)
+									# Trigger most keys here on down press
+									if not self.game.gameSettings['menuFlag']:
+										func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
 
-							# Trigger most keys here on down press
-							if not self.game.gameSettings['menuFlag']:
-								func_string = self.keyMap.map_(byte_pair, direction=direction)
+									# Handle menus
+									self.menu.map_(func_string, direction=direction)
 
-							# Handle menus
-							self.menu.map_(func_string, direction=direction)
+									# Effects after button and menu are handled
+									if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+										if direction == '_DOWN':
+											print("Don't stop clock but send LED off")
+											self.led_sequence.set_led('L5', '0')
 
-							# Effects after button and menu are handled
-							if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
-								if direction == '_DOWN':
-									print("Don't stop clock but send LED off")
-									self.led_sequence.set_led('L5', '0')
+										if direction == '_UP':
+											print("Start clock and send LED on")
+											self.led_sequence.set_led('L5', '1')
 
-								if direction == '_UP':
-									print("Start clock and send LED on")
-									self.led_sequence.set_led('L5', '1')
+									elif button_type == 'mode':
+										if direction == '_DOWN':
+											print('=== ENTER Command State ===')
+										elif direction == '_UP':
+											print('Reset Command Timer')
 
-							elif button_type == 'mode':
-								if direction == '_DOWN':
-									print('=== ENTER Command State ===')
-								elif direction == '_UP':
-									print('Reset Command Timer')
+									# send_led_state_over_network
+									self.send_led_state_over_network()
 
-							# send_led_state_over_network
-							self.send_led_state_over_network()
-
-						else:
-							print(('\nOnly accepts U or D, No action performed with', byte_pair))
+								else:
+									print(('\n', button, 'has not flagged an event.'))
+							else:
+								print("\n'keymap_grid_value', 'event_state', 'event_flag' keys are not all in fragment of button dictionary", button)
 					else:
-						print(('\n', byte_pair, 'byte_pair not in key map'))
+						print('\nbutton_objects not in fragment')
 				else:
-					print(('\nDid not receive 3 bytes in ', keyPressed))
+					print(('\nDid not receive json formatted data in ', data))
 					# Non-keyMap data received
-					if keyPressed == '@':
+					if data == '@':
 						# If received the resend symbol resend
 						self.send_led_state_over_network()
 					'''
@@ -428,7 +433,7 @@ class Console(object):
 						# This are handles all other cases of data received
 						try:
 							# Special display of rssi for testing
-							self.command = int(keyPressed)
+							self.command = int(data)
 							self.commandFlag = True
 							self.addrMap.rssi = self.command
 							self.addrMap.rssiFlag = self.commandFlag
@@ -437,7 +442,7 @@ class Console(object):
 					'''
 
 			# Clear keys pressed list
-			self.quickKeysPressedList = []
+			self.dataReceivedList = []
 
 		# self.timeEvents()  # DO we need anything here?
 
@@ -740,12 +745,12 @@ class Console(object):
 			self.game, reverse_home_and_guest=reverse_home_and_guest, keypad3150=keypad3150,
 			mm_basketball=mm_basketball, whh_flag=whh_flag)
 
-	def key_pressed(self, key_pressed):
+	def data_received(self, data):
 		"""Simulates pressing a key."""
 		# PUBLIC
-		self.keyPressedFlag = True
-		self.quickKeysPressedList.append(key_pressed)
-		print('\nConsole key pressed', key_pressed, 'of self.quickKeysPressedList', self.quickKeysPressedList)
+		self.dataReceivedFlag = True
+		self.dataReceivedList.append(data)
+		print('\nReceived:', data, ': of self.dataReceivedList', self.dataReceivedList)
 
 	# THREADS ------------------------------------------
 
@@ -836,7 +841,7 @@ class Console(object):
 							# there is something in the socket
 							if sock == self.master_socket:
 								# print 'master', sock, self.master_socket
-								self.key_pressed(data)
+								self.data_received(data)
 							else:
 								print('other', sock, self.master_socket)
 
