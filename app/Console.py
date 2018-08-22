@@ -105,8 +105,6 @@ class Console(object):
 		self.modeLogger = None
 		self.master_socket = None
 		self._create_rotating_log('mode')
-		self.LedDict = {'L1': '0', 'L2': '0', 'L3': '0', 'L4': '0', 'L5': '0', 'L6': '0', 'L7': '0'}
-
 		self.dataUpdateIndex = 1
 
 		# Main module items set in reset
@@ -166,7 +164,7 @@ class Console(object):
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],
 			self.printProductionInfo)
-		self.led_sequence = app.led_sequences.LedSequences(led_dict=self.LedDict)
+		self.led_sequence = app.led_sequences.LedSequences()
 		self.menu = app.menu.MenuEventHandler(self.game)
 
 		self.addrMap = app.address_mapping.AddressMapping(game=self.game)
@@ -401,11 +399,11 @@ class Console(object):
 									if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
 										if direction == '_DOWN':
 											print("Don't stop clock but send LED off")
-											self.led_sequence.set_led('L5', '0')
+											self.led_sequence.set_led('topLed', 0)
 
 										if direction == '_UP':
 											print("Start clock and send LED on")
-											self.led_sequence.set_led('L5', '1')
+											self.led_sequence.set_led('topLed', 1)
 
 									elif button_type == 'mode':
 										if direction == '_DOWN':
