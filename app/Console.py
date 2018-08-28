@@ -300,9 +300,9 @@ class Console(object):
 			self.s.serial_output(self.serialString)
 			if self.verboseDiagnostic:
 				print('Serial Output', self.serialString, 'length', len(self.serialString))
-		except:
+		except Exception as e:
 			if not (_platform == "win32" or _platform == "darwin"):
-				print('Serial Output Error', self.serialString)
+				print('Serial Output Error:', e, 'with string:', self.serialString)
 
 	def _check_events(self):
 		tic = time.time()
@@ -364,16 +364,18 @@ class Console(object):
 					print('data', data)
 					try:
 						data = json.loads(data)
-					except:
-						print('error in json loads')
-					json_tree_fragment_dict = dict(data)
+						json_tree_fragment_dict = dict(data)
+					except Exception as e:
+						print('==============Error in json decode:', e)
+						json_tree_fragment_dict = dict()
 
 					# Handle fragment ------------------
 
 					# Check for fragment structure for button_objects
 					if 'button_objects' in json_tree_fragment_dict:
 						for button in json_tree_fragment_dict['button_objects']:
-							if json_tree_fragment_dict['button_objects'][button].keys() >= {'keymap_grid_value', 'event_state', 'event_flag'}:
+							if json_tree_fragment_dict['button_objects'][button].keys() >= {
+								'keymap_grid_value', 'event_state', 'event_flag'}:
 								if json_tree_fragment_dict['button_objects'][button]['event_flag']:
 									keymap_grid_value = json_tree_fragment_dict['button_objects'][button]['keymap_grid_value']
 									event_state = json_tree_fragment_dict['button_objects'][button]['event_state']
@@ -420,7 +422,9 @@ class Console(object):
 								else:
 									print(('\n', button, 'has not flagged an event.'))
 							else:
-								print("\n'keymap_grid_value', 'event_state', 'event_flag' keys are not all in fragment of button dictionary", button)
+								print(
+									"\n'keymap_grid_value', 'event_state', 'event_flag' ",
+									"keys are not all in fragment of button dictionary", button)
 					else:
 						print('\nbutton_objects not in fragment')
 				else:
@@ -855,7 +859,8 @@ class Console(object):
 							socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
 					# exception
-					except:
+					except Exception as e:
+						print(e)
 						message = "exception from process received data"
 						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
@@ -903,9 +908,9 @@ class Console(object):
 			if socket != server_socket:
 				try:
 					socket.send(bytes(message, "utf8"))
-				except:
+				except Exception as e:
 					message = 'broken socket connection', socket, message
-					print(message)
+					print(e, ':', message)
 					self.modeLogger.info(message)
 
 					# broken socket connection
