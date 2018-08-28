@@ -361,8 +361,11 @@ class Console(object):
 			for data in self.dataReceivedList:
 				self.modeLogger.info(data + ' received')
 				if data[0] == '{':
-					data = json.loads(data)
-					print(data)
+					print('data', data)
+					try:
+						data = json.loads(data)
+					except:
+						print('error in json loads')
 					json_tree_fragment_dict = dict(data)
 
 					# Handle fragment ------------------
@@ -393,7 +396,7 @@ class Console(object):
 										func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
 
 									# Handle menus
-									self.menu.map_(func_string, direction=direction)
+									#self.menu.map_(func_string, direction=direction)
 
 									# Effects after button and menu are handled
 									if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
@@ -453,6 +456,7 @@ class Console(object):
 		self._update_mp_serial_string()
 
 	def send_led_state_over_network(self):
+		self.broadcastString += 'JSON_FRAGMENT'
 		self.broadcastString += self.led_sequence.get_led_dict_string()
 		self.broadcastFlag = True
 
