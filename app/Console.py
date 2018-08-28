@@ -860,8 +860,8 @@ class Console(object):
 
 					# exception
 					except Exception as e:
-						print(e)
 						message = "exception from process received data"
+						print(e, ':', message)
 						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
 			# Broadcast data triggered from check_events
@@ -909,8 +909,8 @@ class Console(object):
 				try:
 					socket.send(bytes(message, "utf8"))
 				except Exception as e:
-					message = 'broken socket connection', socket, message
-					print(e, ':', message)
+					message = e, ':', socket, message
+					print(message)
 					self.modeLogger.info(message)
 
 					# broken socket connection
