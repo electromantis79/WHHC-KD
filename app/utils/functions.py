@@ -17,6 +17,7 @@
 import time
 import os
 import timeit
+import json
 
 from sys import platform as _platform
 
@@ -201,3 +202,46 @@ def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
 		print(t.timeit(1) * 1000, 'ms')
 
 	return result
+
+
+def find_substrings(string, substring):
+	count = 0
+	index = 0
+	flag = True
+	index_list = list()
+	while flag:
+		a = string.find(substring, index)
+		if a == -1:
+			flag = False
+		else:
+			count += 1
+			index_list.append(a)
+			index = a + 1
+	print('index_list', index_list)
+	return index_list
+
+
+def slice_fragments(data, index_list):
+	fragment_list = list()
+	for count in list(range(len(index_list))):
+		if len(index_list) == 1:
+			fragment_list.append(data)
+		elif count == len(index_list) - 1:
+			fragment_list.append(data[index_list[-1]:])
+		else:
+			fragment_list.append(data[index_list[count]:index_list[count+1]])
+
+	for fragment_index, fragment in enumerate(fragment_list):
+		fragment_list[fragment_index] = fragment[len('JSON_FRAGMENT'):]
+
+	print('fragment_list', fragment_list)
+	return fragment_list
+
+
+def convert_to_json_format(data):
+	try:
+		data = json.loads(data)
+		return data
+	except Exception as e:
+		print('\n', e, ': Data received failed json format inspection')
+		return False

@@ -360,91 +360,71 @@ class Console(object):
 			# Handle multiple incoming button presses
 			for data in self.dataReceivedList:
 				self.modeLogger.info(data + ' received')
-				if data[0] == '{':
-					print('data', data)
-					try:
-						data = json.loads(data)
-						json_tree_fragment_dict = dict(data)
-					except Exception as e:
-						print('==============Error in json decode:', e)
-						json_tree_fragment_dict = dict()
+				index_list = app.utils.functions.find_substrings(data, 'JSON_FRAGMENT')
+				fragment_list = app.utils.functions.slice_fragments(data, index_list)
+				for fragment_index, fragment in enumerate(fragment_list):
+					fragment_list[fragment_index] = app.utils.functions.convert_to_json_format(fragment)
 
-					# Handle fragment ------------------
+				for fragment in fragment_list:
+					if fragment:
+						# Handle fragment ------------------
 
-					# Check for fragment structure for button_objects
-					if 'button_objects' in json_tree_fragment_dict:
-						for button in json_tree_fragment_dict['button_objects']:
-							if json_tree_fragment_dict['button_objects'][button].keys() >= {
-								'keymap_grid_value', 'event_state', 'event_flag'}:
-								if json_tree_fragment_dict['button_objects'][button]['event_flag']:
-									keymap_grid_value = json_tree_fragment_dict['button_objects'][button]['keymap_grid_value']
-									event_state = json_tree_fragment_dict['button_objects'][button]['event_state']
+						# Check for fragment structure for button_objects
+						if 'button_objects' in fragment:
+							for button in fragment['button_objects']:
+								if fragment['button_objects'][button].keys() >= {
+									'keymap_grid_value', 'event_state', 'event_flag'}:
+									if fragment['button_objects'][button]['event_flag']:
+										keymap_grid_value = fragment['button_objects'][button]['keymap_grid_value']
+										event_state = fragment['button_objects'][button]['event_state']
 
-									# Format direction
-									if event_state == 'down':
-										direction = '_DOWN'
-									elif event_state == 'up':
-										direction = '_UP'
+										# Format direction
+										if event_state == 'down':
+											direction = '_DOWN'
+										elif event_state == 'up':
+											direction = '_UP'
 
-									# Define button type without direction
-									button_type = self.keyMap.get_func_string(keymap_grid_value, direction='_BOTH')
-									print(('Button type =', button_type))
+										# Define button type without direction
+										button_type = self.keyMap.get_func_string(keymap_grid_value, direction='_BOTH')
+										print(('Button type =', button_type))
 
-									# Get default function string for menu active case
-									func_string = self.keyMap.get_func_string(keymap_grid_value, direction=direction)
+										# Get default function string for menu active case
+										func_string = self.keyMap.get_func_string(keymap_grid_value, direction=direction)
 
-									# Trigger most keys here on down press
-									if not self.game.gameSettings['menuFlag']:
-										func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
+										# Trigger most keys here on down press
+										if not self.game.gameSettings['menuFlag']:
+											func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
 
-									# Handle menus
-									#self.menu.map_(func_string, direction=direction)
+										# Handle menus
+										#self.menu.map_(func_string, direction=direction)
 
-									# Effects after button and menu are handled
-									if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
-										if direction == '_DOWN':
-											print("Don't stop clock but send LED off")
-											self.led_sequence.set_led('topLed', 0)
+										# Effects after button and menu are handled
+										if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+											if direction == '_DOWN':
+												print("Don't stop clock but send LED off")
+												self.led_sequence.set_led('topLed', 0)
 
-										if direction == '_UP':
-											print("Start clock and send LED on")
-											self.led_sequence.set_led('topLed', 1)
+											if direction == '_UP':
+												print("Start clock and send LED on")
+												self.led_sequence.set_led('topLed', 1)
 
-									elif button_type == 'mode':
-										if direction == '_DOWN':
-											print('=== ENTER Command State ===')
-										elif direction == '_UP':
-											print('Reset Command Timer')
+										elif button_type == 'mode':
+											if direction == '_DOWN':
+												print('=== ENTER Command State ===')
+											elif direction == '_UP':
+												print('Reset Command Timer')
 
-									# send_led_state_over_network
-									self.send_led_state_over_network()
+										# send_led_state_over_network
+										self.send_led_state_over_network()
 
+									else:
+										print(('\n', button, 'has not flagged an event.'))
 								else:
-									print(('\n', button, 'has not flagged an event.'))
-							else:
-								print(
-									"\n'keymap_grid_value', 'event_state', 'event_flag' ",
-									"keys are not all in fragment of button dictionary", button)
-					else:
-						print('\nbutton_objects not in fragment')
-				else:
-					print(('\nDid not receive json formatted data in ', data))
-					# Non-keyMap data received
-					if data == '@':
-						# If received the resend symbol resend
-						self.send_led_state_over_network()
-					'''
-					else:
-						# This are handles all other cases of data received
-						try:
-							# Special display of rssi for testing
-							self.command = int(data)
-							self.commandFlag = True
-							self.addrMap.rssi = self.command
-							self.addrMap.rssiFlag = self.commandFlag
-						except:
-							pass
-					'''
+									print(
+										"\n'keymap_grid_value', 'event_state', 'event_flag' ",
+										"keys are not all in fragment of button dictionary", button)
+						else:
+							print('\nbutton_objects not in fragment')
 
 			# Clear keys pressed list
 			self.dataReceivedList = []
@@ -851,8 +831,7 @@ class Console(object):
 							else:
 								print('other', sock, self.master_socket)
 
-							# '#' stands for main broadcast echo header
-							socket_list = self._broadcast_or_remove(server_socket, '#' + data, socket_list)
+							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
 						else:
 							# at this stage, no data means probably the connection has been broken
 							message = "[%s] is offline, no data" % sock
