@@ -383,6 +383,8 @@ class Console(object):
 											direction = '_DOWN'
 										elif event_state == 'up':
 											direction = '_UP'
+										else:
+											direction = None
 
 										# Define button type without direction
 										button_type = self.keyMap.get_func_string(keymap_grid_value, direction='_BOTH')
@@ -391,31 +393,36 @@ class Console(object):
 										# Get default function string for menu active case
 										func_string = self.keyMap.get_func_string(keymap_grid_value, direction=direction)
 
-										# Trigger most keys here on down press
-										if not self.game.gameSettings['menuFlag']:
-											func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
+										# Check for valid data before button processing
+										if func_string == '':
+											print('ValueError for event_state or keymap_grid_value, button not processed')
+										else:
 
-										# Handle menus
-										#self.menu.map_(func_string, direction=direction)
+											# Trigger most keys here on down press
+											if not self.game.gameSettings['menuFlag']:
+												func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
 
-										# Effects after button and menu are handled
-										if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
-											if direction == '_DOWN':
-												print("Don't stop clock but send LED off")
-												self.led_sequence.set_led('topLed', 0)
+											# Handle menus
+											#self.menu.map_(func_string, direction=direction)
 
-											if direction == '_UP':
-												print("Start clock and send LED on")
-												self.led_sequence.set_led('topLed', 1)
+											# Effects after button and menu are handled
+											if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+												if direction == '_DOWN':
+													print("Don't stop clock but send LED off")
+													self.led_sequence.set_led('topLed', 0)
 
-										elif button_type == 'mode':
-											if direction == '_DOWN':
-												print('=== ENTER Command State ===')
-											elif direction == '_UP':
-												print('Reset Command Timer')
+												if direction == '_UP':
+													print("Start clock and send LED on")
+													self.led_sequence.set_led('topLed', 1)
 
-										# send_led_state_over_network
-										self.send_led_state_over_network()
+											elif button_type == 'mode':
+												if direction == '_DOWN':
+													print('=== ENTER Command State ===')
+												elif direction == '_UP':
+													print('Reset Command Timer')
+
+											# send_led_state_over_network
+											self.send_led_state_over_network()
 
 									else:
 										print(('\n', button, 'has not flagged an event.'))

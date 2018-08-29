@@ -228,7 +228,10 @@ class KeypadMapping(object):
 
 				return func_string
 			else:
-				return self.Keypad_Keys[direction][key_pressed]
+				if direction in self.Keypad_Keys and key_pressed in self.Keypad_Keys[direction]:
+					return self.Keypad_Keys[direction][key_pressed]
+				else:
+					return ''
 		else:
 			return ''
 
