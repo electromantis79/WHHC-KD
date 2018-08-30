@@ -367,71 +367,36 @@ class Console(object):
 
 				for fragment in fragment_list:
 					if fragment:
-						# Handle fragment ------------------
+						# Validate fragment ------------------
+						valid, keymap_grid_value, direction, button_type, func_string = self.json_button_objects_validation(
+							fragment)
 
-						# Check for fragment structure for button_objects
-						if 'button_objects' in fragment:
-							for button in fragment['button_objects']:
-								if fragment['button_objects'][button].keys() >= {
-									'keymap_grid_value', 'event_state', 'event_flag'}:
-									if fragment['button_objects'][button]['event_flag']:
-										keymap_grid_value = fragment['button_objects'][button]['keymap_grid_value']
-										event_state = fragment['button_objects'][button]['event_state']
+						if valid:
+							# Trigger most keys here on down press
+							if not self.game.gameSettings['menuFlag']:
+								func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
 
-										# Format direction
-										if event_state == 'down':
-											direction = '_DOWN'
-										elif event_state == 'up':
-											direction = '_UP'
-										else:
-											direction = None
+							# Handle menus
+							#self.menu.map_(func_string, direction=direction)
 
-										# Define button type without direction
-										button_type = self.keyMap.get_func_string(keymap_grid_value, direction='_BOTH')
-										print(('Button type =', button_type))
+							# Effects after button and menu are handled
+							if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+								if direction == '_DOWN':
+									print("Don't stop clock but send LED off")
+									self.led_sequence.set_led('topLed', 0)
 
-										# Get default function string for menu active case
-										func_string = self.keyMap.get_func_string(keymap_grid_value, direction=direction)
+								if direction == '_UP':
+									print("Start clock and send LED on")
+									self.led_sequence.set_led('topLed', 1)
 
-										# Check for valid data before button processing
-										if func_string == '':
-											print('ValueError for event_state or keymap_grid_value, button not processed')
-										else:
+							elif button_type == 'mode':
+								if direction == '_DOWN':
+									print('=== ENTER Command State ===')
+								elif direction == '_UP':
+									print('Reset Command Timer')
 
-											# Trigger most keys here on down press
-											if not self.game.gameSettings['menuFlag']:
-												func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
-
-											# Handle menus
-											#self.menu.map_(func_string, direction=direction)
-
-											# Effects after button and menu are handled
-											if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
-												if direction == '_DOWN':
-													print("Don't stop clock but send LED off")
-													self.led_sequence.set_led('topLed', 0)
-
-												if direction == '_UP':
-													print("Start clock and send LED on")
-													self.led_sequence.set_led('topLed', 1)
-
-											elif button_type == 'mode':
-												if direction == '_DOWN':
-													print('=== ENTER Command State ===')
-												elif direction == '_UP':
-													print('Reset Command Timer')
-
-											# send_led_state_over_network
-											self.send_led_state_over_network()
-
-									else:
-										print(('\n', button, 'has not flagged an event.'))
-								else:
-									print(
-										"\n'keymap_grid_value', 'event_state', 'event_flag' ",
-										"keys are not all in fragment of button dictionary", button)
-						else:
-							print('\nbutton_objects not in fragment')
+							# send_led_state_over_network
+							self.send_led_state_over_network()
 
 			# Clear keys pressed list
 			self.dataReceivedList = []
@@ -445,6 +410,51 @@ class Console(object):
 
 		# Prepare data for the output thread
 		self._update_mp_serial_string()
+
+	def json_button_objects_validation(self, json_fragment):
+		valid = keymap_grid_value = direction = button_type = func_string = False
+		# Check for fragment structure for button_objects
+		if 'button_objects' in json_fragment:
+			for button in json_fragment['button_objects']:
+				if json_fragment['button_objects'][button].keys() >= {
+					'keymap_grid_value', 'event_state', 'event_flag'}:
+					if json_fragment['button_objects'][button]['event_flag']:
+						keymap_grid_value = json_fragment['button_objects'][button]['keymap_grid_value']
+						event_state = json_fragment['button_objects'][button]['event_state']
+
+						# Format direction
+						if event_state == 'down':
+							direction = '_DOWN'
+						elif event_state == 'up':
+							direction = '_UP'
+						else:
+							direction = None
+
+						# Define button type without direction
+						button_type = self.keyMap.get_func_string(keymap_grid_value, direction='_BOTH')
+						print(('Button type =', button_type))
+
+						# Get default function string for menu active case
+						func_string = self.keyMap.get_func_string(keymap_grid_value, direction=direction)
+
+						# Check for valid data before button processing
+						if func_string == '':
+							print('ValueError for event_state or keymap_grid_value, button not processed')
+						else:
+							valid = True
+							return valid, keymap_grid_value, direction, button_type, func_string
+
+
+					else:
+						print(('\n', button, 'has not flagged an event.'))
+				else:
+					print(
+						"\n'keymap_grid_value', 'event_state', 'event_flag' ",
+						"keys are not all in fragment of button dictionary", button)
+		else:
+			print('\nbutton_objects not in fragment')
+
+		return valid, keymap_grid_value, direction, button_type, func_string
 
 	def send_led_state_over_network(self):
 		self.broadcastString += 'JSON_FRAGMENT'

@@ -250,7 +250,8 @@ class KeypadMapping(object):
 		Sets the keyPressFlag used by the Menu_Class
 		"""
 		# PUBLIC method
-		self.funcString = self.get_func_string(key_pressed, direction=direction)
+		if key_pressed:
+			self.funcString = self.get_func_string(key_pressed, direction=direction)
 		print("Key mapped %s" % key_pressed, 'to funcString "%s"' % self.funcString)
 		print("Called", str(self.gameFuncDict[self.funcString]))
 		self.gameFuncDict[self.funcString]()  # call game function
