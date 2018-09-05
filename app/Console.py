@@ -16,7 +16,6 @@ import os
 import threading
 import time
 import logging
-import json
 from logging.handlers import RotatingFileHandler
 from flask import Flask, flash, request, redirect, url_for
 from flask import send_from_directory
@@ -121,6 +120,7 @@ class Console(object):
 		self.sp = None
 		self.priorityListEmech = []
 		self.mode = None
+		self.commandState = None
 		self.led_sequence = None
 
 		self.reset()
@@ -152,6 +152,7 @@ class Console(object):
 		app.utils.functions.verbose(['\nConsole Reset'], self.printProductionInfo)
 
 		self.mode = self.BOOT_UP_MODE
+		self.commandState = False
 		self.modeLogger.info(self.modeNameDict[self.mode])
 
 		# Create Game object
@@ -353,63 +354,97 @@ class Console(object):
 
 	def _connected_mode(self):
 		# Handle a key press
-		if self.dataReceivedFlag:
-			self.dataReceivedFlag = False
-			# print 'checkEvents data received'
-
-			# Handle multiple incoming button presses
-			for data in self.dataReceivedList:
-				self.modeLogger.info(data + ' received')
-				index_list = app.utils.functions.find_substrings(data, 'JSON_FRAGMENT')
-				fragment_list = app.utils.functions.slice_fragments(data, index_list)
-				for fragment_index, fragment in enumerate(fragment_list):
-					fragment_list[fragment_index] = app.utils.functions.convert_to_json_format(fragment)
-
-				for fragment in fragment_list:
-					if fragment:
-						# Validate fragment ------------------
-						valid, keymap_grid_value, direction, button_type, func_string = self.json_button_objects_validation(
-							fragment)
-
-						if valid:
-							# Trigger most keys here on down press
-							if not self.game.gameSettings['menuFlag']:
-								func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
-
-							# Handle menus
-							#self.menu.map_(func_string, direction=direction)
-
-							# Effects after button and menu are handled
-							if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
-								if direction == '_DOWN':
-									print("Don't stop clock but send LED off")
-									self.led_sequence.set_led('topLed', 0)
-
-								if direction == '_UP':
-									print("Start clock and send LED on")
-									self.led_sequence.set_led('topLed', 1)
-
-							elif button_type == 'mode':
-								if direction == '_DOWN':
-									print('=== ENTER Command State ===')
-								elif direction == '_UP':
-									print('Reset Command Timer')
-
-							# send_led_state_over_network
-							self.send_led_state_over_network()
-
-			# Clear keys pressed list
-			self.dataReceivedList = []
-
-		# self.timeEvents()  # DO we need anything here?
-
-		# self.dataEvents()  # DO we need anything here?
+		self.handle_data_receive_list()
 
 		# Update the new data in addrMap wordDict
 		self._update_mp_words_dict()
 
 		# Prepare data for the output thread
 		self._update_mp_serial_string()
+
+	def handle_data_receive_list(self):
+		if self.dataReceivedFlag:
+			self.dataReceivedFlag = False
+			data_received_list = self.dataReceivedList
+			self.dataReceivedList = []
+
+			# Handle multiple incoming button presses
+			for data in data_received_list:
+				self.modeLogger.info(data + ' received')
+
+				index_list = app.utils.functions.find_substrings(data, 'JSON_FRAGMENT')
+
+				fragment_list = app.utils.functions.slice_fragments(data, index_list)
+
+				for fragment_index, fragment in enumerate(fragment_list):
+					fragment_list[fragment_index] = app.utils.functions.convert_to_json_format(fragment)
+
+				for fragment in fragment_list:
+					self.handle_fragment(fragment)
+
+	def handle_fragment(self, fragment):
+		if fragment:
+			# Validate fragment ------------------
+			valid, keymap_grid_value, direction, button_type, func_string = self.json_button_objects_validation(
+				fragment)
+
+			if valid:
+				# Trigger most keys here on down press
+				if not self.commandState and not self.game.gameSettings['timeOfDayClockEnable']:
+					func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
+
+				# Handle menus
+				# self.menu.map_(func_string, direction=direction)
+
+				self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
+
+				# Effects after button and menu are handled
+				self.after_button_event_is_handled(direction, button_type)
+
+				# send_led_state_over_network
+				self.send_led_state_over_network()
+
+	def handle_command_state_events(self, keymap_grid_value, direction, button_type, func_string):
+		if self.commandState:
+			if button_type == 'periodClockOnOff':
+				if self.game.gameSettings['timeOfDayClockEnable']:
+					print('=== EXIT Command State ===')
+					self.commandState = False
+					print('=== EXIT Time Of Day Mode ===')
+					self.game.gameSettings['timeOfDayClockEnable'] = False
+
+				elif self.game.clockDict['periodClock'].running:
+					if direction == '_DOWN':
+						# Stop clock
+						self.keyMap.map_(keymap_grid_value, direction='_UP')
+						print('=== EXIT Command State ===')
+						self.commandState = False
+						print('=== ENTER Time Of Day Mode ===')
+						self.game.gameSettings['timeOfDayClockEnable'] = True
+
+				elif not self.game.clockDict['periodClock'].running:
+					if direction == '_DOWN':
+						self.period_clock_reset()
+					elif direction == '_UP':
+						print('=== EXIT Command State ===')
+						self.commandState = False
+
+	def after_button_event_is_handled(self, direction, button_type):
+		if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
+			if direction == '_DOWN':
+				print("Don't stop clock but send LED off")
+				self.led_sequence.set_led('topLed', 0)
+
+			if direction == '_UP':
+				print("Start clock and send LED on")
+				self.led_sequence.set_led('topLed', 1)
+
+		elif button_type == 'mode':
+			if direction == '_DOWN':
+				print('=== ENTER Command State ===')
+				self.commandState = True
+			elif direction == '_UP':
+				print('Reset Command Timer')
 
 	def json_button_objects_validation(self, json_fragment):
 		valid = keymap_grid_value = direction = button_type = func_string = False
@@ -444,7 +479,6 @@ class Console(object):
 							valid = True
 							return valid, keymap_grid_value, direction, button_type, func_string
 
-
 					else:
 						print(('\n', button, 'has not flagged an event.'))
 				else:
@@ -455,6 +489,22 @@ class Console(object):
 			print('\nbutton_objects not in fragment')
 
 		return valid, keymap_grid_value, direction, button_type, func_string
+
+	def period_clock_reset(self):
+		if self.game.clockDict['periodClock'].currentTime == (15 * 60):
+			self.game.clockDict['periodClock'].reset_(30 * 60)
+		elif self.game.clockDict['periodClock'].currentTime == (30 * 60):
+			self.game.clockDict['periodClock'].reset_(60 * 60)
+		elif self.game.clockDict['periodClock'].currentTime == (60 * 60):
+			self.game.clockDict['periodClock'].reset_(90 * 60)
+		elif self.game.clockDict['periodClock'].currentTime == (90 * 60):
+			self.game.clockDict['periodClock'].reset_(1 * 60)
+		elif self.game.clockDict['periodClock'].currentTime == (1 * 60):
+			self.game.clockDict['periodClock'].reset_(30)
+		elif self.game.clockDict['periodClock'].currentTime == 30:
+			self.game.clockDict['periodClock'].reset_(5)
+		else:
+			self.game.clockDict['periodClock'].reset_(15 * 60)
 
 	def send_led_state_over_network(self):
 		self.broadcastString += 'JSON_FRAGMENT'
@@ -872,30 +922,6 @@ class Console(object):
 			toc = time.time()
 			elapse = toc - tic
 			time.sleep(self.socketServerFrequency-elapse)
-
-		server_socket.close()
-		'''
-		import Network, logging
-		jobs=[]
-		server=multiprocessing.Process(name='server', target=Network.chat_server)
-		jobs.append(server)
-		multiprocessing.log_to_stderr(logging.DEBUG)
-		server.start()
-		server.join()
-		while 1:
-			#
-			if not server.is_alive() and configDict['SERVER']==True:
-				print server.exitcode
-				configDict['SERVER']=False
-				c.writeSERVER(False)
-				server.terminate()
-			elif configDict['SERVER']==False:
-				time.sleep(3)
-				server=multiprocessing.Process(name='server', target=Network.chat_server)
-				jobs.append(server)
-				server.start()
-				server.join()
-		'''
 
 	def _broadcast_or_remove(self, server_socket, message, socket_list):
 		# broadcast chat messages to all connected clients
