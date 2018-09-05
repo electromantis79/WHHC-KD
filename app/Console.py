@@ -160,7 +160,6 @@ class Console(object):
 		if internal_reset:
 			self.game.kill_clock_threads()
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
-		self.game.gameSettings['whh_flag'] = self.whh_flag
 		self.set_keypad(whh_flag=self.whh_flag)
 		app.utils.functions.verbose(
 			['sport', self.game.gameData['sport'], 'sportType', self.game.gameData['sportType']],

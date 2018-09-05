@@ -96,7 +96,7 @@ class Clock(object):
 
 				self.currentTime = self.maxSeconds + elapse_time
 
-				hours = int(self.currentTime)/(60*60)
+				hours = int(self.currentTime//(60*60))
 				minutes = int(self.currentTime/60)-hours*60
 				seconds = int(self.currentTime-minutes*60-hours*60*60)
 

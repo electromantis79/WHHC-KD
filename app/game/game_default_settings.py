@@ -191,6 +191,7 @@ class GameDefaultSettings:
 		self.gameDefaultSettings['blankTestFlag'] = False
 		self.gameDefaultSettings['checkLCDFlag'] = False
 		self.gameDefaultSettings['menuFlag'] = False
+		self.gameDefaultSettings['whh_flag'] = True
 		self.gameDefaultSettings['keyPressFlag'] = False
 		self.gameDefaultSettings['restoreFlag'] = False
 		self.gameDefaultSettings['PitchSpeedFlag'] = False

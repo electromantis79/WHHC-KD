@@ -99,10 +99,14 @@ class Game(object):
 		# Order of thread creation sets priority when init same class, last is highest
 		self.clockDict['timeOutTimer'] = app.game.clock.Clock(
 			False, self.gameSettings['timeOutTimerMaxSeconds'], clock_name='timeOutTimer')
-		
+
+		if self.gameSettings['whh_flag']:
+			internal_clock = True
+		else:
+			internal_clock = False
 		self.clockDict['timeOfDayClock'] = app.game.clock.Clock(
 			True, max_seconds=self.gameSettings['timeOfDayClockMaxSeconds'],
-			resolution=0.1, hours_flag=True, clock_name='timeOfDayClock')
+			resolution=0.1, hours_flag=True, clock_name='timeOfDayClock', internal_clock=internal_clock)
 		
 		self.clockDict['segmentTimer'] = app.game.clock.Clock(
 			self.gameSettings['segmentTimerCountUp'], self.gameSettings['segmentTimerMaxSeconds'], clock_name='segmentTimer')
