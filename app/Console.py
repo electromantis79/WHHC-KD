@@ -121,6 +121,10 @@ class Console(object):
 		self.priorityListEmech = []
 		self.mode = None
 		self.commandState = None
+		self.longPressFlag = None
+		self.mainTimerRunningMode = None
+		self.batteryStrengthMode = None
+		self.signalStrengthMode = None
 		self.led_sequence = None
 
 		self.reset()
@@ -153,6 +157,10 @@ class Console(object):
 
 		self.mode = self.BOOT_UP_MODE
 		self.commandState = False
+		self.mainTimerRunningMode = False
+		self.longPressFlag = False
+		self.batteryStrengthMode = False
+		self.signalStrengthMode = False
 		self.modeLogger.info(self.modeNameDict[self.mode])
 
 		# Create Game object
@@ -389,61 +397,132 @@ class Console(object):
 
 			if valid:
 				# Trigger most keys here on down press
-				if not self.commandState and not self.game.gameSettings['timeOfDayClockEnable']:
-					func_string = self.keyMap.map_(keymap_grid_value, direction=direction)
+				if self.commandState:
+					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
+				else:
+					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string)
 
-				# Handle menus
-				# self.menu.map_(func_string, direction=direction)
-
-				self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
-
-				# Effects after button and menu are handled
-				self.after_button_event_is_handled(direction, button_type)
+				if self.mainTimerRunningMode:
+					self.led_sequence.set_led('topLed', 1)
+				else:
+					self.led_sequence.set_led('topLed', 0)
 
 				# send_led_state_over_network
 				self.send_led_state_over_network()
 
-	def handle_command_state_events(self, keymap_grid_value, direction, button_type, func_string):
-		if self.commandState:
-			if button_type == 'periodClockOnOff':
-				if self.game.gameSettings['timeOfDayClockEnable']:
-					print('=== EXIT Command State ===')
-					self.commandState = False
-					print('=== EXIT Time Of Day Mode ===')
-					self.game.gameSettings['timeOfDayClockEnable'] = False
+	def handle_scoring_state_events(self, keymap_grid_value, direction, button_type, func_string):
+		if button_type == 'periodClockOnOff':
+			if self.game.gameSettings['timeOfDayClockEnable']:
+				pass
 
-				elif self.game.clockDict['periodClock'].running:
-					if direction == '_DOWN':
-						# Stop clock
-						self.keyMap.map_(keymap_grid_value, direction='_UP')
-						print('=== EXIT Command State ===')
-						self.commandState = False
-						print('=== ENTER Time Of Day Mode ===')
-						self.game.gameSettings['timeOfDayClockEnable'] = True
+			elif self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					print("Stop Main Timer, but don't exit Main Timer Running Mode")
+					self.game.clockDict['periodClock'].stop_()
 
-				elif not self.game.clockDict['periodClock'].running:
-					if direction == '_DOWN':
-						self.period_clock_reset()
-					elif direction == '_UP':
-						print('=== EXIT Command State ===')
-						self.commandState = False
+				if direction == '_UP':
+					print("EXIT Main Timer Running Mode")
+					self.mainTimerRunningMode = False
 
-	def after_button_event_is_handled(self, direction, button_type):
-		if button_type == 'periodClockOnOff' and self.game.clockDict['periodClock'].running:
-			if direction == '_DOWN':
-				print("Don't stop clock but send LED off")
-				self.led_sequence.set_led('topLed', 0)
+			elif not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					pass
 
-			if direction == '_UP':
-				print("Start clock and send LED on")
-				self.led_sequence.set_led('topLed', 1)
+				if direction == '_UP':
+					print("Start Main Timer and enter Main Timer Running Mode")
+					self.game.clockDict['periodClock'].start_()
+					print("ENTER Main Timer Running Mode")
+					self.mainTimerRunningMode = True
 
 		elif button_type == 'mode':
 			if direction == '_DOWN':
 				print('=== ENTER Command State ===')
 				self.commandState = True
+				print('START long press timer')
+
 			elif direction == '_UP':
-				print('Reset Command Timer')
+				if self.longPressFlag:
+					print('Trigger Power down mode')
+
+		else:
+			if direction == '_DOWN':
+				self.keyMap.map_(keymap_grid_value, direction=direction)
+
+			elif direction == '_UP':
+				pass
+
+	def handle_command_state_events(self, keymap_grid_value, direction, button_type, func_string):
+		if button_type == 'periodClockOnOff':
+			if self.game.gameSettings['timeOfDayClockEnable']:
+				if direction == '_DOWN':
+					pass
+				elif direction == '_UP':
+					print('=== EXIT Command State ===')
+					self.commandState = False
+					print('=== EXIT Time Of Day Mode ===')
+					self.game.gameSettings['timeOfDayClockEnable'] = False
+					print("Exit Main Timer Running Mode")
+					self.mainTimerRunningMode = False
+
+			elif self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					self.game.clockDict['periodClock'].stop_()
+					print('=== EXIT Command State ===')
+					self.commandState = False
+					print('=== ENTER Time Of Day Mode ===')
+					self.game.gameSettings['timeOfDayClockEnable'] = True
+				elif direction == '_UP':
+					print("Exit Main Timer Running Mode")
+					self.mainTimerRunningMode = False
+
+			elif not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					self.period_clock_reset()
+				elif direction == '_UP':
+					print('=== EXIT Command State ===')
+					self.commandState = False
+
+		elif button_type == 'mode':
+			if not self.batteryStrengthMode and not self.signalStrengthMode:
+				if direction == '_DOWN':
+					print('=== EXIT Command State ===')
+					self.commandState = False
+					print('=== ENTER Signal Strength Mode ===')
+					self.signalStrengthMode = True
+
+				elif direction == '_UP':
+					print('Reset Command Timer')
+
+			elif self.signalStrengthMode:
+				if direction == '_DOWN':
+					print('=== EXIT Command State ===')
+					self.commandState = False
+					print('=== EXIT Signal Strength Mode ===')
+					self.signalStrengthMode = False
+					print('=== ENTER Battery Strength Mode ===')
+					self.batteryStrengthMode = True
+
+				elif direction == '_UP':
+					print('Reset Command Timer')
+
+			elif self.batteryStrengthMode:
+				if direction == '_DOWN':
+					print('=== EXIT Command State ===')
+					self.commandState = False
+					print('Reset Command Timer')
+					print('=== EXIT Battery Strength Mode ===')
+					self.batteryStrengthMode = False
+					print('=== ENTER Strength Not Selected Mode ===')
+
+				elif direction == '_UP':
+					print('Reset Command Timer')
+
+		else:
+			if direction == '_DOWN':
+				pass
+
+			elif direction == '_UP':
+				pass
 
 	def json_button_objects_validation(self, json_fragment):
 		valid = keymap_grid_value = direction = button_type = func_string = False
