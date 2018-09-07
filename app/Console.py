@@ -85,7 +85,6 @@ class Console(object):
 		# Variables that don't need resetting through internal reset
 		self.className = 'console'
 		self.serialString = ''
-		self.checkEventsActiveFlag = False
 		self.MP_StreamRefreshFlag = True
 		self.check_events_over_period_flag = False
 		self.count_event_time = 0
@@ -107,6 +106,7 @@ class Console(object):
 		self.dataUpdateIndex = 1
 
 		# Main module items set in reset
+		self.checkEventsActiveFlag = None
 		self.configDict = None
 		self.game = None
 		self.keyMap = None
@@ -126,6 +126,7 @@ class Console(object):
 		self.batteryStrengthMode = None
 		self.signalStrengthMode = None
 		self.led_sequence = None
+		self.testState = None
 
 		self.reset()
 
@@ -151,22 +152,30 @@ class Console(object):
 		# add handler to logger
 		self.modeLogger.addHandler(handler)
 
-	def reset(self, internal_reset=0):
+	def reset(self, internal_reset=False):
 		"""Resets the console to a new game."""
 		app.utils.functions.verbose(['\nConsole Reset'], self.printProductionInfo)
 
-		self.mode = self.BOOT_UP_MODE
+		# Kill old clock threads so they don't multiple for ever
+		if internal_reset:
+			self.game.kill_clock_threads()
+			self.mode = self.CONNECTED_MODE
+			self.modeLogger.info('internal_reset')
+		else:
+			self.mode = self.BOOT_UP_MODE
+			self.modeLogger.info(self.modeNameDict[self.mode])
+
+		self.checkEventsActiveFlag = False
 		self.commandState = False
+		self.testState = 0
 		self.mainTimerRunningMode = False
 		self.longPressFlag = False
 		self.batteryStrengthMode = False
 		self.signalStrengthMode = False
-		self.modeLogger.info(self.modeNameDict[self.mode])
 
 		# Create Game object
 		self.configDict = app.utils.reads.read_config()
-		if internal_reset:
-			self.game.kill_clock_threads()
+
 		self.game = app.utils.functions.select_sport_instance(self.configDict, number_of_teams=2)
 		self.set_keypad(whh_flag=self.whh_flag)
 		app.utils.functions.verbose(
@@ -191,7 +200,7 @@ class Console(object):
 
 		self.priorityListEmech = self._select_mp_data_priority()
 
-		self._setup_threads(internal_reset)  # internal_reset not used with this converter
+		self._setup_threads(internal_reset)
 
 	def _select_mp_data_priority(self):
 		# Select priority order list
@@ -369,6 +378,11 @@ class Console(object):
 		# Prepare data for the output thread
 		self._update_mp_serial_string()
 
+		# Handle reset
+		if self.game.gameSettings['resetGameFlag']:
+			self.game.gameSettings['resetGameFlag'] = False
+			self.reset(internal_reset=True)
+
 	def handle_data_receive_list(self):
 		if self.dataReceivedFlag:
 			self.dataReceivedFlag = False
@@ -397,11 +411,29 @@ class Console(object):
 
 			if valid:
 				# Trigger most keys here on down press
-				if self.commandState:
+
+				if self.testState == 1:
+					self.test_state_one(keymap_grid_value, direction, button_type, func_string)
+				elif self.testState == 2:
+					self.test_state_two(keymap_grid_value, direction, button_type, func_string)
+				elif self.testState == 3:
+					self.testState = 0
+				elif self.testState == 4:
+					self.testState = 0
+				elif self.commandState:
 					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
+
+					# Always leave command state after a combo event
+					if button_type == 'mode' and direction == '_UP':
+						pass
+					else:
+						print('=== EXIT Command State ===')
+						self.commandState = False
+
 				else:
 					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string)
 
+				# Update LEDs
 				if self.mainTimerRunningMode:
 					self.led_sequence.set_led('topLed', 1)
 				else:
@@ -455,38 +487,35 @@ class Console(object):
 		if button_type == 'periodClockOnOff':
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				if direction == '_DOWN':
-					pass
-				elif direction == '_UP':
-					print('=== EXIT Command State ===')
-					self.commandState = False
 					print('=== EXIT Time Of Day Mode ===')
 					self.game.gameSettings['timeOfDayClockEnable'] = False
-					print("Exit Main Timer Running Mode")
-					self.mainTimerRunningMode = False
+					print("Enter Main Timer Running Mode")
+					self.mainTimerRunningMode = True
+				elif direction == '_UP':
+					pass
 
 			elif self.mainTimerRunningMode:
 				if direction == '_DOWN':
 					self.game.clockDict['periodClock'].stop_()
-					print('=== EXIT Command State ===')
-					self.commandState = False
+					print("Exit Main Timer Running Mode")
+					self.mainTimerRunningMode = False
 					print('=== ENTER Time Of Day Mode ===')
 					self.game.gameSettings['timeOfDayClockEnable'] = True
 				elif direction == '_UP':
-					print("Exit Main Timer Running Mode")
-					self.mainTimerRunningMode = False
+					pass
 
 			elif not self.mainTimerRunningMode:
 				if direction == '_DOWN':
 					self.period_clock_reset()
+					print("Enter Main Timer Running Mode")
+					self.mainTimerRunningMode = True
 				elif direction == '_UP':
-					print('=== EXIT Command State ===')
-					self.commandState = False
+					pass
 
 		elif button_type == 'mode':
 			if not self.batteryStrengthMode and not self.signalStrengthMode:
 				if direction == '_DOWN':
-					print('=== EXIT Command State ===')
-					self.commandState = False
+					print('Reset Command Timer')
 					print('=== ENTER Signal Strength Mode ===')
 					self.signalStrengthMode = True
 
@@ -495,8 +524,7 @@ class Console(object):
 
 			elif self.signalStrengthMode:
 				if direction == '_DOWN':
-					print('=== EXIT Command State ===')
-					self.commandState = False
+					print('Reset Command Timer')
 					print('=== EXIT Signal Strength Mode ===')
 					self.signalStrengthMode = False
 					print('=== ENTER Battery Strength Mode ===')
@@ -507,8 +535,6 @@ class Console(object):
 
 			elif self.batteryStrengthMode:
 				if direction == '_DOWN':
-					print('=== EXIT Command State ===')
-					self.commandState = False
 					print('Reset Command Timer')
 					print('=== EXIT Battery Strength Mode ===')
 					self.batteryStrengthMode = False
@@ -516,6 +542,88 @@ class Console(object):
 
 				elif direction == '_UP':
 					print('Reset Command Timer')
+
+		elif button_type == 'inningsPlusOne':
+			if self.game.gameSettings['timeOfDayClockEnable']:
+				if direction == '_DOWN':
+					print('Reset Command Timer')
+					self.game.gameSettings['resetGameFlag'] = True
+
+				elif direction == '_UP':
+					pass
+
+			elif self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					pass
+				elif direction == '_UP':
+					pass
+
+			elif not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					print('Reset Command Timer')
+					self.game.gameSettings['resetGameFlag'] = True
+
+				elif direction == '_UP':
+					pass
+
+		elif button_type == 'guestScorePlusOne':
+			if not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					self.testState = 1
+					print('Enter Test', self.testState, 'State')
+
+				elif direction == '_UP':
+					pass
+
+		elif button_type == 'homeScorePlusOne':
+			if not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					self.testState = 2
+					print('Enter Test', self.testState, 'State')
+
+				elif direction == '_UP':
+					pass
+
+		elif button_type == 'guestScoreMinusOne':
+			if not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					self.testState = 3
+					print('Enter Test', self.testState, 'State')
+
+				elif direction == '_UP':
+					pass
+
+		elif button_type == 'homeScoreMinusOne':
+			if not self.mainTimerRunningMode:
+				if direction == '_DOWN':
+					self.testState = 4
+					print('Enter Test', self.testState, 'State')
+
+				elif direction == '_UP':
+					pass
+
+		elif button_type == 'ballsPlusOne':
+			if direction == '_DOWN':
+				print('If Brightness is at 50%, set Brightness to 100%, otherwise decrease Brightness by 10%')
+
+			elif direction == '_UP':
+				pass
+
+		elif button_type == 'strikesPlusOne':
+			if direction == '_DOWN':
+				print('Toggle Lamp Test Mode')
+				self.game.gameSettings['lampTestFlag'] = not self.game.gameSettings['lampTestFlag']
+
+			elif direction == '_UP':
+				pass
+
+		elif button_type == 'outsPlusOne':
+			if direction == '_DOWN':
+				print('Enter Blank Test Mode')
+				self.game.gameSettings['blankTestFlag'] = not self.game.gameSettings['blankTestFlag']
+
+			elif direction == '_UP':
+				pass
 
 		else:
 			if direction == '_DOWN':
@@ -588,6 +696,28 @@ class Console(object):
 		self.broadcastString += 'JSON_FRAGMENT'
 		self.broadcastString += self.led_sequence.get_led_dict_string()
 		self.broadcastFlag = True
+
+	def test_state_one(self, keymap_grid_value, direction, button_type, func_string):
+		if button_type == 'mode':
+			if direction == '_DOWN':
+				pass
+
+			elif direction == '_UP':
+				self.testState = 0
+
+	def test_state_two(self, keymap_grid_value, direction, button_type, func_string):
+		if button_type == 'mode':
+			if direction == '_DOWN':
+				pass
+
+			elif direction == '_UP':
+				self.testState = 0
+
+	def test_state_three(self,keymap_grid_value, direction, button_type, func_string):
+		pass
+
+	def test_state_four(self,keymap_grid_value, direction, button_type, func_string):
+		pass
 
 	def _update_mp_words_dict(self):
 		if self.game.gameSettings['blankTestFlag']:

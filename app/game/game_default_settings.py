@@ -145,7 +145,7 @@ class GameDefaultSettings:
 
 		# Period Clocks
 		self.gameDefaultSettings['MM_baseballPeriodClockMaxSeconds'] = 720
-		self.gameDefaultSettings['MP_baseballPeriodClockMaxSeconds'] = 60
+		self.gameDefaultSettings['MP_baseballPeriodClockMaxSeconds'] = 720
 		self.gameDefaultSettings['MM_footballPeriodClockMaxSeconds'] = 720
 		self.gameDefaultSettings['MP_footballPeriodClockMaxSeconds'] = 720
 		self.gameDefaultSettings['MM_basketballPeriodClockMaxSeconds'] = 720
