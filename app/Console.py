@@ -126,7 +126,6 @@ class Console(object):
 		self.batteryStrengthMode = None
 		self.signalStrengthMode = None
 		self.led_sequence = None
-		self.testState = None
 
 		self.reset()
 
@@ -167,7 +166,6 @@ class Console(object):
 
 		self.checkEventsActiveFlag = False
 		self.commandState = False
-		self.testState = 0
 		self.mainTimerRunningMode = False
 		self.longPressFlag = False
 		self.batteryStrengthMode = False
@@ -411,15 +409,15 @@ class Console(object):
 
 			if valid:
 				# Trigger most keys here on down press
-
-				if self.testState == 1:
+				test_state = self.game.get_game_data('testStateUnits')
+				if test_state == 1:
 					self.test_state_one(keymap_grid_value, direction, button_type, func_string)
-				elif self.testState == 2:
+				elif test_state == 2:
 					self.test_state_two(keymap_grid_value, direction, button_type, func_string)
-				elif self.testState == 3:
-					self.testState = 0
-				elif self.testState == 4:
-					self.testState = 0
+				elif test_state == 3:
+					self.game.set_game_data('testStateUnits', 0, places=1)
+				elif test_state == 4:
+					self.game.set_game_data('testStateUnits', 0, places=1)
 				elif self.commandState:
 					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
 
@@ -569,8 +567,8 @@ class Console(object):
 		elif button_type == 'guestScorePlusOne':
 			if not self.mainTimerRunningMode:
 				if direction == '_DOWN':
-					self.testState = 1
-					print('Enter Test', self.testState, 'State')
+					self.game.set_game_data('testStateUnits', 1, places=1)
+					print('Enter Test State 1')
 
 				elif direction == '_UP':
 					pass
@@ -578,8 +576,8 @@ class Console(object):
 		elif button_type == 'homeScorePlusOne':
 			if not self.mainTimerRunningMode:
 				if direction == '_DOWN':
-					self.testState = 2
-					print('Enter Test', self.testState, 'State')
+					self.game.set_game_data('testStateUnits', 2, places=1)
+					print('Enter Test State 2')
 
 				elif direction == '_UP':
 					pass
@@ -587,8 +585,8 @@ class Console(object):
 		elif button_type == 'guestScoreMinusOne':
 			if not self.mainTimerRunningMode:
 				if direction == '_DOWN':
-					self.testState = 3
-					print('Enter Test', self.testState, 'State')
+					self.game.set_game_data('testStateUnits', 3, places=1)
+					print('Enter Test State 3')
 
 				elif direction == '_UP':
 					pass
@@ -596,8 +594,8 @@ class Console(object):
 		elif button_type == 'homeScoreMinusOne':
 			if not self.mainTimerRunningMode:
 				if direction == '_DOWN':
-					self.testState = 4
-					print('Enter Test', self.testState, 'State')
+					self.game.set_game_data('testStateUnits', 4, places=1)
+					print('Enter Test State 4')
 
 				elif direction == '_UP':
 					pass
@@ -703,7 +701,8 @@ class Console(object):
 				pass
 
 			elif direction == '_UP':
-				self.testState = 0
+				self.game.set_game_data('testStateUnits', 0, places=1)
+				print('Exit Test State 1')
 
 	def test_state_two(self, keymap_grid_value, direction, button_type, func_string):
 		if button_type == 'mode':
@@ -711,12 +710,13 @@ class Console(object):
 				pass
 
 			elif direction == '_UP':
-				self.testState = 0
+				self.game.set_game_data('testStateUnits', 0, places=1)
+				print('Exit Test State 1')
 
-	def test_state_three(self,keymap_grid_value, direction, button_type, func_string):
+	def test_state_three(self, keymap_grid_value, direction, button_type, func_string):
 		pass
 
-	def test_state_four(self,keymap_grid_value, direction, button_type, func_string):
+	def test_state_four(self, keymap_grid_value, direction, button_type, func_string):
 		pass
 
 	def _update_mp_words_dict(self):
