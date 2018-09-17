@@ -569,6 +569,8 @@ class Console(object):
 				if direction == '_DOWN':
 					self.game.set_game_data('testStateUnits', 1, places=1)
 					print('Enter Test State 1')
+					self.led_sequence.all_off()
+					self.led_sequence.set_led('strengthLedBottom', 1)
 
 				elif direction == '_UP':
 					pass
@@ -702,6 +704,7 @@ class Console(object):
 
 			elif direction == '_UP':
 				self.game.set_game_data('testStateUnits', 0, places=1)
+				self.led_sequence.all_off()
 				print('Exit Test State 1')
 
 	def test_state_two(self, keymap_grid_value, direction, button_type, func_string):
@@ -711,7 +714,8 @@ class Console(object):
 
 			elif direction == '_UP':
 				self.game.set_game_data('testStateUnits', 0, places=1)
-				print('Exit Test State 1')
+				self.led_sequence.all_off()
+				print('Exit Test State 2')
 
 	def test_state_three(self, keymap_grid_value, direction, button_type, func_string):
 		pass

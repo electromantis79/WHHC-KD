@@ -57,6 +57,7 @@ class Game(object):
 		# Digit values common to all sports
 		self.set_game_data('segmentCount', self.get_game_data('segmentCount'))
 		self.set_game_data('period', self.get_game_data('period'))
+		self.set_game_data('signalStrength', self.get_game_data('signalStrength'), places=3)
 
 		if self.gameData['sport'][-4:] == 'ball' or self.gameData['sport'][-6:] == 'soccer':
 			self.gameSettings['multisportMenuFlag'] = True

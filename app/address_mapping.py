@@ -188,8 +188,9 @@ class AddressMapping(object):
 					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 6)
 				else:
 					alts = self._format_alts(alts, [6, 7, 8], 5)
-				if self.game.get_game_data('testStateUnits'):
+				if self.game.get_game_data('testStateUnits') == 1:
 					alts = self._format_alts(alts, [5, 10, 26], 7)
+					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 9, 12, 21, 22, 25, 28], 8)
 				else:
 					alts = self._format_alts(alts, [5], 5)
 
@@ -815,7 +816,9 @@ class AddressMapping(object):
 		elif segment_data == 'BSO':
 			segment_data = self._bso_decode()
 		elif segment_data == 'Down_Quarter':
-			segment_data = self.__down_quarter_decode()
+			segment_data = self._down_quarter_decode()
+		elif segment_data == 'SSH':
+			segment_data = self._signal_strength_hundreds_decode()
 		elif segment_data == 'fQtr4_gDec':
 			segment_data = ''
 			if self.game.get_game_data('decimalIndicator'):
@@ -983,7 +986,7 @@ class AddressMapping(object):
 			segment_data += 'fg'
 		return segment_data
 
-	def __down_quarter_decode(self):
+	def _down_quarter_decode(self):
 		segment_data = ''
 		down = self.game.get_game_data('down')
 		quarter = self.game.get_game_data('quarter')
@@ -1007,6 +1010,13 @@ class AddressMapping(object):
 			segment_data += 'efg'
 		elif quarter >= 4:
 			segment_data += 'efg'
+		return segment_data
+
+	def _signal_strength_hundreds_decode(self):
+		segment_data = ''
+		ssh = self.game.get_game_data('signalStrengthHundreds')
+		if ssh:
+			segment_data = 'g'
 		return segment_data
 
 	# Segment Decode Functions End

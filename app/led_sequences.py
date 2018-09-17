@@ -56,6 +56,11 @@ class LedSequences(object):
 				print(self.LedDict['led_objects'][pin]['function_name'], 'set to', value)
 				break
 
+	def all_off(self):
+		for pin in self.LedPinList:
+			self.LedDict['led_objects'][pin]['value'] = 0
+		print('All LEDs Off')
+
 	def battery_test(self, enable=False):
 		"""Continue this method while in this mode (until timeout)"""
 		if enable:
