@@ -16,6 +16,7 @@ import os
 import threading
 import time
 import logging
+import json
 from logging.handlers import RotatingFileHandler
 from flask import Flask, flash, request, redirect, url_for
 from flask import send_from_directory
@@ -401,6 +402,9 @@ class Console(object):
 				for fragment in fragment_list:
 					self.handle_fragment(fragment)
 
+			if self.broadcastString:
+				self.broadcastFlag = True
+
 	def handle_fragment(self, fragment):
 		if fragment:
 			# Validate fragment ------------------
@@ -437,8 +441,13 @@ class Console(object):
 				else:
 					self.led_sequence.set_led('topLed', 0)
 
-				# send_led_state_over_network
-				self.send_led_state_over_network()
+				# build_broadcast_strings
+				self.build_led_dict_broadcast_string()
+
+			valid, rssi_value = self.json_rssi_validation(fragment)
+
+			if valid:
+				self.game.set_game_data('signalStrength', rssi_value, places=3)
 
 	def handle_scoring_state_events(self, keymap_grid_value, direction, button_type, func_string):
 		if button_type == 'periodClockOnOff':
@@ -571,6 +580,8 @@ class Console(object):
 					print('Enter Test State 1')
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedBottom', 1)
+					self.build_get_rssi_flag_broadcast_string(True)
+					print(self.broadcastString)
 
 				elif direction == '_UP':
 					pass
@@ -662,8 +673,7 @@ class Console(object):
 						if func_string == '':
 							print('ValueError for event_state or keymap_grid_value, button not processed')
 						else:
-							valid = True
-							return valid, keymap_grid_value, direction, button_type, func_string
+							valid = 'button'
 
 					else:
 						print(('\n', button, 'has not flagged an event.'))
@@ -675,6 +685,19 @@ class Console(object):
 			print('\nbutton_objects not in fragment')
 
 		return valid, keymap_grid_value, direction, button_type, func_string
+
+	@staticmethod
+	def json_rssi_validation(json_fragment):
+		valid = False
+		rssi_value = None
+		# Check for fragment structure for button_objects
+		if 'rssi' in json_fragment:
+			valid = True
+			rssi_value = json_fragment['rssi']
+			print('\nrssi is', rssi_value)
+			return valid, rssi_value
+
+		return valid, rssi_value
 
 	def period_clock_reset(self):
 		if self.game.clockDict['periodClock'].currentTime == (15 * 60):
@@ -692,10 +715,17 @@ class Console(object):
 		else:
 			self.game.clockDict['periodClock'].reset_(15 * 60)
 
-	def send_led_state_over_network(self):
+	def build_led_dict_broadcast_string(self):
 		self.broadcastString += 'JSON_FRAGMENT'
 		self.broadcastString += self.led_sequence.get_led_dict_string()
-		self.broadcastFlag = True
+
+	def build_get_rssi_flag_broadcast_string(self, value):
+		self.broadcastString += 'JSON_FRAGMENT'
+		temp_dict = dict()
+		temp_dict['command_flags'] = dict()
+		temp_dict['command_flags']['get_rssi'] = value
+		string = json.dumps(temp_dict)
+		self.broadcastString += string
 
 	def test_state_one(self, keymap_grid_value, direction, button_type, func_string):
 		if button_type == 'mode':
@@ -705,6 +735,8 @@ class Console(object):
 			elif direction == '_UP':
 				self.game.set_game_data('testStateUnits', 0, places=1)
 				self.led_sequence.all_off()
+				self.build_get_rssi_flag_broadcast_string(False)
+				print(self.broadcastString)
 				print('Exit Test State 1')
 
 	def test_state_two(self, keymap_grid_value, direction, button_type, func_string):
@@ -1067,7 +1099,7 @@ class Console(object):
 
 		while 1:
 			tic = time.time()
-			# print(tic-self.startTime)
+			print(tic-self.startTime)
 
 			# get the list sockets which are ready to be read through select
 			ready_to_read, ready_to_write, in_error = select.select(
@@ -1097,6 +1129,7 @@ class Console(object):
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
 						data = data.decode("utf-8")
+						print('Data Received', time.time()-self.startTime, ':', data)
 						if data:
 							if self.master_socket is None:
 								self.master_socket = sock
@@ -1125,7 +1158,7 @@ class Console(object):
 			# Broadcast data triggered from check_events
 			if self.broadcastFlag:
 				self.broadcastFlag = False
-
+				print('Broadcast Flag start time =', time.time()-self.startTime, 'self.broadcastString =', self.broadcastString)
 				socket_list = self._broadcast_or_remove(server_socket, self.broadcastString, socket_list)
 
 				# Clear broadcastString
@@ -1141,7 +1174,8 @@ class Console(object):
 			# send the message only to peer
 			if socket != server_socket:
 				try:
-					socket.send(bytes(message, "utf8"))
+					print('Broadcasting', time.time()-self.startTime, ':', message)
+					socket.sendall(bytes(message, "utf8"))
 				except Exception as e:
 					message = e, ':', socket, message
 					print(message)
