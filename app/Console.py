@@ -30,6 +30,7 @@ import app.serial_IO.serial_packet
 import app.keypad_mapping
 import app.menu
 import app.led_sequences
+import app.game.clock
 
 from sys import platform as _platform
 
@@ -105,6 +106,12 @@ class Console(object):
 		self.master_socket = None
 		self._create_rotating_log('mode')
 		self.dataUpdateIndex = 1
+		self.commandStateCancelTime = 2.5
+		self.commandStateTimer = app.game.clock.Clock(max_seconds=self.commandStateCancelTime)
+		self.longPressTime = 2.5
+		self.longPressTimer = app.game.clock.Clock(max_seconds=self.longPressTime)
+		self.batteryStrengthTime = 2.5
+		self.signalStrengthTime = 2.5
 
 		# Main module items set in reset
 		self.checkEventsActiveFlag = None
@@ -127,6 +134,8 @@ class Console(object):
 		self.batteryStrengthMode = None
 		self.signalStrengthMode = None
 		self.led_sequence = None
+		self.batteryStrengthModeTimer = None
+		self.signalStrengthTimer = None
 
 		self.reset()
 
@@ -368,6 +377,9 @@ class Console(object):
 		# End Check Events --------------------------------------------------------------------
 
 	def _connected_mode(self):
+		# Handle timers
+		self.handle_timers()
+
 		# Handle a key press
 		self.handle_data_receive_list()
 
@@ -381,6 +393,16 @@ class Console(object):
 		if self.game.gameSettings['resetGameFlag']:
 			self.game.gameSettings['resetGameFlag'] = False
 			self.reset(internal_reset=True)
+
+	def handle_timers(self):
+		if self.commandStateTimer.currentTime == 0.0:
+			print('=== Command State Timeout ===')
+			self._cancel_command_state()
+
+		if self.longPressTimer.currentTime == 0.0:
+			print('=== Long Press Timeout ===')
+			self._reset_long_press_timer()
+			self.longPressFlag = True
 
 	def handle_data_receive_list(self):
 		if self.dataReceivedFlag:
@@ -426,11 +448,10 @@ class Console(object):
 					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
 
 					# Always leave command state after a combo event
-					if button_type == 'mode' and direction == '_UP':
+					if button_type == 'mode':
 						pass
 					else:
-						print('=== EXIT Command State ===')
-						self.commandState = False
+						self._cancel_command_state()
 
 				else:
 					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string)
@@ -477,11 +498,17 @@ class Console(object):
 			if direction == '_DOWN':
 				print('=== ENTER Command State ===')
 				self.commandState = True
+				print('START command state timer')
+				self.commandStateTimer.start_()
 				print('START long press timer')
+				self.longPressTimer.start_()
 
 			elif direction == '_UP':
 				if self.longPressFlag:
-					print('Trigger Power down mode')
+					self.longPressFlag = False
+					self._send_power_down_flag()
+				else:
+					self._reset_long_press_timer()
 
 		else:
 			if direction == '_DOWN':
@@ -522,38 +549,55 @@ class Console(object):
 		elif button_type == 'mode':
 			if not self.batteryStrengthMode and not self.signalStrengthMode:
 				if direction == '_DOWN':
-					print('Reset Command Timer')
+					self._reset_command_timer()
+					self.signalStrengthTimer = threading.Timer(
+						self.signalStrengthTime, self._exit_signal_strength_mode).start()
 					print('=== ENTER Signal Strength Mode ===')
 					self.signalStrengthMode = True
+					self.build_signal_strength_display_flag_broadcast_string(True)
+					print('START long press timer')
+					self.longPressTimer.start_()
 
 				elif direction == '_UP':
-					print('Reset Command Timer')
+					self._reset_command_timer()
+					self._reset_long_press_timer()
 
 			elif self.signalStrengthMode:
 				if direction == '_DOWN':
-					print('Reset Command Timer')
+					self._reset_command_timer()
 					print('=== EXIT Signal Strength Mode ===')
 					self.signalStrengthMode = False
+					self.build_signal_strength_display_flag_broadcast_string(False)
+					self.batteryStrengthModeTimer = threading.Timer(
+						self.batteryStrengthTime, self._exit_battery_strength_mode).start()
 					print('=== ENTER Battery Strength Mode ===')
 					self.batteryStrengthMode = True
+					self.build_battery_strength_display_flag_broadcast_string(True)
+					print('START long press timer')
+					self.longPressTimer.start_()
 
 				elif direction == '_UP':
-					print('Reset Command Timer')
+					self._reset_command_timer()
+					self._reset_long_press_timer()
 
 			elif self.batteryStrengthMode:
 				if direction == '_DOWN':
-					print('Reset Command Timer')
+					self._reset_command_timer()
 					print('=== EXIT Battery Strength Mode ===')
 					self.batteryStrengthMode = False
+					self.build_battery_strength_display_flag_broadcast_string(False)
 					print('=== ENTER Strength Not Selected Mode ===')
+					print('START long press timer')
+					self.longPressTimer.start_()
 
 				elif direction == '_UP':
-					print('Reset Command Timer')
+					self._reset_command_timer()
+					self._reset_long_press_timer()
 
 		elif button_type == 'inningsPlusOne':
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				if direction == '_DOWN':
-					print('Reset Command Timer')
+					self._reset_command_timer()
 					self.game.gameSettings['resetGameFlag'] = True
 
 				elif direction == '_UP':
@@ -567,7 +611,7 @@ class Console(object):
 
 			elif not self.mainTimerRunningMode:
 				if direction == '_DOWN':
-					print('Reset Command Timer')
+					self._reset_command_timer()
 					self.game.gameSettings['resetGameFlag'] = True
 
 				elif direction == '_UP':
@@ -581,7 +625,6 @@ class Console(object):
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedBottom', 1)
 					self.build_get_rssi_flag_broadcast_string(True)
-					print(self.broadcastString)
 
 				elif direction == '_UP':
 					pass
@@ -642,6 +685,27 @@ class Console(object):
 
 			elif direction == '_UP':
 				pass
+
+	def _reset_command_timer(self):
+		self.commandStateTimer.stop_()
+		self.commandStateTimer.reset_(self.commandStateCancelTime)
+		if self.commandState:
+			self.commandStateTimer.start_()
+		print('Reset Command Timer')
+
+	def _cancel_command_state(self):
+		self.commandState = False
+		print('=== EXIT Command State ===')
+		self._reset_command_timer()
+
+	def _reset_long_press_timer(self):
+		self.longPressTimer.stop_()
+		self.longPressTimer.reset_(self.commandStateCancelTime)
+		print('Reset Long Press Timer')
+
+	def _send_power_down_flag(self):
+		print('Send Power Down Flag to Keypad')
+		self.build_power_down_flag_broadcast_string(True)
 
 	def json_button_objects_validation(self, json_fragment):
 		valid = keymap_grid_value = direction = button_type = func_string = False
@@ -727,6 +791,30 @@ class Console(object):
 		string = json.dumps(temp_dict)
 		self.broadcastString += string
 
+	def build_signal_strength_display_flag_broadcast_string(self, value):
+		self.broadcastString += 'JSON_FRAGMENT'
+		temp_dict = dict()
+		temp_dict['command_flags'] = dict()
+		temp_dict['command_flags']['signal_strength_display'] = value
+		string = json.dumps(temp_dict)
+		self.broadcastString += string
+
+	def build_battery_strength_display_flag_broadcast_string(self, value):
+		self.broadcastString += 'JSON_FRAGMENT'
+		temp_dict = dict()
+		temp_dict['command_flags'] = dict()
+		temp_dict['command_flags']['battery_strength_display'] = value
+		string = json.dumps(temp_dict)
+		self.broadcastString += string
+
+	def build_power_down_flag_broadcast_string(self, value):
+		self.broadcastString += 'JSON_FRAGMENT'
+		temp_dict = dict()
+		temp_dict['command_flags'] = dict()
+		temp_dict['command_flags']['power_down'] = value
+		string = json.dumps(temp_dict)
+		self.broadcastString += string
+
 	def test_state_one(self, keymap_grid_value, direction, button_type, func_string):
 		if button_type == 'mode':
 			if direction == '_DOWN':
@@ -754,6 +842,17 @@ class Console(object):
 
 	def test_state_four(self, keymap_grid_value, direction, button_type, func_string):
 		pass
+
+	def _handle_long_press_time(self):
+		self.longPressFlag = True
+
+	def _exit_battery_strength_mode(self):
+		self.batteryStrengthMode = False
+		print('EXIT battery strength mode - timeout')
+
+	def _exit_signal_strength_mode(self):
+		self.signalStrengthMode = False
+		print('EXIT signal strength mode - timeout')
 
 	def _update_mp_words_dict(self):
 		if self.game.gameSettings['blankTestFlag']:
@@ -1099,7 +1198,7 @@ class Console(object):
 
 		while 1:
 			tic = time.time()
-			print(tic-self.startTime)
+			# print(tic-self.startTime)
 
 			# get the list sockets which are ready to be read through select
 			ready_to_read, ready_to_write, in_error = select.select(
