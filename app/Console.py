@@ -556,6 +556,7 @@ class Console(object):
 					self.signalStrengthMode = True
 					self.build_signal_strength_display_flag_broadcast_string(True)
 					print('START long press timer')
+					self._reset_long_press_timer()
 					self.longPressTimer.start_()
 
 				elif direction == '_UP':
@@ -574,6 +575,7 @@ class Console(object):
 					self.batteryStrengthMode = True
 					self.build_battery_strength_display_flag_broadcast_string(True)
 					print('START long press timer')
+					self._reset_long_press_timer()
 					self.longPressTimer.start_()
 
 				elif direction == '_UP':
@@ -588,6 +590,7 @@ class Console(object):
 					self.build_battery_strength_display_flag_broadcast_string(False)
 					print('=== ENTER Strength Not Selected Mode ===')
 					print('START long press timer')
+					self._reset_long_press_timer()
 					self.longPressTimer.start_()
 
 				elif direction == '_UP':
