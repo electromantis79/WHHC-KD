@@ -168,9 +168,11 @@ class Console(object):
 		# Kill old clock threads so they don't multiple for ever
 		if internal_reset:
 			self.game.kill_clock_threads()
+			print('CONNECTED_MODE')
 			self.mode = self.CONNECTED_MODE
 			self.modeLogger.info('internal_reset')
 		else:
+			print('BOOT_UP_MODE')
 			self.mode = self.BOOT_UP_MODE
 			self.modeLogger.info(self.modeNameDict[self.mode])
 
@@ -302,6 +304,7 @@ class Console(object):
 				self.serverThread.daemon = True
 				self.serverThread.start()
 			else:
+				print('CONNECTED_MODE')
 				self.mode = self.CONNECTED_MODE
 				self.modeLogger.info(self.modeNameDict[self.mode])
 
@@ -348,9 +351,11 @@ class Console(object):
 			elif self.mode == self.LISTENING_MODE:
 				pass
 			elif self.mode == self.DISCOVERED_MODE:
+				print('TRANSFER_MODE')
 				self.mode = self.TRANSFER_MODE
 				self.modeLogger.info(self.modeNameDict[self.mode])
 			elif self.mode == self.TRANSFER_MODE:
+				print('CONNECTED_MODE')
 				self.mode = self.CONNECTED_MODE
 				self.modeLogger.info(self.modeNameDict[self.mode])
 			elif self.mode == self.CONNECTED_MODE:
@@ -412,7 +417,7 @@ class Console(object):
 
 			# Handle multiple incoming button presses
 			for data in data_received_list:
-				self.modeLogger.info(data + ' received')
+				self.modeLogger.info('Handle Fragment: ' + data)
 
 				index_list = app.utils.functions.find_substrings(data, 'JSON_FRAGMENT')
 
@@ -873,6 +878,7 @@ class Console(object):
 				if self.previousMPWordDict[address] != self.MPWordDict[address]:
 					self.dirtyDict[address] = self.MPWordDict[address]
 		elif self.mode == self.BOOT_UP_MODE and len(self.dirtyDict) == 0:
+			print('LISTENING_MODE')
 			self.mode = self.LISTENING_MODE
 			self.modeLogger.info(self.modeNameDict[self.mode])
 
@@ -1149,7 +1155,7 @@ class Console(object):
 		# PUBLIC
 		self.dataReceivedFlag = True
 		self.dataReceivedList.append(data)
-		print('\nReceived:', data, ': of self.dataReceivedList', self.dataReceivedList)
+		print('Received:', data, ': of self.dataReceivedList', self.dataReceivedList)
 
 	# THREADS ------------------------------------------
 
@@ -1209,21 +1215,27 @@ class Console(object):
 
 			# Handle newly received data
 			for sock in ready_to_read:
-				# print '----- socket_list', socket_list, 'ready_to_read', ready_to_read
+				# print('----- socket_list', socket_list, 'ready_to_read', ready_to_read)
 				if sock == server_socket:
 					# a new connection request received
 					sockfd, addr = server_socket.accept()
 					socket_list.append(sockfd)
-					print("[%s, %s] is connected" % (sockfd, addr))
-					message = "[%s:%s] entered our chatting room" % (sockfd, addr)
+					message = "Connected: %s" % sockfd
+					print('\n' + message)
+					self.modeLogger.info(message)
 					socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 					if self.master_socket is None:
+						master_message = "Master Socket: %s" % sockfd
+						print(master_message)
+						self.modeLogger.info(master_message)
+						self.master_socket = sockfd
+						print('DISCOVERED_MODE')
 						self.mode = self.DISCOVERED_MODE
 						self.modeLogger.info(self.modeNameDict[self.mode])
-						self.modeLogger.info("[%s:%s] joined first" % (sockfd, addr))
-						self.master_socket = sockfd
 					else:
-						self.modeLogger.info("[%s:%s] joined" % (sockfd, addr))
+						other_message = "Other Socket: %s" % sockfd
+						print(other_message)
+						self.modeLogger.info(other_message)
 
 				else:
 					# process data received from client
@@ -1231,30 +1243,31 @@ class Console(object):
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
 						data = data.decode("utf-8")
-						print('Data Received', time.time()-self.startTime, ':', data)
+						print('\nData Received', time.time()-self.startTime, ':', data)
 						if data:
 							if self.master_socket is None:
 								self.master_socket = sock
+								print('DISCOVERED_MODE')
 								self.mode = self.DISCOVERED_MODE
 								self.modeLogger.info(self.modeNameDict[self.mode])
 
 							# there is something in the socket
 							if sock == self.master_socket:
 								# print 'master', sock, self.master_socket
+								self.modeLogger.info('Data Received: ' + data)
 								self.data_received(data)
 							else:
-								print('other', sock, self.master_socket)
+								print('Other Socket:', sock.getpeername(), 'Not Processed by Receiver Device')
 
 							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
 						else:
 							# at this stage, no data means probably the connection has been broken
-							message = "[%s] is offline, no data" % sock
+							message = "No Data: [%s] is offline" % sock
 							socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
 					# exception
 					except Exception as e:
-						message = "exception from process received data"
-						print(e, ':', message)
+						message = "Exception from processing received data: " + str(e) + str(sock)
 						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 
 			# Broadcast data triggered from check_events
@@ -1276,22 +1289,36 @@ class Console(object):
 			# send the message only to peer
 			if socket != server_socket:
 				try:
-					print('Broadcasting', time.time()-self.startTime, ':', message)
 					socket.sendall(bytes(message, "utf8"))
+
 				except Exception as e:
-					message = e, ':', socket, message
-					print(message)
+					# Log error message
+					message = str(e) + ': ' + message
+					print('_broadcast_or_remove: ' + message)
 					self.modeLogger.info(message)
 
-					# broken socket connection
-					if socket == self.master_socket:
-						self.master_socket = None
-						self.mode = self.LISTENING_MODE
-						self.modeLogger.info(self.modeNameDict[self.mode])
-					socket.close()
-					# broken socket, remove it
+					# broken socket, remove it from list
 					if socket in socket_list:
 						socket_list.remove(socket)
+
+					# handle broken socket connection
+					if socket == self.master_socket:
+						if len(socket_list) > 1:
+							self.master_socket = socket_list[1]
+							master_message = "Master Socket: " + str(self.master_socket)
+							print(master_message)
+							self.modeLogger.info(master_message)
+						else:
+							self.master_socket = None
+							self.mode = self.LISTENING_MODE
+							print('LISTENING_MODE')
+							self.modeLogger.info(self.modeNameDict[self.mode])
+					socket.close()
+
+				else:
+					print('Broadcasting: ', str(socket.getpeername()), time.time() - self.startTime, ':', message)
+					self.modeLogger.info('Broadcasting to ' + str(socket.getpeername()) + ': ' + message)
+
 		return socket_list
 
 
