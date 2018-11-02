@@ -1289,7 +1289,9 @@ class Console(object):
 			# send the message only to peer
 			if socket != server_socket:
 				try:
+					print('Broadcasting: ', str(socket.getpeername()), time.time() - self.startTime, ':', message)
 					socket.sendall(bytes(message, "utf8"))
+					self.modeLogger.info('Broadcasting to ' + str(socket.getpeername()) + ': ' + message)
 
 				except Exception as e:
 					# Log error message
@@ -1314,10 +1316,6 @@ class Console(object):
 							print('LISTENING_MODE')
 							self.modeLogger.info(self.modeNameDict[self.mode])
 					socket.close()
-
-				else:
-					print('Broadcasting: ', str(socket.getpeername()), time.time() - self.startTime, ':', message)
-					self.modeLogger.info('Broadcasting to ' + str(socket.getpeername()) + ': ' + message)
 
 		return socket_list
 
