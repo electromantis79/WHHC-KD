@@ -121,6 +121,7 @@ class Config:
 		self.configDict['SERVER'] = True
 		self.configDict['scoreNetHostAddress'] = '192.168.8.1'
 		self.configDict['socketServerPort'] = 60032
+		self.configDict['ptpServerPort'] = 60042
 		self.configDict['Baud'] = 115200
 
 		# THIS SECTION BUILDS THE self.config OBJECT THAT IS WRITTEN TO THE FILE

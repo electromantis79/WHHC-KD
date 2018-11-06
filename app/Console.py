@@ -21,6 +21,7 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, flash, request, redirect, url_for
 from flask import send_from_directory
 from werkzeug.utils import secure_filename
+import Adafruit_BBIO.GPIO as GPIO
 
 import app.utils.functions
 import app.utils.reads
@@ -40,6 +41,9 @@ ALLOWED_EXTENSIONS = ['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif']
 api = Flask(__name__)
 api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+GPIO.setup("P8_10", GPIO.OUT)
+GPIO.output("P8_10", GPIO.LOW)
+
 
 class Console(object):
 	"""
@@ -56,7 +60,8 @@ class Console(object):
 
 	def __init__(
 			self, check_events_flag=True, serial_input_flag=False, serial_input_type='MP',
-			serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False, whh_flag=False):
+			serial_output_flag=True, encode_packet_flag=False, server_thread_flag=False, whh_flag=False,
+			ptp_server_flag=True):
 		self.initTime = time.time()
 
 		self.checkEventsFlag = check_events_flag
@@ -66,6 +71,7 @@ class Console(object):
 		self.encodePacketFlag = encode_packet_flag
 		self.serverThreadFlag = server_thread_flag
 		self.whh_flag = whh_flag
+		self.ptp_server_flag = ptp_server_flag
 
 		# Print Flags
 		self.printProductionInfo = True
@@ -112,6 +118,8 @@ class Console(object):
 		self.longPressTimer = app.game.clock.Clock(max_seconds=self.longPressTime)
 		self.batteryStrengthTime = 2.5
 		self.signalStrengthTime = 2.5
+		self.ptp_port = 60042
+		self.ptpServerRefreshFrequency = 2
 
 		# Main module items set in reset
 		self.checkEventsActiveFlag = None
@@ -307,6 +315,14 @@ class Console(object):
 				print('CONNECTED_MODE')
 				self.mode = self.CONNECTED_MODE
 				self.modeLogger.info(self.modeNameDict[self.mode])
+
+			if self.ptp_server_flag:
+				app.utils.functions.verbose(['\nPTP Server On'], self.printProductionInfo)
+				self.refresherPtpServer = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self._ptp_server, self.ptpServerRefreshFrequency))
+				self.refresherPtpServer.daemon = True
+				self.refresherPtpServer.name = '_ptp_server'
+				self.refresherPtpServer.start()
 
 	# THREADS
 
@@ -1224,6 +1240,7 @@ class Console(object):
 					print('\n' + message)
 					self.modeLogger.info(message)
 					socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
+
 					if self.master_socket is None:
 						master_message = "Master Socket: %s" % sockfd
 						print(master_message)
@@ -1232,6 +1249,7 @@ class Console(object):
 						print('DISCOVERED_MODE')
 						self.mode = self.DISCOVERED_MODE
 						self.modeLogger.info(self.modeNameDict[self.mode])
+
 					else:
 						other_message = "Other Socket: %s" % sockfd
 						print(other_message)
@@ -1242,6 +1260,7 @@ class Console(object):
 					try:
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
+						GPIO.output("P8_10", GPIO.HIGH)
 						data = data.decode("utf-8")
 						print('\nData Received', time.time()-self.startTime, ':', data)
 						if data:
@@ -1278,10 +1297,117 @@ class Console(object):
 
 				# Clear broadcastString
 				self.broadcastString = ''
+			GPIO.output("P8_10", GPIO.LOW)
 
 			toc = time.time()
 			elapse = toc - tic
 			time.sleep(self.socketServerFrequency-elapse)
+
+	def _ptp_server(self):
+		# Tcp Chat server
+		# RUN IN ITS OWN THREAD-PROCESS
+
+		import socket
+		import select
+		import sys
+		import multiprocessing
+
+		h_o_s_t = self.configDict['scoreNetHostAddress']
+		socket_list = []
+		receive_buffer = 4096
+		p_o_r_t = self.configDict['ptpServerPort']
+
+		p = multiprocessing.current_process()
+		print('Starting:', p.name, p.pid)
+		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		while self.mode != self.CONNECTED_MODE:
+			time.sleep(1)
+		try:
+			server_socket.bind((h_o_s_t, p_o_r_t))
+		except socket.error as err:
+			print('errno', err.errno)
+			if err.errno == 98:
+				# This means we already have a server
+				connected = 0
+				while not connected:
+					time.sleep(3)
+					try:
+						server_socket.bind((h_o_s_t, p_o_r_t))
+						connected = 1
+					except:
+						pass
+			else:
+				sys.exit(err.errno)
+
+		server_socket.listen(10)
+
+		# add server socket object to the list of readable connections
+		socket_list.append(server_socket)
+
+		start_message = "Ptp server started on port " + str(p_o_r_t)
+		print(start_message)
+		self.modeLogger.info(start_message)
+
+		while 1:
+			tic = time.time()
+			# print(tic-self.startTime)
+
+			if self.master_socket is not None:
+				# print('Broadcasting: ', str(self.master_socket.getpeername()), time.time() - self.startTime)
+				# get the list sockets which are ready to be read through select
+				ready_to_read, ready_to_write, in_error = select.select(
+					socket_list, [], [], 0)  # 4th arg, time_out  = 0 : poll and never block
+
+				# Handle newly received data
+				for sock in ready_to_read:
+					# print('----- socket_list', socket_list, 'ready_to_read', ready_to_read)
+					if sock == server_socket:
+						# a new connection request received
+						sockfd, addr = server_socket.accept()
+						socket_list.append(sockfd)
+						message = "PTP Connected: %s" % sockfd
+						print('\n' + message)
+						self.modeLogger.info(message)
+						socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
+
+					else:
+						# process data received from client
+						try:
+							# receiving data from the socket.
+							data = sock.recv(receive_buffer)
+							GPIO.output("P8_10", GPIO.HIGH)
+							data = data.decode("utf-8")
+							print('\nData Received', time.time()-self.startTime, ':', data)
+							if data:
+								if self.master_socket is None:
+									self.master_socket = sock
+									print('DISCOVERED_MODE')
+									self.mode = self.DISCOVERED_MODE
+									self.modeLogger.info(self.modeNameDict[self.mode])
+
+								# there is something in the socket
+								if sock == self.master_socket:
+									# print 'master', sock, self.master_socket
+									self.modeLogger.info('Data Received: ' + data)
+									self.data_received(data)
+								else:
+									print('Other Socket:', sock.getpeername(), 'Not Processed by Receiver Device')
+
+								socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
+							else:
+								# at this stage, no data means probably the connection has been broken
+								message = "No Data: [%s] is offline" % sock
+								socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
+
+						# exception
+						except Exception as e:
+							message = "Exception from processing received data: " + str(e) + str(sock)
+							socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
+
+			toc = time.time()
+			elapse = toc - tic
+			time.sleep(self.ptpServerRefreshFrequency - elapse)
 
 	def _broadcast_or_remove(self, server_socket, message, socket_list):
 		# broadcast chat messages to all connected clients
