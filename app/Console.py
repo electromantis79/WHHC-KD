@@ -453,7 +453,7 @@ class Console(object):
 	def handle_fragment(self, fragment):
 		if fragment:
 			# Validate fragment ------------------
-			valid, keymap_grid_value, direction, button_type, func_string = self.json_button_objects_validation(
+			valid, keymap_grid_value, direction, button_type, func_string, event_time = self.json_button_objects_validation(
 				fragment)
 
 			if valid:
@@ -739,10 +739,14 @@ class Console(object):
 		if 'button_objects' in json_fragment:
 			for button in json_fragment['button_objects']:
 				if json_fragment['button_objects'][button].keys() >= {
-					'keymap_grid_value', 'event_state', 'event_flag'}:
+					'keymap_grid_value', 'event_state', 'event_flag', 'event_time'}:
 					if json_fragment['button_objects'][button]['event_flag']:
 						keymap_grid_value = json_fragment['button_objects'][button]['keymap_grid_value']
 						event_state = json_fragment['button_objects'][button]['event_state']
+						event_time = json_fragment['button_objects'][button]['event_time']
+
+						transit_time = int(self.data_received_time * 1000000) - int(event_time)
+						print('transit_time', transit_time, 'us')
 
 						# Format direction
 						if event_state == 'down':
@@ -774,7 +778,7 @@ class Console(object):
 		else:
 			print('\nbutton_objects not in fragment')
 
-		return valid, keymap_grid_value, direction, button_type, func_string
+		return valid, keymap_grid_value, direction, button_type, func_string, event_time
 
 	@staticmethod
 	def json_rssi_validation(json_fragment):
@@ -1190,6 +1194,7 @@ class Console(object):
 		socket_list = []
 		receive_buffer = 4096
 		p_o_r_t = self.configDict['socketServerPort']
+		self.data_received_time = 0.0
 
 		p = multiprocessing.current_process()
 		print('Starting:', p.name, p.pid)
@@ -1263,8 +1268,9 @@ class Console(object):
 						# receiving data from the socket.
 						data = sock.recv(receive_buffer)
 						GPIO.output("P8_10", GPIO.HIGH)
+						self.data_received_time = time.time()-self.startTime
 						data = data.decode("utf-8")
-						print('\nData Received', time.time()-self.startTime, ':', data)
+						print('\nData Received', self.data_received_time, ':', data)
 						if data:
 							if self.master_socket is None:
 								self.master_socket = sock
