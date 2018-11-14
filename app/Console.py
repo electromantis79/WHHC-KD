@@ -119,7 +119,7 @@ class Console(object):
 		self.longPressTimer = app.game.clock.Clock(max_seconds=self.longPressTime)
 		self.batteryStrengthTime = 2.5
 		self.signalStrengthTime = 2.5
-		self.ptpServerRefreshFrequency = 2
+		self.ptpServerRefreshFrequency = 1
 		self.ptp_port = 60042
 		GPIO.output("P8_10", False)
 
@@ -1324,11 +1324,11 @@ class Console(object):
 		ptp_follow_up_flag = False
 		ptp_delay_request_flag = False
 		ptp_delay_response_flag = False
+		print_ptp_messages = False
 		self.send_time = 0
 		self.time_4 = 0
 
 		p = multiprocessing.current_process()
-		print('Starting:', p.name, p.pid)
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		while self.mode != self.CONNECTED_MODE:
@@ -1367,7 +1367,6 @@ class Console(object):
 			if ptp_sync_active_flag:
 				if ptp_accept_flag:
 					if len(socket_list) == 1:
-						# print('Broadcasting: ', str(self.master_socket.getpeername()), time.time() - self.startTime)
 						# get the list sockets which are ready to be read through select
 						ready_to_read, ready_to_write, in_error = select.select(
 							socket_list, [], [], 0)  # 4th arg, time_out  = 0 : poll and never block
@@ -1386,54 +1385,23 @@ class Console(object):
 								ptp_accept_flag = False
 								ptp_sync_message_flag = True
 
-							else:
-								# process data received from client
-								try:
-									# receiving data from the socket.
-									data = sock.recv(receive_buffer)
-									GPIO.output("P8_10", GPIO.HIGH)
-									data = data.decode("utf-8")
-									print('\nData Received', time.time()-self.startTime, ':', data)
-									if data:
-										if self.master_socket is None:
-											self.master_socket = sock
-											print('DISCOVERED_MODE')
-											self.mode = self.DISCOVERED_MODE
-											self.modeLogger.info(self.modeNameDict[self.mode])
-
-										# there is something in the socket
-										if sock == self.master_socket:
-											# print 'master', sock, self.master_socket
-											self.modeLogger.info('Data Received: ' + data)
-											self.data_received(data)
-										else:
-											print('Other Socket:', sock.getpeername(), 'Not Processed by Receiver Device')
-
-										socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
-									else:
-										# at this stage, no data means probably the connection has been broken
-										message = "No Data: [%s] is offline" % sock
-										socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
-
-								# exception
-								except Exception as e:
-									message = "Exception from processing received data: " + str(e) + str(sock)
-									socket_list = self._broadcast_or_remove(server_socket, message, socket_list)
 					else:
 						ptp_accept_flag = False
 						ptp_sync_message_flag = True
 
 				if ptp_sync_message_flag:
-					print('Sync message')
-					sync_message = 'SYNC%d' % ((time.time() - self.startTime) * 1000000)
-					socket_list = self._broadcast_or_remove(server_socket, sync_message, socket_list, ptp_flag=True, sync_flag=True)
+					if print_ptp_messages:
+						print('Sync message')
+					sync_message = 'SYNC%d' % (int((time.time() - self.startTime) * 1000000))
+					socket_list = self._broadcast_or_remove(server_socket, sync_message, socket_list, ptp_flag=True, sync_flag=True, print_messages=print_ptp_messages)
 					ptp_sync_message_flag = False
 					ptp_follow_up_flag = True
 
 				if ptp_follow_up_flag:
-					print('Follow Up')
+					if print_ptp_messages:
+						print('Follow Up')
 					follow_up_message = 'FOLLOW_UP%d' % self.send_time
-					socket_list = self._broadcast_or_remove(server_socket, follow_up_message, socket_list, ptp_flag=True, sync_flag=False)
+					socket_list = self._broadcast_or_remove(server_socket, follow_up_message, socket_list, ptp_flag=True, sync_flag=False, print_messages=print_ptp_messages)
 					ptp_follow_up_flag = False
 					ptp_delay_request_flag = True
 
@@ -1456,7 +1424,7 @@ class Console(object):
 								# receiving data from the socket.
 								data = sock.recv(receive_buffer)
 								self.time_4 = time.time()
-								self.time_4 = (self.time_4 - self.startTime) * 1000000
+								self.time_4 = int((self.time_4 - self.startTime) * 1000000)
 								GPIO.output("P8_10", True)
 								time.sleep(0.001)
 								GPIO.output("P8_10", False)
@@ -1478,26 +1446,49 @@ class Console(object):
 								time.sleep(0.001)
 
 								data = data.decode("utf-8")
-								print('\nData Received', int(self.time_4), ':', data + ' ' + str(int(data[14:]) - int(self.time_4)))
+								try:
+									diff = str(int(data[14:]) - self.time_4)
+								except:
+									diff = 'ERROR'
+								if print_ptp_messages:
+									print('\nData Received', self.time_4, ':', data + ' ' + diff)
 								if data:
 									# there is something in the socket
-									self.modeLogger.info('Data Received: ' + data)
 									ptp_delay_request_flag = False
 									ptp_delay_response_flag = True
 								else:
 									# at this stage, no data means probably the connection has been broken
-									message = "No Data: [%s] is offline" % sock
-									socket_list = self._broadcast_or_remove(server_socket, message, socket_list, ptp_flag=True, sync_flag=False)
+									message = "No Data Delay Request: [%s] is offline" % sock
+									socket_list = self._broadcast_or_remove(server_socket, message, socket_list, ptp_flag=True, sync_flag=False, print_messages=print_ptp_messages)
+									self.modeLogger.info(message)
+									if sock in socket_list:
+										socket_list.remove(sock)
+									ptp_sync_active_flag = True
+									ptp_accept_flag = True
+									ptp_sync_message_flag = False
+									ptp_follow_up_flag = False
+									ptp_delay_request_flag = False
+									ptp_delay_response_flag = False
 
 							# exception
 							except Exception as e:
-								message = "Exception from processing received data: " + str(e) + str(sock)
-								socket_list = self._broadcast_or_remove(server_socket, message, socket_list, ptp_flag=True, sync_flag=False)
+								message = "Exception from processing Delay Request received data: " + str(e) + str(sock)
+								socket_list = self._broadcast_or_remove(server_socket, message, socket_list, ptp_flag=True, sync_flag=False, print_messages=print_ptp_messages)
+								self.modeLogger.info(message)
+								if sock in socket_list:
+									socket_list.remove(sock)
+								ptp_sync_active_flag = True
+								ptp_accept_flag = True
+								ptp_sync_message_flag = False
+								ptp_follow_up_flag = False
+								ptp_delay_request_flag = False
+								ptp_delay_response_flag = False
 
 				if ptp_delay_response_flag:
-					print('Delay Response')
+					if print_ptp_messages:
+						print('Delay Response')
 					follow_up_message = 'DELAY_RESPONSE%d' % self.time_4
-					socket_list = self._broadcast_or_remove(server_socket, follow_up_message, socket_list, ptp_flag=True, sync_flag=False)
+					socket_list = self._broadcast_or_remove(server_socket, follow_up_message, socket_list, ptp_flag=True, sync_flag=False, print_messages=print_ptp_messages)
 					ptp_delay_response_flag = False
 					ptp_sync_active_flag = False
 
@@ -1509,27 +1500,27 @@ class Console(object):
 				ptp_delay_request_flag = False
 				ptp_delay_response_flag = False
 				ptp_sync_start_time = time.time()
-				print('PTP Sync Triggered at', ptp_sync_start_time - self.startTime)
+				if print_ptp_messages:
+					print('PTP Sync Triggered at', ptp_sync_start_time)
 
 			time.sleep(self.ptpServerSleepDelay)
 
-	def _broadcast_or_remove(self, server_socket, message, socket_list, ptp_flag=False, sync_flag=False):
+	def _broadcast_or_remove(self, server_socket, message, socket_list, ptp_flag=False, sync_flag=False, print_messages=True):
 		# broadcast chat messages to all connected clients
 		for socket in socket_list:
 			# send the message only to peer
 			if socket != server_socket:
 				try:
-					print('Broadcasting: ', str(socket.getpeername()), time.time() - self.startTime, ':', message)
+					if print_messages:
+						print('Broadcasting: ', str(socket.getpeername()), time.time(), ':', message)
 					socket.sendall(bytes(message, "utf8"))
 					self.send_time = time.time()
-					self.send_time = (self.send_time - self.startTime) * 1000000
+					self.send_time = int((self.send_time - self.startTime) * 1000000)
 					if sync_flag:
 						GPIO.output("P8_10", True)
 						time.sleep(0.001)
 						GPIO.output("P8_10", False)
 						time.sleep(0.001)
-
-					self.modeLogger.info('Broadcasting to ' + str(socket.getpeername()) + ': ' + message)
 
 				except Exception as e:
 					# Log error message
