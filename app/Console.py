@@ -465,8 +465,10 @@ class Console(object):
 					self.test_state_two(keymap_grid_value, direction, button_type, func_string)
 				elif test_state == 3:
 					self.game.set_game_data('testStateUnits', 0, places=1)
+					self.modeLogger.info('END TEST 3 MODE')
 				elif test_state == 4:
 					self.game.set_game_data('testStateUnits', 0, places=1)
+					self.modeLogger.info('END TEST 4 MODE')
 				elif self.commandState:
 					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
 
@@ -648,6 +650,7 @@ class Console(object):
 				if direction == '_DOWN':
 					self.game.set_game_data('testStateUnits', 1, places=1)
 					print('Enter Test State 1')
+					self.modeLogger.info('BEGIN TEST 1 MODE')
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedBottom', 1)
 					self.build_get_rssi_flag_broadcast_string(True)
@@ -660,6 +663,10 @@ class Console(object):
 				if direction == '_DOWN':
 					self.game.set_game_data('testStateUnits', 2, places=1)
 					print('Enter Test State 2')
+					self.modeLogger.info('BEGIN TEST 2 MODE')
+					self.led_sequence.all_off()
+					self.led_sequence.set_led('strengthLedMiddleBottom', 1)
+					self.build_send_blocks_flag_broadcast_string(True)
 
 				elif direction == '_UP':
 					pass
@@ -669,6 +676,7 @@ class Console(object):
 				if direction == '_DOWN':
 					self.game.set_game_data('testStateUnits', 3, places=1)
 					print('Enter Test State 3')
+					self.modeLogger.info('BEGIN TEST 3 MODE')
 
 				elif direction == '_UP':
 					pass
@@ -678,6 +686,7 @@ class Console(object):
 				if direction == '_DOWN':
 					self.game.set_game_data('testStateUnits', 4, places=1)
 					print('Enter Test State 4')
+					self.modeLogger.info('BEGIN TEST 4 MODE')
 
 				elif direction == '_UP':
 					pass
@@ -734,7 +743,7 @@ class Console(object):
 		self.build_power_down_flag_broadcast_string(True)
 
 	def json_button_objects_validation(self, json_fragment):
-		valid = keymap_grid_value = direction = button_type = func_string = False
+		valid = keymap_grid_value = direction = button_type = func_string = event_time = False
 		# Check for fragment structure for button_objects
 		if 'button_objects' in json_fragment:
 			for button in json_fragment['button_objects']:
@@ -821,6 +830,14 @@ class Console(object):
 		string = json.dumps(temp_dict)
 		self.broadcastString += string
 
+	def build_send_blocks_flag_broadcast_string(self, value):
+		self.broadcastString += 'JSON_FRAGMENT'
+		temp_dict = dict()
+		temp_dict['command_flags'] = dict()
+		temp_dict['command_flags']['send_blocks'] = value
+		string = json.dumps(temp_dict)
+		self.broadcastString += string
+
 	def build_signal_strength_display_flag_broadcast_string(self, value):
 		self.broadcastString += 'JSON_FRAGMENT'
 		temp_dict = dict()
@@ -856,6 +873,7 @@ class Console(object):
 				self.build_get_rssi_flag_broadcast_string(False)
 				print(self.broadcastString)
 				print('Exit Test State 1')
+				self.modeLogger.info('END TEST 1 MODE')
 
 	def test_state_two(self, keymap_grid_value, direction, button_type, func_string):
 		if button_type == 'mode':
@@ -865,7 +883,10 @@ class Console(object):
 			elif direction == '_UP':
 				self.game.set_game_data('testStateUnits', 0, places=1)
 				self.led_sequence.all_off()
+				self.build_send_blocks_flag_broadcast_string(False)
+				print(self.broadcastString)
 				print('Exit Test State 2')
+				self.modeLogger.info('END TEST 2 MODE')
 
 	def test_state_three(self, keymap_grid_value, direction, button_type, func_string):
 		pass
