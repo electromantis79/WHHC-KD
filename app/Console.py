@@ -121,6 +121,7 @@ class Console(object):
 		self.signalStrengthTime = 2.5
 		self.ptpServerRefreshFrequency = 1
 		self.ptp_port = 60042
+		self.testTwoFlag = False
 		GPIO.output("P8_10", False)
 
 		# Main module items set in reset
@@ -447,7 +448,7 @@ class Console(object):
 				for fragment in fragment_list:
 					self.handle_fragment(fragment)
 
-			if self.broadcastString:
+			if self.broadcastString and not self.testTwoFlag:
 				self.broadcastFlag = True
 
 	def handle_fragment(self, fragment):
@@ -462,6 +463,7 @@ class Console(object):
 				if test_state == 1:
 					self.test_state_one(keymap_grid_value, direction, button_type, func_string)
 				elif test_state == 2:
+					self.testTwoFlag = True
 					self.test_state_two(keymap_grid_value, direction, button_type, func_string)
 				elif test_state == 3:
 					self.game.set_game_data('testStateUnits', 0, places=1)
@@ -883,6 +885,8 @@ class Console(object):
 			elif direction == '_UP':
 				self.game.set_game_data('testStateUnits', 0, places=1)
 				self.led_sequence.all_off()
+				self.testTwoFlag = False
+				self.broadcastString = ''
 				self.build_send_blocks_flag_broadcast_string(False)
 				print(self.broadcastString)
 				print('Exit Test State 2')
@@ -1307,7 +1311,7 @@ class Console(object):
 							else:
 								print('Other Socket:', sock.getpeername(), 'Not Processed by Receiver Device')
 
-							socket_list = self._broadcast_or_remove(server_socket, data, socket_list)
+							socket_list = self._broadcast_or_remove(server_socket, data, socket_list, enable=self.broadcastFlag)
 						else:
 							# at this stage, no data means probably the connection has been broken
 							message = "No Data: [%s] is offline" % sock
@@ -1532,47 +1536,48 @@ class Console(object):
 
 			time.sleep(self.ptpServerSleepDelay)
 
-	def _broadcast_or_remove(self, server_socket, message, socket_list, ptp_flag=False, sync_flag=False, print_messages=True):
-		# broadcast chat messages to all connected clients
-		for socket in socket_list:
-			# send the message only to peer
-			if socket != server_socket:
-				try:
-					if print_messages:
-						print('Broadcasting: ', str(socket.getpeername()), time.time(), ':', message)
-					socket.sendall(bytes(message, "utf8"))
-					self.send_time = time.time()
-					self.send_time = int((self.send_time - self.startTime) * 1000000)
-					if sync_flag:
-						GPIO.output("P8_10", True)
-						time.sleep(0.001)
-						GPIO.output("P8_10", False)
-						time.sleep(0.001)
+	def _broadcast_or_remove(self, server_socket, message, socket_list, ptp_flag=False, sync_flag=False, print_messages=True, enable=True):
+		if enable:
+			# broadcast chat messages to all connected clients
+			for socket in socket_list:
+				# send the message only to peer
+				if socket != server_socket:
+					try:
+						if print_messages:
+							print('Broadcasting: ', str(socket.getpeername()), time.time(), ':', message)
+						socket.sendall(bytes(message, "utf8"))
+						self.send_time = time.time()
+						self.send_time = int((self.send_time - self.startTime) * 1000000)
+						if sync_flag:
+							GPIO.output("P8_10", True)
+							time.sleep(0.001)
+							GPIO.output("P8_10", False)
+							time.sleep(0.001)
 
-				except Exception as e:
-					# Log error message
-					message = str(e) + ': ' + message
-					print('_broadcast_or_remove: ' + message)
-					self.modeLogger.info(message)
+					except Exception as e:
+						# Log error message
+						message = str(e) + ': ' + message
+						print('_broadcast_or_remove: ' + message)
+						self.modeLogger.info(message)
 
-					# broken socket, remove it from list
-					if socket in socket_list:
-						socket_list.remove(socket)
+						# broken socket, remove it from list
+						if socket in socket_list:
+							socket_list.remove(socket)
 
-					if not ptp_flag:
-						# handle broken socket connection
-						if socket == self.master_socket:
-							if len(socket_list) > 1:
-								self.master_socket = socket_list[1]
-								master_message = "Master Socket: " + str(self.master_socket)
-								print(master_message)
-								self.modeLogger.info(master_message)
-							else:
-								self.master_socket = None
-								self.mode = self.LISTENING_MODE
-								print('LISTENING_MODE')
-								self.modeLogger.info(self.modeNameDict[self.mode])
-					socket.close()
+						if not ptp_flag:
+							# handle broken socket connection
+							if socket == self.master_socket:
+								if len(socket_list) > 1:
+									self.master_socket = socket_list[1]
+									master_message = "Master Socket: " + str(self.master_socket)
+									print(master_message)
+									self.modeLogger.info(master_message)
+								else:
+									self.master_socket = None
+									self.mode = self.LISTENING_MODE
+									print('LISTENING_MODE')
+									self.modeLogger.info(self.modeNameDict[self.mode])
+						socket.close()
 
 		return socket_list
 
