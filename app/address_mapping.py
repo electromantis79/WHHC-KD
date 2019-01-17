@@ -371,10 +371,7 @@ class AddressMapping(object):
 				group, bank, word, i_bit, h_bit,
 				high_nibble, low_nibble, blank_type, segment_data) = self._load_from_add_dict(address)
 
-			# Replace 221 with rssi value - For testing of WHH Console
-			if group == 2 and bank == 2 and word == 1 and self.rssiFlag:
-				high_nibble = self.rssi/10
-				low_nibble = self.rssi % 10
+			# Special case overrides should go here, priority order can not matter
 
 			# encode values into MP style word and fill wordsDict
 			self.wordsDict[address] = self.mp.encode(

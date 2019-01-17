@@ -118,7 +118,7 @@ class Console(object):
 		self.longPressTime = 2.5
 		self.longPressTimer = app.game.clock.Clock(max_seconds=self.longPressTime)
 		self.batteryStrengthTime = 2.5
-		self.signalStrengthTime = 2.5
+		self.signalStrengthTime = 2.5 + 1
 		self.ptpServerRefreshFrequency = 1
 		self.ptp_port = 60042
 		self.testTwoFlag = False
@@ -422,6 +422,10 @@ class Console(object):
 		if self.commandStateTimer.currentTime == 0.0:
 			print('=== Command State Timeout ===')
 			self._cancel_command_state()
+			self.led_sequence.set_led('signalLed', 0)
+			self.led_sequence.set_led('batteryLed', 0)
+			self.build_led_dict_broadcast_string()
+			self.broadcastFlag = True
 
 		if self.longPressTimer.currentTime == 0.0:
 			print('=== Long Press Timeout ===')
@@ -479,6 +483,8 @@ class Console(object):
 						pass
 					else:
 						self._cancel_command_state()
+						self._reset_long_press_timer()
+						self.longPressFlag = False
 
 				else:
 					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string)
@@ -488,6 +494,13 @@ class Console(object):
 					self.led_sequence.set_led('topLed', 1)
 				else:
 					self.led_sequence.set_led('topLed', 0)
+
+				if self.commandState:
+					self.led_sequence.set_led('signalLed', 1)
+					self.led_sequence.set_led('batteryLed', 1)
+				else:
+					self.led_sequence.set_led('signalLed', 0)
+					self.led_sequence.set_led('batteryLed', 0)
 
 				# build_broadcast_strings
 				self.build_led_dict_broadcast_string()
@@ -653,6 +666,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 1, places=1)
 					print('Enter Test State 1')
 					self.modeLogger.info('BEGIN TEST 1 MODE')
+					self._reset_long_press_timer()
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedBottom', 1)
 					self.build_get_rssi_flag_broadcast_string(True)
@@ -666,6 +680,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 2, places=1)
 					print('Enter Test State 2')
 					self.modeLogger.info('BEGIN TEST 2 MODE')
+					self._reset_long_press_timer()
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedMiddleBottom', 1)
 					self.build_send_blocks_flag_broadcast_string(True)
@@ -679,6 +694,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 3, places=1)
 					print('Enter Test State 3')
 					self.modeLogger.info('BEGIN TEST 3 MODE')
+					self._reset_long_press_timer()
 
 				elif direction == '_UP':
 					pass
@@ -689,6 +705,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 4, places=1)
 					print('Enter Test State 4')
 					self.modeLogger.info('BEGIN TEST 4 MODE')
+					self._reset_long_press_timer()
 
 				elif direction == '_UP':
 					pass
@@ -1311,7 +1328,7 @@ class Console(object):
 							else:
 								print('Other Socket:', sock.getpeername(), 'Not Processed by Receiver Device')
 
-							socket_list = self._broadcast_or_remove(server_socket, data, socket_list, enable=self.broadcastFlag)
+							# socket_list = self._broadcast_or_remove(server_socket, data, socket_list, enable=self.broadcastFlag)
 						else:
 							# at this stage, no data means probably the connection has been broken
 							message = "No Data: [%s] is offline" % sock
