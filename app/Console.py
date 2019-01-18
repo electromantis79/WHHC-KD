@@ -105,6 +105,9 @@ class Console(object):
 		self.sendList = []
 		self.ETNSendList = []
 		self.ETNSendListFlag = False
+		self.dimmingChangeFlag = False
+		self.dimmingSendList = []
+		self.dimmingSendListFlag = False
 		self.dataReceivedList = []
 		self.dataReceivedFlag = False
 		self.broadcastFlag = False
@@ -712,7 +715,16 @@ class Console(object):
 
 		elif button_type == 'ballsPlusOne':
 			if direction == '_DOWN':
-				print('If Brightness is at 50%, set Brightness to 100%, otherwise decrease Brightness by 10%')
+				brightness = self.game.gameSettings['brightness']
+				brightness -= 10
+
+				if brightness < 50:
+					brightness = 100
+
+				print('------> Brightness set to', brightness, '%')
+				self.game.gameSettings['brightness'] = brightness
+
+				self.dimmingChangeFlag = True
 
 			elif direction == '_UP':
 				pass
@@ -956,7 +968,10 @@ class Console(object):
 		self.sendList = []
 
 		# Make custom send list for ASCII to MP ETN send
-		self._custom_send_list_ascii_to_mp_etn()
+		self._custom_send_list_ascii_to_mp_etn()  # Not used on handheld
+
+		# Make custom send list for dimming
+		self._custom_send_list_dimming()
 
 		# Append dirty words to send list
 		remove_count = 0
@@ -1033,6 +1048,60 @@ class Console(object):
 			second_byte = int((word & 0xFF)).to_bytes(1, 'big')
 			serial_string += first_byte+second_byte
 		self.serialString = serial_string
+
+	def _custom_send_list_dimming(self):
+		if self.dimmingChangeFlag:
+			self.dimmingChangeFlag = False
+
+			self.dimmingSendListFlag = True
+			self.dimmingSendList = []
+
+			# Scale brightness
+			user_brightness = self.game.gameSettings['brightness']
+			# print('user_brightness = ', user_brightness)
+			scaled_brightness = (user_brightness - 50) * 3 // 2 + 24  # range = 24 - 99
+			# print('scaled_brightness = ', scaled_brightness)
+
+			# Build words
+			word1 = self.mp.encode(1, 1, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word2 = self.mp.encode(1, 1, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+			word3 = self.mp.encode(1, 2, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word4 = self.mp.encode(1, 2, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+			word5 = self.mp.encode(1, 3, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word6 = self.mp.encode(1, 3, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+
+			send_list = [
+				word1, word2, self.MPWordDict[1], word3, word4, self.MPWordDict[5], word5, word6, self.MPWordDict[9]]
+
+			self.dimmingSendList.append(send_list)
+
+			word1 = self.mp.encode(1, 4, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word2 = self.mp.encode(1, 4, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+			word3 = self.mp.encode(2, 1, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word4 = self.mp.encode(2, 1, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+			word5 = self.mp.encode(2, 2, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word6 = self.mp.encode(2, 2, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+
+			send_list = [
+				word1, word2, self.MPWordDict[13], word3, word4, self.MPWordDict[17], word5, word6, self.MPWordDict[21]]
+
+			self.dimmingSendList.append(send_list)
+
+			word1 = self.mp.encode(2, 3, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word2 = self.mp.encode(2, 3, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+			word3 = self.mp.encode(2, 4, 1, 0, 1, 11, 12, 0, 0)  # 11, 12 = 0xB, 0xC
+			word4 = self.mp.encode(2, 4, 2, 0, 0, 0, scaled_brightness, 0, 0, pass3_4_flag=True)
+
+			send_list = [word1, word2, self.MPWordDict[25], word3, word4, self.MPWordDict[29]]
+
+			self.dimmingSendList.append(send_list)
+
+		if self.dimmingSendListFlag and self.dimmingSendList:
+			self.sendList = self.dimmingSendList[0]
+			self.dimmingSendList.pop(0)
+
+		if not self.dimmingSendList:
+			self.dimmingSendListFlag = False
 
 	def _custom_send_list_ascii_to_mp_etn(self):
 		if self.sp.ETNChangeFlag:
@@ -1116,7 +1185,7 @@ class Console(object):
 
 			if right_etn_byte == 0:
 				right_etn_byte = chr(right_etn_byte)
-			word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+			word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)  # 10, 13 = 0xA, 0xD
 			word2 = self.mp.encode(2, 4, 2, 0, 0, 0, team_addr, 0, 0, pass3_4_flag=True)
 			word3 = self.mp.encode(2, 4, 3, 0, 0, 0, ord(left_etn_byte), 0, '', pass3_4_flag=True)
 			word4 = self.mp.encode(2, 4, 4, 0, 0, 0, ord(right_etn_byte), 0, '', pass3_4_flag=True)
@@ -1163,7 +1232,7 @@ class Console(object):
 
 			if right_etn_byte == 0:
 				right_etn_byte = chr(right_etn_byte)
-			word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+			word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)  # 10, 13 = 0xA, 0xD
 			word2 = self.mp.encode(2, 4, 2, 0, 0, 0, team_addr, 0, 0, pass3_4_flag=True)
 			word3 = self.mp.encode(2, 4, 3, 0, 0, 0, ord(left_etn_byte), 0, '', pass3_4_flag=True)
 			word4 = self.mp.encode(2, 4, 4, 0, 0, 0, ord(right_etn_byte), 0, '', pass3_4_flag=True)
@@ -1182,7 +1251,7 @@ class Console(object):
 
 		team_addr_shift = 0
 
-		word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+		word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)  # 10, 13 = 0xA, 0xD
 		word2 = self.mp.encode(2, 4, 2, 0, 0, 0, team_addr_shift, 0, 0, pass3_4_flag=True)
 		word4 = self.mp.encode(2, 4, 4, 0, 0, 0, font_justify, 0, '', pass3_4_flag=True)
 
@@ -1198,7 +1267,7 @@ class Console(object):
 
 		team_addr_shift = 64
 
-		word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)
+		word1 = self.mp.encode(2, 4, 1, 0, 1, 10, 13, 0, 0)  # 10, 13 = 0xA, 0xD
 		word2 = self.mp.encode(2, 4, 2, 0, 0, 0, team_addr_shift, 0, 0, pass3_4_flag=True)
 		word4 = self.mp.encode(2, 4, 4, 0, 0, 0, font_justify, 0, '', pass3_4_flag=True)
 
