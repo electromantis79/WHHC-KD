@@ -110,6 +110,10 @@ class Console(object):
 		self.dimmingSendListFlag = False
 		self.dataReceivedList = []
 		self.dataReceivedFlag = False
+		self.lampTestDeactivateFlag = True
+		self.lampTestActivateFlag = False
+		self.blankTestDeactivateFlag = True
+		self.blankTestActivateFlag = False
 		self.broadcastFlag = False
 		self.broadcastString = ''
 		self.modeLogger = None
@@ -731,16 +735,18 @@ class Console(object):
 
 		elif button_type == 'strikesPlusOne':
 			if direction == '_DOWN':
-				print('Toggle Lamp Test Mode')
-				self.game.gameSettings['lampTestFlag'] = not self.game.gameSettings['lampTestFlag']
+				if not self.game.gameSettings['blankTestFlag']:
+					print('Toggle Lamp Test Mode')
+					self.game.gameSettings['lampTestFlag'] = not self.game.gameSettings['lampTestFlag']
 
 			elif direction == '_UP':
 				pass
 
 		elif button_type == 'outsPlusOne':
 			if direction == '_DOWN':
-				print('Enter Blank Test Mode')
-				self.game.gameSettings['blankTestFlag'] = not self.game.gameSettings['blankTestFlag']
+				if not self.game.gameSettings['lampTestFlag']:
+					print('Enter Blank Test Mode')
+					self.game.gameSettings['blankTestFlag'] = not self.game.gameSettings['blankTestFlag']
 
 			elif direction == '_UP':
 				pass
@@ -973,6 +979,9 @@ class Console(object):
 		# Make custom send list for dimming
 		self._custom_send_list_dimming()
 
+		# Make custom send list for dimming
+		self._custom_send_list_etn_lamp_blank_test()
+
 		# Append dirty words to send list
 		remove_count = 0
 		if len(self.dirtyDict) and not self.ETNSendListFlag:
@@ -1048,6 +1057,52 @@ class Console(object):
 			second_byte = int((word & 0xFF)).to_bytes(1, 'big')
 			serial_string += first_byte+second_byte
 		self.serialString = serial_string
+
+	def _custom_send_list_etn_lamp_blank_test(self):
+		# Build ETN Lamp Test send list
+		if self.game.gameSettings['lampTestFlag']:
+			if not self.lampTestActivateFlag:
+				self.lampTestActivateFlag = True
+				self.lampTestDeactivateFlag = False
+				print('ETN lampTestActivateFlag------------------------')
+				lamp_or_blank_test_value = 1
+				word1 = self.mp.encode(2, 4, 1, 0, 1, 12, 14, 0, 0)  # 12, 14 = 0xC, 0xE
+				word2 = self.mp.encode(2, 4, 2, 0, 0, 0, lamp_or_blank_test_value, 0, 0, pass3_4_flag=True)
+
+				self.send_list = [word1, word2, self.MPWordDict[29]]
+		else:
+			if not self.lampTestDeactivateFlag:
+				self.lampTestDeactivateFlag = True
+				self.lampTestActivateFlag = False
+				print('ETN lampTestDeactivateFlag----------------------')
+				lamp_or_blank_test_value = 0
+				word1 = self.mp.encode(2, 4, 1, 0, 1, 12, 14, 0, 0)  # 12, 14 = 0xC, 0xE
+				word2 = self.mp.encode(2, 4, 2, 0, 0, 0, lamp_or_blank_test_value, 0, 0, pass3_4_flag=True)
+
+				self.send_list = [word1, word2, self.MPWordDict[29]]
+
+		# Build ETN Blank Test send list
+		if self.game.gameSettings['blankTestFlag']:
+			if not self.blankTestActivateFlag:
+				self.blankTestActivateFlag = True
+				self.blankTestDeactivateFlag = False
+				print('ETN blankTestActivateFlag------------------------')
+				lamp_or_blank_test_value = 2
+				word1 = self.mp.encode(2, 4, 1, 0, 1, 12, 14, 0, 0)  # 12, 14 = 0xC, 0xE
+				word2 = self.mp.encode(2, 4, 2, 0, 0, 0, lamp_or_blank_test_value, 0, 0, pass3_4_flag=True)
+
+				self.send_list = [word1, word2, self.MPWordDict[29]]
+
+		else:
+			if not self.blankTestDeactivateFlag:
+				self.blankTestDeactivateFlag = True
+				self.blankTestActivateFlag = False
+				print('ETN blankTestDeactivateFlag----------------------')
+				lamp_or_blank_test_value = 0
+				word1 = self.mp.encode(2, 4, 1, 0, 1, 12, 14, 0, 0)  # 12, 14 = 0xC, 0xE
+				word2 = self.mp.encode(2, 4, 2, 0, 0, 0, lamp_or_blank_test_value, 0, 0, pass3_4_flag=True)
+
+				self.send_list = [word1, word2, self.MPWordDict[29]]
 
 	def _custom_send_list_dimming(self):
 		if self.dimmingChangeFlag:
