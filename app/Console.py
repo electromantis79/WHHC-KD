@@ -87,8 +87,8 @@ class Console(object):
 		self.serialInputRefreshFrequency = 0.1
 		self.serialOutputRefreshFrequency = 0.1
 		self.checkEventsRefreshFrequency = 0.1
-		self.socketServerFrequency = 0.1
-		self.ptpServerSleepDelay = 0.0005
+		self.socketServerFrequency = 0.005
+		self.ptpServerSleepDelay = 0.002
 		self.startTime = time.time()
 
 		# Variables that don't need resetting through internal reset
@@ -124,6 +124,9 @@ class Console(object):
 		self.commandStateTimer = app.game.clock.Clock(max_seconds=self.commandStateCancelTime)
 		self.longPressTime = 2.5
 		self.longPressTimer = app.game.clock.Clock(max_seconds=self.longPressTime)
+		self.rssiOutOfRangeTime = 4
+		self.rssiOutOfRangeTimer = app.game.clock.Clock(max_seconds=self.rssiOutOfRangeTime)
+		self.rssi_value = 0
 		self.batteryStrengthTime = 2.5
 		self.signalStrengthTime = 2.5 + 1
 		self.ptpServerRefreshFrequency = 1
@@ -197,6 +200,11 @@ class Console(object):
 		self.checkEventsActiveFlag = False
 		self.commandState = False
 		self.mainTimerRunningMode = False
+		if internal_reset:
+			self.led_sequence.set_led('signalLed', 0)
+			self.led_sequence.set_led('batteryLed', 0)
+			self.led_sequence.set_led('topLed', 0)
+			self.build_led_dict_broadcast_string()
 		self.longPressFlag = False
 		self.batteryStrengthMode = False
 		self.signalStrengthMode = False
@@ -439,8 +447,17 @@ class Console(object):
 			self._reset_long_press_timer()
 			self.longPressFlag = True
 
+		if self.rssiOutOfRangeTimer.currentTime == 0.0:
+			self.game.set_game_data('signalStrength', 255, places=3)
+		elif self.rssiOutOfRangeTimer.currentTime < 2.7:
+			if self.rssi_value is not None:
+				self.game.set_game_data('signalStrength', self.rssi_value, places=3)
+		elif self.rssiOutOfRangeTimer.currentTime < 3.0:
+			self.game.set_game_data('signalStrength', 0, places=3)
+
 	def handle_data_receive_list(self):
 		if self.dataReceivedFlag:
+			tic = time.time()
 			self.dataReceivedFlag = False
 			data_received_list = self.dataReceivedList
 			self.dataReceivedList = []
@@ -462,8 +479,13 @@ class Console(object):
 			if self.broadcastString and not self.testTwoFlag:
 				self.broadcastFlag = True
 
+			toc = time.time()
+			elapse = (toc-tic)
+			print('handle data_received_list elapse =', elapse * 1000, 'ms')
+
 	def handle_fragment(self, fragment):
 		if fragment:
+			tic = time.time()
 			# Validate fragment ------------------
 			valid, keymap_grid_value, direction, button_type, func_string, event_time = self.json_button_objects_validation(
 				fragment)
@@ -496,26 +518,20 @@ class Console(object):
 				else:
 					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string)
 
-				# Update LEDs
-				if self.mainTimerRunningMode:
-					self.led_sequence.set_led('topLed', 1)
-				else:
-					self.led_sequence.set_led('topLed', 0)
-
-				if self.commandState:
-					self.led_sequence.set_led('signalLed', 1)
-					self.led_sequence.set_led('batteryLed', 1)
-				else:
-					self.led_sequence.set_led('signalLed', 0)
-					self.led_sequence.set_led('batteryLed', 0)
-
-				# build_broadcast_strings
-				self.build_led_dict_broadcast_string()
-
-			valid, rssi_value = self.json_rssi_validation(fragment)
+			valid, self.rssi_value = self.json_rssi_validation(fragment)
 
 			if valid:
-				self.game.set_game_data('signalStrength', rssi_value, places=3)
+				self.game.set_game_data('signalStrength', self.rssi_value, places=3)
+				self._reset_rssi_out_of_range_timer()
+				self.rssiOutOfRangeTimer.start_()
+
+			toc = time.time()
+			toc2 = time.time()
+			elapse = (toc-tic)
+			elapse2 = (toc2 - tic)
+			elapse3 = toc2-toc
+			print('fragment process time =', elapse * 1000, 'ms')
+			print('double time stamp elapse =', elapse3 * 1000000, 'us')
 
 	def handle_scoring_state_events(self, keymap_grid_value, direction, button_type, func_string):
 		if button_type == 'periodClockOnOff':
@@ -530,6 +546,8 @@ class Console(object):
 				if direction == '_UP':
 					print("EXIT Main Timer Running Mode")
 					self.mainTimerRunningMode = False
+					self.led_sequence.set_led('topLed', 0)
+					self.build_led_dict_broadcast_string()
 
 			elif not self.mainTimerRunningMode:
 				if direction == '_DOWN':
@@ -540,11 +558,16 @@ class Console(object):
 					self.game.clockDict['periodClock'].start_()
 					print("ENTER Main Timer Running Mode")
 					self.mainTimerRunningMode = True
+					self.led_sequence.set_led('topLed', 1)
+					self.build_led_dict_broadcast_string()
 
 		elif button_type == 'mode':
 			if direction == '_DOWN':
 				print('=== ENTER Command State ===')
 				self.commandState = True
+				self.led_sequence.set_led('signalLed', 1)
+				self.led_sequence.set_led('batteryLed', 1)
+				self.build_led_dict_broadcast_string()
 				print('START command state timer')
 				self.commandStateTimer.start_()
 				print('START long press timer')
@@ -572,6 +595,8 @@ class Console(object):
 					self.game.gameSettings['timeOfDayClockEnable'] = False
 					print("Enter Main Timer Running Mode")
 					self.mainTimerRunningMode = True
+					self.led_sequence.set_led('topLed', 1)
+					self.build_led_dict_broadcast_string()
 				elif direction == '_UP':
 					pass
 
@@ -580,6 +605,8 @@ class Console(object):
 					self.game.clockDict['periodClock'].stop_()
 					print("Exit Main Timer Running Mode")
 					self.mainTimerRunningMode = False
+					self.led_sequence.set_led('topLed', 0)
+					self.build_led_dict_broadcast_string()
 					print('=== ENTER Time Of Day Mode ===')
 					self.game.gameSettings['timeOfDayClockEnable'] = True
 				elif direction == '_UP':
@@ -590,6 +617,8 @@ class Console(object):
 					self.period_clock_reset()
 					print("Enter Main Timer Running Mode")
 					self.mainTimerRunningMode = True
+					self.led_sequence.set_led('topLed', 1)
+					self.build_led_dict_broadcast_string()
 				elif direction == '_UP':
 					pass
 
@@ -767,6 +796,9 @@ class Console(object):
 
 	def _cancel_command_state(self):
 		self.commandState = False
+		self.led_sequence.set_led('signalLed', 0)
+		self.led_sequence.set_led('batteryLed', 0)
+		self.build_led_dict_broadcast_string()
 		print('=== EXIT Command State ===')
 		self._reset_command_timer()
 
@@ -774,6 +806,11 @@ class Console(object):
 		self.longPressTimer.stop_()
 		self.longPressTimer.reset_(self.commandStateCancelTime)
 		print('Reset Long Press Timer')
+
+	def _reset_rssi_out_of_range_timer(self):
+		self.rssiOutOfRangeTimer.stop_()
+		self.rssiOutOfRangeTimer.reset_(self.rssiOutOfRangeTime)
+		print('Reset RSSI Out of Range Timer')
 
 	def _send_power_down_flag(self):
 		print('Send Power Down Flag to Keypad')
@@ -908,6 +945,7 @@ class Console(object):
 				self.game.set_game_data('testStateUnits', 0, places=1)
 				self.led_sequence.all_off()
 				self.build_get_rssi_flag_broadcast_string(False)
+				self.build_led_dict_broadcast_string()
 				print(self.broadcastString)
 				print('Exit Test State 1')
 				self.modeLogger.info('END TEST 1 MODE')
@@ -923,6 +961,7 @@ class Console(object):
 				self.testTwoFlag = False
 				self.broadcastString = ''
 				self.build_send_blocks_flag_broadcast_string(False)
+				self.build_led_dict_broadcast_string()
 				print(self.broadcastString)
 				print('Exit Test State 2')
 				self.modeLogger.info('END TEST 2 MODE')
@@ -1452,7 +1491,8 @@ class Console(object):
 							else:
 								print('Other Socket:', sock.getpeername(), 'Not Processed by Receiver Device')
 
-							# socket_list = self._broadcast_or_remove(server_socket, data, socket_list, enable=self.broadcastFlag)
+							# Acknowledgement section
+							socket_list = self._broadcast_or_remove(server_socket, 'JSON_FRAGMENT"?"', socket_list)  # , enable=self.broadcastFlag)
 						else:
 							# at this stage, no data means probably the connection has been broken
 							message = "No Data: [%s] is offline" % sock
@@ -1475,7 +1515,10 @@ class Console(object):
 
 			toc = time.time()
 			elapse = toc - tic
-			time.sleep(self.socketServerFrequency-elapse)
+			try:
+				time.sleep(self.socketServerFrequency-elapse)
+			except:
+				time.sleep(self.socketServerFrequency)
 
 	def _ptp_server(self):
 		# Tcp Chat server
@@ -1713,6 +1756,9 @@ class Console(object):
 									master_message = "Master Socket: " + str(self.master_socket)
 									print(master_message)
 									self.modeLogger.info(master_message)
+									self.game.set_game_data('testStateUnits', 0, places=1)
+									self.led_sequence.all_off()
+									self.build_led_dict_broadcast_string()
 								else:
 									self.master_socket = None
 									self.mode = self.LISTENING_MODE
