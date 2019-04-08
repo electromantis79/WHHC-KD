@@ -122,8 +122,7 @@ class Console(object):
 		self.dataUpdateIndex = 1
 		self.commandStateCancelTime = 2.5
 		self.commandStateTimer = app.game.clock.Clock(max_seconds=self.commandStateCancelTime)
-		self.longPressTime = 2.5
-		self.longPressTimer = app.game.clock.Clock(max_seconds=self.longPressTime)
+		self.longPressTime_powerDown = self.commandStateCancelTime
 		self.rssiOutOfRangeTime = 4
 		self.rssiOutOfRangeTimer = app.game.clock.Clock(max_seconds=self.rssiOutOfRangeTime)
 		self.rssi_value = 0
@@ -132,6 +131,7 @@ class Console(object):
 		self.ptpServerRefreshFrequency = 1
 		self.ptp_port = 60042
 		self.testTwoFlag = False
+		self.longPressDownTime = None
 		GPIO.output("P8_10", False)
 
 		# Main module items set in reset
@@ -150,7 +150,6 @@ class Console(object):
 		self.priorityListEmech = []
 		self.mode = None
 		self.commandState = None
-		self.longPressFlag = None
 		self.mainTimerRunningMode = None
 		self.batteryStrengthMode = None
 		self.signalStrengthMode = None
@@ -442,11 +441,6 @@ class Console(object):
 			self.build_led_dict_broadcast_string()
 			self.broadcastFlag = True
 
-		if self.longPressTimer.currentTime == 0.0:
-			print('=== Long Press Timeout ===')
-			self._reset_long_press_timer()
-			self.longPressFlag = True
-
 		if self.rssiOutOfRangeTimer.currentTime == 0.0:
 			self.game.set_game_data('signalStrength', 255, places=3)
 		elif self.rssiOutOfRangeTimer.currentTime < 2.7:
@@ -505,18 +499,17 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 0, places=1)
 					self.modeLogger.info('END TEST 4 MODE')
 				elif self.commandState:
-					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string)
+					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string, event_time)
 
 					# Always leave command state after a combo event
 					if button_type == 'mode':
 						pass
 					else:
 						self._cancel_command_state()
-						self._reset_long_press_timer()
-						self.longPressFlag = False
+						self.longPressDownTime = None
 
 				else:
-					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string)
+					self.handle_scoring_state_events(keymap_grid_value, direction, button_type, func_string, event_time)
 
 			valid, self.rssi_value = self.json_rssi_validation(fragment)
 
@@ -533,7 +526,7 @@ class Console(object):
 			print('fragment process time =', elapse * 1000, 'ms')
 			print('double time stamp elapse =', elapse3 * 1000000, 'us')
 
-	def handle_scoring_state_events(self, keymap_grid_value, direction, button_type, func_string):
+	def handle_scoring_state_events(self, keymap_grid_value, direction, button_type, func_string, event_time):
 		if button_type == 'periodClockOnOff':
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				pass
@@ -571,14 +564,18 @@ class Console(object):
 				print('START command state timer')
 				self.commandStateTimer.start_()
 				print('START long press timer')
-				self.longPressTimer.start_()
+				self.longPressDownTime = event_time
 
 			elif direction == '_UP':
-				if self.longPressFlag:
-					self.longPressFlag = False
-					self._send_power_down_flag()
-				else:
-					self._reset_long_press_timer()
+				if self.longPressDownTime is not None:
+					print(
+						'self.longPressDownTime', self.longPressDownTime, 'event_time', event_time,
+						'event_time - self.longPressDownTime', event_time - self.longPressDownTime)
+
+					if event_time - self.longPressDownTime > self.longPressTime_powerDown:
+						self._send_power_down_flag()
+					else:
+						self.longPressDownTime = None
 
 		else:
 			if direction == '_DOWN':
@@ -587,7 +584,7 @@ class Console(object):
 			elif direction == '_UP':
 				pass
 
-	def handle_command_state_events(self, keymap_grid_value, direction, button_type, func_string):
+	def handle_command_state_events(self, keymap_grid_value, direction, button_type, func_string, event_time):
 		if button_type == 'periodClockOnOff':
 			if self.game.gameSettings['timeOfDayClockEnable']:
 				if direction == '_DOWN':
@@ -631,13 +628,10 @@ class Console(object):
 					print('=== ENTER Signal Strength Mode ===')
 					self.signalStrengthMode = True
 					self.build_signal_strength_display_flag_broadcast_string(True)
-					print('START long press timer')
-					self._reset_long_press_timer()
-					self.longPressTimer.start_()
+					self.longPressDownTime = event_time
 
 				elif direction == '_UP':
-					self._reset_command_timer()
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 
 			elif self.signalStrengthMode:
 				if direction == '_DOWN':
@@ -650,13 +644,10 @@ class Console(object):
 					print('=== ENTER Battery Strength Mode ===')
 					self.batteryStrengthMode = True
 					self.build_battery_strength_display_flag_broadcast_string(True)
-					print('START long press timer')
-					self._reset_long_press_timer()
-					self.longPressTimer.start_()
+					self.longPressDownTime = event_time
 
 				elif direction == '_UP':
-					self._reset_command_timer()
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 
 			elif self.batteryStrengthMode:
 				if direction == '_DOWN':
@@ -665,13 +656,10 @@ class Console(object):
 					self.batteryStrengthMode = False
 					self.build_battery_strength_display_flag_broadcast_string(False)
 					print('=== ENTER Strength Not Selected Mode ===')
-					print('START long press timer')
-					self._reset_long_press_timer()
-					self.longPressTimer.start_()
+					self.longPressDownTime = event_time
 
 				elif direction == '_UP':
-					self._reset_command_timer()
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 
 		elif button_type == 'inningsPlusOne':
 			if self.game.gameSettings['timeOfDayClockEnable']:
@@ -702,7 +690,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 1, places=1)
 					print('Enter Test State 1')
 					self.modeLogger.info('BEGIN TEST 1 MODE')
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedBottom', 1)
 					self.build_get_rssi_flag_broadcast_string(True)
@@ -716,7 +704,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 2, places=1)
 					print('Enter Test State 2')
 					self.modeLogger.info('BEGIN TEST 2 MODE')
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedMiddleBottom', 1)
 					self.build_send_blocks_flag_broadcast_string(True)
@@ -730,7 +718,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 3, places=1)
 					print('Enter Test State 3')
 					self.modeLogger.info('BEGIN TEST 3 MODE')
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 
 				elif direction == '_UP':
 					pass
@@ -741,7 +729,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 4, places=1)
 					print('Enter Test State 4')
 					self.modeLogger.info('BEGIN TEST 4 MODE')
-					self._reset_long_press_timer()
+					self.longPressDownTime = None
 
 				elif direction == '_UP':
 					pass
@@ -801,11 +789,6 @@ class Console(object):
 		self.build_led_dict_broadcast_string()
 		print('=== EXIT Command State ===')
 		self._reset_command_timer()
-
-	def _reset_long_press_timer(self):
-		self.longPressTimer.stop_()
-		self.longPressTimer.reset_(self.commandStateCancelTime)
-		print('Reset Long Press Timer')
 
 	def _reset_rssi_out_of_range_timer(self):
 		self.rssiOutOfRangeTimer.stop_()
@@ -971,9 +954,6 @@ class Console(object):
 
 	def test_state_four(self, keymap_grid_value, direction, button_type, func_string):
 		pass
-
-	def _handle_long_press_time(self):
-		self.longPressFlag = True
 
 	def _exit_battery_strength_mode(self):
 		self.batteryStrengthMode = False
