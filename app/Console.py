@@ -1,4 +1,4 @@
-# !/usr/bin/env python3
+#!/usr/bin/env python3
 #  -*- coding: utf-8 -*-
 
 """
@@ -12,8 +12,14 @@
 
 """
 
-import os
+import os, sys
+print(os.getcwd())
+print(sys.path)
+print(sys.executable)
+sys.path = ['/Repos/WHHC-node/app', '/Repos/WHHC-node', '/Repos/WHHC-node/app/G', '/My Drive/RPi Bone Repo/GitHub/Bone', '/My Drive/RPi Bone Repo/GitHub', '/Repos/WHHC-node/app/C', '/Users/cgunter/AppData/Local/Programs/Python/Python36/python.exe', '/usr/lib/python35.zip', '/usr/lib/python3.5', '/usr/lib/python3.5/plat-arm-linux-gnueabihf', '/usr/lib/python3.5/lib-dynload', '/usr/local/lib/python3.5/dist-packages', '/usr/local/lib/python3.5/dist-packages/pip-10.0.1-py3.5.egg', '/usr/lib/python3/dist-packages']
+print(sys.path)
 import threading
+import _thread
 import time
 import logging
 import json
@@ -289,6 +295,7 @@ class Console(object):
 	def _setup_threads(self, internal_reset):
 		# Platform Dependencies
 		import app.utils.functions
+		self.threadList = []
 		if (_platform == "linux" or _platform == "linux2") and not internal_reset:
 			print('Platform is', _platform)
 			if self.serialInputFlag or self.serialOutputFlag:
@@ -306,14 +313,8 @@ class Console(object):
 				self.refresherSerialInput.daemon = True
 				self.refresherSerialInput.name = '_serial_input'
 				self.previousByteCount = 0
+				self.threadList.append(self.refresherSerialInput)
 				self.refresherSerialInput.start()
-
-			if self.checkEventsFlag:
-				self.refresherCheckEvents = threading.Thread(
-					target=app.utils.functions.thread_timer, args=(self._check_events, self.checkEventsRefreshFrequency))
-				self.refresherCheckEvents.daemon = True
-				self.refresherCheckEvents.name = '_check_events'
-				self.refresherCheckEvents.start()
 
 			if self.serialOutputFlag:
 				app.utils.functions.verbose(
@@ -322,11 +323,14 @@ class Console(object):
 					target=app.utils.functions.thread_timer, args=(self._serial_output, self.serialOutputRefreshFrequency))
 				self.refresherSerialOutput.daemon = True
 				self.refresherSerialOutput.name = '_serial_output'
+				self.threadList.append(self.refresherSerialOutput)
 				self.refresherSerialOutput.start()
 
 			if self.serverThreadFlag:
 				self.serverThread = threading.Thread(target=self._socket_server)
 				self.serverThread.daemon = True
+				self.serverThread.name = '_chat_server'
+				self.threadList.append(self.serverThread)
 				self.serverThread.start()
 			else:
 				print('CONNECTED_MODE')
@@ -339,7 +343,18 @@ class Console(object):
 					target=app.utils.functions.thread_timer, args=(self._ptp_server, self.ptpServerRefreshFrequency))
 				self.refresherPtpServer.daemon = True
 				self.refresherPtpServer.name = '_ptp_server'
+				self.threadList.append(self.refresherPtpServer)
 				self.refresherPtpServer.start()
+
+			if self.checkEventsFlag:
+				self.refresherCheckEvents = threading.Thread(
+					target=app.utils.functions.thread_timer, args=(self._check_events, self.checkEventsRefreshFrequency))
+				self.refresherCheckEvents.daemon = True
+				self.refresherCheckEvents.name = '_check_events'
+				self.threadList.append(self.refresherCheckEvents)
+				self.refresherCheckEvents.start()
+
+			print(self.threadList)
 
 	# THREADS
 
@@ -374,6 +389,14 @@ class Console(object):
 		# This is how the check events function is called when not on linux
 		if (_platform == "win32" or _platform == "darwin") and self.checkEventsFlag:
 			self.checkEventsTimer = threading.Timer(self.checkEventsRefreshFrequency, self._check_events).start()
+
+		# Close parent thread if any threads are dead
+		for _thread_ in self.threadList:
+			if not _thread_.is_alive():
+				message = 'Thread ' + _thread_.name + ' closed. Killing main program'
+				self.modeLogger.error(message)
+				print(message)
+				os._exit(0)
 
 		# This flag is to eliminate double entry to this area (Should never happen anyway)
 		if not self.checkEventsActiveFlag:
@@ -1441,7 +1464,9 @@ class Console(object):
 						print('DISCOVERED_MODE')
 						self.mode = self.DISCOVERED_MODE
 						self.modeLogger.info(self.modeNameDict[self.mode])
-
+						self.game.set_game_data('testStateUnits', 0, places=1)
+						self.led_sequence.all_off()
+						self.build_led_dict_broadcast_string()
 					else:
 						other_message = "Other Socket: %s" % sockfd
 						print(other_message)
@@ -1811,10 +1836,11 @@ def test():
 	h_o_s_t = '192.168.8.1'
 	p_o_r_t = 60050
 	start_message = "API server started on port " + str(p_o_r_t)
-	print(start_message)
-	cons.modeLogger.info(start_message)
 
-	api.run(host=h_o_s_t, debug=False, port=p_o_r_t)
+	#print(start_message)
+	#cons.modeLogger.info(start_message)
+
+	# api.run(host=h_o_s_t, debug=False, port=p_o_r_t)
 
 
 	# SPORT_LIST = [
