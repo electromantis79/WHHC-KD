@@ -17,9 +17,9 @@ print(os.getcwd())
 print(sys.path)
 print(sys.executable)
 sys.path = ['/Repos/WHHC-node/app', '/Repos/WHHC-node', '/Repos/WHHC-node/app/G', '/My Drive/RPi Bone Repo/GitHub/Bone', '/My Drive/RPi Bone Repo/GitHub', '/Repos/WHHC-node/app/C', '/Users/cgunter/AppData/Local/Programs/Python/Python36/python.exe', '/usr/lib/python35.zip', '/usr/lib/python3.5', '/usr/lib/python3.5/plat-arm-linux-gnueabihf', '/usr/lib/python3.5/lib-dynload', '/usr/local/lib/python3.5/dist-packages', '/usr/local/lib/python3.5/dist-packages/pip-10.0.1-py3.5.egg', '/usr/lib/python3/dist-packages']
+# TODO: fix to dynamic paths before release
 print(sys.path)
 import threading
-import _thread
 import time
 import logging
 import json
@@ -137,6 +137,7 @@ class Console(object):
 		self.ptpServerRefreshFrequency = 1
 		self.ptp_port = 60042
 		self.testTwoFlag = False
+		self.receiver_rssi_flag = False
 		self.longPressDownTime = None
 		GPIO.output("P8_10", False)
 
@@ -438,6 +439,16 @@ class Console(object):
 		# End Check Events --------------------------------------------------------------------
 
 	def _connected_mode(self):
+		if self.receiver_rssi_flag:
+			if self.master_socket is not None:
+				ip = self.master_socket.getpeername()
+				mac = app.utils.functions.get_mac_from_ip(ip[0])
+				signal_avg = app.utils.functions.get_signal_avg_from_mac(mac)
+				signal_avg = int(signal_avg[-2:])
+				# print('signal_avg', signal_avg)
+				self.rssi_value = signal_avg
+				self.game.set_game_data('signalStrength', self.rssi_value, places=3)
+
 		# Handle timers
 		self.handle_timers()
 
@@ -519,8 +530,7 @@ class Console(object):
 					self.game.set_game_data('testStateUnits', 0, places=1)
 					self.modeLogger.info('END TEST 3 MODE')
 				elif test_state == 4:
-					self.game.set_game_data('testStateUnits', 0, places=1)
-					self.modeLogger.info('END TEST 4 MODE')
+					self.test_state_four(keymap_grid_value, direction, button_type, func_string)
 				elif self.commandState:
 					self.handle_command_state_events(keymap_grid_value, direction, button_type, func_string, event_time)
 
@@ -650,7 +660,7 @@ class Console(object):
 						self.signalStrengthTime, self._exit_signal_strength_mode).start()
 					print('=== ENTER Signal Strength Mode ===')
 					self.signalStrengthMode = True
-					self.build_signal_strength_display_flag_broadcast_string(True)
+					self.build_command_flags_broadcast_string('signal_strength_display', True)
 					self.longPressDownTime = event_time
 
 				elif direction == '_UP':
@@ -661,12 +671,12 @@ class Console(object):
 					self._reset_command_timer()
 					print('=== EXIT Signal Strength Mode ===')
 					self.signalStrengthMode = False
-					self.build_signal_strength_display_flag_broadcast_string(False)
+					self.build_command_flags_broadcast_string('signal_strength_display', False)
 					self.batteryStrengthModeTimer = threading.Timer(
 						self.batteryStrengthTime, self._exit_battery_strength_mode).start()
 					print('=== ENTER Battery Strength Mode ===')
 					self.batteryStrengthMode = True
-					self.build_battery_strength_display_flag_broadcast_string(True)
+					self.build_command_flags_broadcast_string('battery_strength_display', True)
 					self.longPressDownTime = event_time
 
 				elif direction == '_UP':
@@ -677,7 +687,7 @@ class Console(object):
 					self._reset_command_timer()
 					print('=== EXIT Battery Strength Mode ===')
 					self.batteryStrengthMode = False
-					self.build_battery_strength_display_flag_broadcast_string(False)
+					self.build_command_flags_broadcast_string('battery_strength_display', False)
 					print('=== ENTER Strength Not Selected Mode ===')
 					self.longPressDownTime = event_time
 
@@ -716,7 +726,7 @@ class Console(object):
 					self.longPressDownTime = None
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedBottom', 1)
-					self.build_get_rssi_flag_broadcast_string(True)
+					self.build_command_flags_broadcast_string('get_rssi', True)
 
 				elif direction == '_UP':
 					pass
@@ -730,7 +740,7 @@ class Console(object):
 					self.longPressDownTime = None
 					self.led_sequence.all_off()
 					self.led_sequence.set_led('strengthLedMiddleBottom', 1)
-					self.build_send_blocks_flag_broadcast_string(True)
+					self.build_command_flags_broadcast_string('send_blocks', True)
 
 				elif direction == '_UP':
 					pass
@@ -753,6 +763,12 @@ class Console(object):
 					print('Enter Test State 4')
 					self.modeLogger.info('BEGIN TEST 4 MODE')
 					self.longPressDownTime = None
+					self.led_sequence.all_off()
+					self.led_sequence.set_led('strengthLedTop', 1)
+					self.build_command_flags_broadcast_string('receiver_rssi', True)
+					self.rssiOutOfRangeTimer.stop_()
+					self.rssiOutOfRangeTimer.reset_(self.rssiOutOfRangeTime)
+					self.receiver_rssi_flag = True
 
 				elif direction == '_UP':
 					pass
@@ -820,7 +836,8 @@ class Console(object):
 
 	def _send_power_down_flag(self):
 		print('Send Power Down Flag to Keypad')
-		self.build_power_down_flag_broadcast_string(True)
+		self.build_command_flags_broadcast_string('power_down', True)
+		self.modeLogger.info('Sent Power Down Flag to Keypad')
 
 	def json_button_objects_validation(self, json_fragment):
 		valid = keymap_grid_value = direction = button_type = func_string = event_time = False
@@ -902,43 +919,11 @@ class Console(object):
 		self.broadcastString += 'JSON_FRAGMENT'
 		self.broadcastString += self.led_sequence.get_led_dict_string()
 
-	def build_get_rssi_flag_broadcast_string(self, value):
+	def build_command_flags_broadcast_string(self, flag, value):
 		self.broadcastString += 'JSON_FRAGMENT'
 		temp_dict = dict()
 		temp_dict['command_flags'] = dict()
-		temp_dict['command_flags']['get_rssi'] = value
-		string = json.dumps(temp_dict)
-		self.broadcastString += string
-
-	def build_send_blocks_flag_broadcast_string(self, value):
-		self.broadcastString += 'JSON_FRAGMENT'
-		temp_dict = dict()
-		temp_dict['command_flags'] = dict()
-		temp_dict['command_flags']['send_blocks'] = value
-		string = json.dumps(temp_dict)
-		self.broadcastString += string
-
-	def build_signal_strength_display_flag_broadcast_string(self, value):
-		self.broadcastString += 'JSON_FRAGMENT'
-		temp_dict = dict()
-		temp_dict['command_flags'] = dict()
-		temp_dict['command_flags']['signal_strength_display'] = value
-		string = json.dumps(temp_dict)
-		self.broadcastString += string
-
-	def build_battery_strength_display_flag_broadcast_string(self, value):
-		self.broadcastString += 'JSON_FRAGMENT'
-		temp_dict = dict()
-		temp_dict['command_flags'] = dict()
-		temp_dict['command_flags']['battery_strength_display'] = value
-		string = json.dumps(temp_dict)
-		self.broadcastString += string
-
-	def build_power_down_flag_broadcast_string(self, value):
-		self.broadcastString += 'JSON_FRAGMENT'
-		temp_dict = dict()
-		temp_dict['command_flags'] = dict()
-		temp_dict['command_flags']['power_down'] = value
+		temp_dict['command_flags'][flag] = value
 		string = json.dumps(temp_dict)
 		self.broadcastString += string
 
@@ -950,7 +935,7 @@ class Console(object):
 			elif direction == '_UP':
 				self.game.set_game_data('testStateUnits', 0, places=1)
 				self.led_sequence.all_off()
-				self.build_get_rssi_flag_broadcast_string(False)
+				self.build_command_flags_broadcast_string('get_rssi', False)
 				self.build_led_dict_broadcast_string()
 				print(self.broadcastString)
 				print('Exit Test State 1')
@@ -966,7 +951,7 @@ class Console(object):
 				self.led_sequence.all_off()
 				self.testTwoFlag = False
 				self.broadcastString = ''
-				self.build_send_blocks_flag_broadcast_string(False)
+				self.build_command_flags_broadcast_string('send_blocks', False)
 				self.build_led_dict_broadcast_string()
 				print(self.broadcastString)
 				print('Exit Test State 2')
@@ -976,7 +961,19 @@ class Console(object):
 		pass
 
 	def test_state_four(self, keymap_grid_value, direction, button_type, func_string):
-		pass
+		if button_type == 'mode':
+			if direction == '_DOWN':
+				pass
+
+			elif direction == '_UP':
+				self.game.set_game_data('testStateUnits', 0, places=1)
+				self.led_sequence.all_off()
+				self.build_command_flags_broadcast_string('receiver_rssi', False)
+				self.build_led_dict_broadcast_string()
+				print(self.broadcastString)
+				print('Exit Test State 4')
+				self.modeLogger.info('END TEST 4 MODE')
+				self.receiver_rssi_flag = False
 
 	def _exit_battery_strength_mode(self):
 		self.batteryStrengthMode = False
@@ -1416,6 +1413,7 @@ class Console(object):
 			print('errno', err.errno)
 			if err.errno == 98:
 				# This means we already have a server
+				print('Waiting til the port is available to bind')
 				connected = 0
 				while not connected:
 					time.sleep(3)

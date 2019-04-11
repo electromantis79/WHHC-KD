@@ -18,8 +18,10 @@ import time
 import os
 import timeit
 import json
+import re
 
 from sys import platform as _platform
+from subprocess import Popen, PIPE
 
 SPORT_LIST = [
 	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
@@ -245,3 +247,28 @@ def convert_to_json_format(data):
 	except Exception as e:
 		print('\n', e, ': Data received failed json format inspection')
 		return False
+
+
+def get_mac_from_ip(ip):
+	try:
+		pid = Popen(["arp", "-n", ip], stdout=PIPE)
+		s = str(pid.communicate()[0])
+		mac = re.search(r"(([a-f\d]{1,2}\:){5}[a-f\d]{1,2})", s).groups()[0]
+		return mac
+	except Exception as e:
+		print('\n', e, ': Failed to get mac from arp')
+		return None
+
+
+def get_signal_avg_from_mac(mac):
+	try:
+		proc = Popen(
+			["iw", 'dev', "SoftAp0", "station", 'dump'],
+			stdout=PIPE, universal_newlines=True)
+		s = str(proc.communicate()[0])
+		pattern = "(" + mac + "(.*\n)*.*\\savg:\\s-\\d\\d)"
+		signal_avg = re.search(pattern, s).groups()[0]
+		return signal_avg
+	except Exception as e:
+		print('\n', e, ': Failed to get signal_avg from mac')
+		return None

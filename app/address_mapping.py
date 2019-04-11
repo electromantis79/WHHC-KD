@@ -188,7 +188,7 @@ class AddressMapping(object):
 					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 21, 22], 6)
 				else:
 					alts = self._format_alts(alts, [6, 7, 8], 5)
-				if self.game.get_game_data('testStateUnits') == 1:
+				if self.game.get_game_data('testStateUnits') == 1 or self.game.get_game_data('testStateUnits') == 4:
 					alts = self._format_alts(alts, [5, 10, 26], 7)
 					alts = self._format_alts(alts, [1, 2, 6, 7, 8, 9, 12, 21, 22, 25, 28], 8)
 				else:
