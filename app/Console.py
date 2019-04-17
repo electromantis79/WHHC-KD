@@ -441,13 +441,12 @@ class Console(object):
 	def _connected_mode(self):
 		if self.receiver_rssi_flag:
 			if self.master_socket is not None:
-				ip = self.master_socket.getpeername()
-				mac = app.utils.functions.get_mac_from_ip(ip[0])
-				signal_avg = app.utils.functions.get_signal_avg_from_mac(mac)
+				signal_avg = app.utils.functions.get_signal_avg_from_mac(self.master_mac)
 				signal_avg = int(signal_avg[-2:])
 				# print('signal_avg', signal_avg)
 				self.rssi_value = signal_avg
 				self.game.set_game_data('signalStrength', self.rssi_value, places=3)
+				time.sleep(0.05)
 
 		# Handle timers
 		self.handle_timers()
@@ -1459,6 +1458,8 @@ class Console(object):
 						print(master_message)
 						self.modeLogger.info(master_message)
 						self.master_socket = sockfd
+						ip = self.master_socket.getpeername()
+						self.master_mac = app.utils.functions.get_mac_from_ip(ip[0])
 						print('DISCOVERED_MODE')
 						self.mode = self.DISCOVERED_MODE
 						self.modeLogger.info(self.modeNameDict[self.mode])
@@ -1756,6 +1757,8 @@ class Console(object):
 							if socket == self.master_socket:
 								if len(socket_list) > 1:
 									self.master_socket = socket_list[1]
+									ip = self.master_socket.getpeername()
+									self.master_mac = app.utils.functions.get_mac_from_ip(ip[0])
 									master_message = "Master Socket: " + str(self.master_socket)
 									print(master_message)
 									self.modeLogger.info(master_message)
