@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -49,16 +49,16 @@ def csv_one_row_read(file_name):
 	..warning: Path to file_name must be from app folder.
 	"""
 	file_mode = 'r'  # read
-	binary_file = 'b'
+	binary_file = 't'
 	file_mode += binary_file
-	f = open(file_name, file_mode)
+	f = open(file_name)
 
-	csv_reader = csv.DictReader(f, delimiter=',', quotechar="'")
+	csv_reader = csv.DictReader(f)
 	row = None
 	for row in csv_reader:
 		try:
-			values = row.values()
-			keys = row.keys()
+			values = list(row.values())
+			keys = list(row.keys())
 			for i in range(len(row)):
 				if values[i] == '':
 					del row[keys[i]]
@@ -82,7 +82,7 @@ def read_address_map(sport, sport_type, word_list_addr):
 	This is built with "Spreadsheets/AddressMap.csv"
 	"""
 	address_map = 'Spreadsheets/AddressMap.csv'
-	csv_reader = csv.DictReader(open(address_map, 'rb'), delimiter=',', quotechar="'")
+	csv_reader = csv.DictReader(open(address_map))
 	alt_dict = {}
 	dictionary = dict.fromkeys(word_list_addr, 0)
 	for row in csv_reader:
@@ -182,17 +182,17 @@ def readMP_Keypad_Layouts():
 	"""
 	Uses Spreadsheets/MP_Keypad_Layouts.csv to build a dictionary of all keypads.
 	"""
-	MP_Keypad_Layouts='Spreadsheets/MP_Keypad_Layouts.csv'
-	csvReader=csv.DictReader(open(MP_Keypad_Layouts, 'rb'), delimiter=',', quotechar="'")
-	keypad=[]
+	MP_Keypad_Layouts = 'Spreadsheets/MP_Keypad_Layouts.csv'
+	csvReader = csv.DictReader(open(MP_Keypad_Layouts))
+	keypad = []
 	dictionary = {}
 	for count, row in enumerate(csvReader):
 		try:
 			#print 'row', row
-			values=row.values()
+			values = list(row.values())
 			#print values
 			keypad.append(row['KEYPAD'])
-			keys=row.keys()
+			keys = list(row.keys())
 			#print keys
 			del row['KEYPAD']
 			#print 'len-row', len(row)
@@ -200,14 +200,14 @@ def readMP_Keypad_Layouts():
 				#raw_input('\nPress Enter to continue through loop\n')
 				#print 'i', i
 				#print values[i]
-				if values[i]=='':
+				if values[i] == '':
 					#print '\nDeleting ', keys[i], ' because it is empty.\n'
 					del row[keys[i]]
 			#print row
 			if row:
-				dictionary[keypad[count]]=row
+				dictionary[keypad[count]] = row
 		except ValueError:
-			print 'error, Check spreadsheet'
+			print('error, Check spreadsheet')
 
 	#print dictionary.keys()
 	return dictionary
@@ -236,7 +236,7 @@ def readMasksPerModel(model):
 				y=float(row['Y'])
 				coord=(x,y, row['positionTopToBot'])
 				positionDict[mask_ID]=coord
-				if row.has_key(''):
+				if '' in row:
 					del row['']
 		except ValueError:
 			pass
@@ -282,7 +282,7 @@ def readLED_Positions(pcbSize, pcbType):
 					segmentDict[segment].append(designator)
 					positionDict[designator]=coord
 					#print self.positionDict, self.segmentDict
-					if row.has_key(''):
+					if '' in row:
 						del row['']
 					#raw_input()
 		except ValueError:
@@ -313,7 +313,7 @@ def readMaskParts(maskType):
 				y=float(row['Y'])
 				coord=(pcbSize, pcbType, x,y)
 				positionDict[positionRtoL]=coord
-				if row.has_key(''):
+				if '' in row:
 					del row['']
 		except ValueError:
 			pass
@@ -405,6 +405,6 @@ def readMP_Keypad_Button_Names():
 			if row:
 				dictionary[function]=buttonName
 		except ValueError:
-			print 'error'
+			print('error')
 	#print dictionary
 	return dictionary

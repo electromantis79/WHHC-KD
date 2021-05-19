@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -17,15 +17,11 @@
 import time
 import os
 import timeit
+import json
+import re
 
 from sys import platform as _platform
-
-# thread_timer related
-if _platform == "linux" or _platform == "linux2":
-	try:
-		import prctl
-	except:
-		pass
+from subprocess import Popen, PIPE
 
 SPORT_LIST = [
 	'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
@@ -50,13 +46,7 @@ def thread_timer(passed_function, period=.01, arg=None, align_time=0.0):
 				next_call = next_call + period
 				count += 1
 			next_call = next_call + period * count
-			print 'thread_timer adjusted', start_time - align_time, 'seconds'
-
-	if _platform == "linux" or _platform == "linux2":
-		try:
-			prctl.set_name(passed_function.__name__)  # Used only for htop testing
-		except:
-			pass
+			print('thread_timer adjusted', start_time - align_time, 'seconds')
 
 	stamp = 0
 	while 1:
@@ -141,7 +131,7 @@ def select_sport_instance(config_dict, number_of_teams=2):
 		from app.game.game import Game
 		game = Game(config_dict, number_of_teams)
 	else:
-		print 'sport not in list'
+		print('sport not in list')
 		raise Exception
 	return game
 
@@ -189,9 +179,9 @@ def verbose(messages, enable=True):
 	if enable:
 		for x, message in enumerate(messages):
 			if x == len(messages) - 1:
-				print message
+				print(message)
 			else:
-				print message,
+				print(message, end=' ')
 
 
 def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
@@ -205,12 +195,80 @@ def elapse_time(passed_function, lower_limit=0, on=False, time_it=False):
 		end_time = time.time()
 		total_time = (end_time - start_time) * 1000
 		if total_time >= lower_limit * 1000:
-			print passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit)
+			print(passed_function, 'took', total_time, 'ms, lower limit=', str(lower_limit))
 	else:
 		result = passed_function()
 
 	if time_it:
 		t = timeit.Timer(passed_function, "print 'time_it'")
-		print t.timeit(1) * 1000, 'ms'
+		print(t.timeit(1) * 1000, 'ms')
 
 	return result
+
+
+def find_substrings(string, substring):
+	count = 0
+	index = 0
+	flag = True
+	index_list = list()
+	while flag:
+		a = string.find(substring, index)
+		if a == -1:
+			flag = False
+		else:
+			count += 1
+			index_list.append(a)
+			index = a + 1
+	print('index_list', index_list)
+	return index_list
+
+
+def slice_fragments(data, index_list):
+	fragment_list = list()
+	for count in list(range(len(index_list))):
+		if len(index_list) == 1:
+			fragment_list.append(data)
+		elif count == len(index_list) - 1:
+			fragment_list.append(data[index_list[-1]:])
+		else:
+			fragment_list.append(data[index_list[count]:index_list[count+1]])
+
+	for fragment_index, fragment in enumerate(fragment_list):
+		fragment_list[fragment_index] = fragment[len('JSON_FRAGMENT'):]
+
+	print('fragment_list', fragment_list)
+	return fragment_list
+
+
+def convert_to_json_format(data):
+	try:
+		data = json.loads(data)
+		return data
+	except Exception as e:
+		print('\n', e, ': Data received failed json format inspection')
+		return False
+
+
+def get_mac_from_ip(ip):
+	try:
+		pid = Popen(["arp", "-n", ip], stdout=PIPE)
+		s = str(pid.communicate()[0])
+		mac = re.search(r"(([a-f\d]{1,2}\:){5}[a-f\d]{1,2})", s).groups()[0]
+		return mac
+	except Exception as e:
+		print('\n', e, ': Failed to get mac from arp')
+		return None
+
+
+def get_signal_avg_from_mac(mac):
+	try:
+		proc = Popen(
+			["iw", 'dev', "SoftAp0", "station", 'dump'],
+			stdout=PIPE, universal_newlines=True)
+		s = str(proc.communicate()[0])
+		pattern = "(" + mac + "(.*\n)*.*\\savg:\\s-\\d\\d)"
+		signal_avg = re.search(pattern, s).groups()[0]
+		return signal_avg
+	except Exception as e:
+		print('\n', e, ': Failed to get signal_avg from mac')
+		return None

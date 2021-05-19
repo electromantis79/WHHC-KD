@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -45,7 +45,7 @@ class GameDefaultSettings:
 				if self.gameDefaultSettingsFile:
 					self._read_all()
 				else:
-					print os.getcwd()
+					print(os.getcwd())
 		elif self.fileType == 'user':
 			if self.write:
 				self.gameDefaultSettings = app.utils.configobj.ConfigObj('game/gameUserSettings')
@@ -56,7 +56,7 @@ class GameDefaultSettings:
 				if self.gameDefaultSettingsFile:
 					self._read_all()
 				else:
-					print os.getcwd()+'+/'+file_name
+					print(os.getcwd()+'+/'+file_name)
 
 	def _write_all(self):
 		# Write all configurations to object and file.
@@ -191,6 +191,7 @@ class GameDefaultSettings:
 		self.gameDefaultSettings['blankTestFlag'] = False
 		self.gameDefaultSettings['checkLCDFlag'] = False
 		self.gameDefaultSettings['menuFlag'] = False
+		self.gameDefaultSettings['whh_flag'] = True
 		self.gameDefaultSettings['keyPressFlag'] = False
 		self.gameDefaultSettings['restoreFlag'] = False
 		self.gameDefaultSettings['PitchSpeedFlag'] = False
@@ -208,7 +209,7 @@ class GameDefaultSettings:
 		self.gameDefaultSettings['teamTwoJustify'] = 2
 
 		# THIS SECTION BUILDS THE self.config OBJECT THAT IS WRITTEN TO THE FILE
-		print "WROTE TO FILE"
+		print("WROTE TO FILE")
 
 		self.gameDefaultSettings.write()  # Create 'config' file. Everything will be converted to strings
 		self.tic = time.time()
@@ -217,19 +218,19 @@ class GameDefaultSettings:
 		# Read all configurations from file and store in object
 		self.toc = time.time()
 		self.gameDefaultSettings = {}
-		for key in self.gameDefaultSettingsFile.keys():
+		for key in list(self.gameDefaultSettingsFile.keys()):
 			if self.gameDefaultSettingsFile[key] == 'False' or self.gameDefaultSettingsFile[key] == 'True':
 				self.gameDefaultSettings[key] = app.utils.functions.tf(self.gameDefaultSettingsFile[key])
 			elif self.gameDefaultSettingsFile[key].find('.') != -1:
 				self.gameDefaultSettings[key] = float(self.gameDefaultSettingsFile[key])
-			elif unicode(self.gameDefaultSettingsFile[key]).isdigit():
+			elif str(self.gameDefaultSettingsFile[key]).isdigit():
 				self.gameDefaultSettings[key] = int(self.gameDefaultSettingsFile[key])
-			elif unicode(self.gameDefaultSettingsFile[key]).isalnum() or self.gameDefaultSettingsFile[key].isalpha():
+			elif str(self.gameDefaultSettingsFile[key]).isalnum() or self.gameDefaultSettingsFile[key].isalpha():
 				self.gameDefaultSettings[key] = self.gameDefaultSettingsFile[key]
 			elif self.gameDefaultSettingsFile[key] == '':
 				self.gameDefaultSettings[key] = self.gameDefaultSettingsFile[key]
 			else:
-				print self.gameDefaultSettingsFile[key], 'format not recognized'
+				print(self.gameDefaultSettingsFile[key], 'format not recognized')
 				raise Exception
 		self.tic = time.time()
 
@@ -253,19 +254,19 @@ def create_settings_files():
 	Run this module with writeConfigFlag=True to create the gameDefaultSettings file.
 	Next press enter to copy it to the gameUserSettings file.
 	"""
-	print "ON"
+	print("ON")
 	write_game_default_settings_flag = True
 	if write_game_default_settings_flag:
 		app.utils.misc.silent_remove('game/gameDefaultSettings')
 	g = GameDefaultSettings(write_game_default_settings_flag, 'default')
 	app.utils.misc.print_dict(g.__dict__)
-	print "%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc)
-	raw_input()
+	print("%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc))
+	input()
 	app.utils.misc.silent_remove('game/gameUserSettings')
 	g.user_equals_default()
 	app.utils.misc.print_dict(g.__dict__)
 
-	print "%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc)
+	print("%f seconds to run 'gameSettings' file setup." % (g.tic - g.toc))
 
 
 if __name__ == '__main__':

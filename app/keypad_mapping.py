@@ -23,111 +23,124 @@ class KeypadMapping(object):
 
 		*Key* = Button name Ex. "B8"
 
-		*Value* = Pointer to game.[*functionName*]
+		*Value* = Pointer to self.game.[*functionName*]
 	"""
 
-	def __init__(self, game, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_baseball=False):
+	def __init__(self, game, reverse_home_and_guest=False, keypad3150=False, mm_basketball=False, whh_flag=False):
 		self.funcString = ''
-		self.keyPressFlag = False
+		self.game = game
 		self.reverseHomeAndGuest = reverse_home_and_guest
 		self.keypad3150 = keypad3150
 		self.MMBasketball = mm_basketball
-		self.WHHBaseball = whh_baseball
+		self.WHHFlag = whh_flag
 
+		# gameFuncDict = Key(button name) : Value(game function called)
 		self.gameFuncDict = {
-			'guestScorePlusTen': game.guestScorePlusTen, 'guestScorePlusOne': game.guestScorePlusOne,
-			'NewGame':  game.NewGame, 'homeScorePlusTen': game.homeScorePlusTen, 'homeScorePlusOne': game.homeScorePlusOne,
-			'secondsMinusOne': game.secondsMinusOne, 'minutesMinusOne': game.minutesMinusOne,
-			'periodClockOnOff': game.periodClockOnOff, 'quartersPlusOne': game.quartersPlusOne, 'setClock': game.setClock,
-			'setClockTenthSec': game.setClockTenthSec, 'tenthSecOnOff': game.tenthSecOnOff, 'clockUpDown': game.clockUpDown,
-			'autoHorn': game.autoHorn, 'timeOfDay': game.timeOfDay, 'timeOutTimer': game.timeOutTimer,
-			'possession': game.possession, 'secondsPlusOne': game.secondsPlusOne, 'horn': game.Horn,
-			'setHomeScore': game.setHomeScore, 'setGuestScore': game.setGuestScore, 'setGuestFunctions': game.setGuestFunctions,
-			'setHomeFunctions': game.setHomeFunctions, 'guestShotsPlusOne': game.guestShotsPlusOne,
-			'homeShotsPlusOne': game.homeShotsPlusOne, 'periodClockReset': game.periodClockReset,
-			'handheldButton1': game.handheldButton1, 'handheldButton2': game.handheldButton2,
-			'handheldButton3': game.handheldButton3, 'playClocks': game.playClocks, 'shotClocks': game.shotClocks,
-			'mode': game.blank, 'blank': game.blank, 'None': game.blank, '': game.blank}
+			'guestScorePlusTen': self.game.guestScorePlusTen, 'guestScorePlusOne': self.game.guestScorePlusOne,
+			'NewGame':  self.game.NewGame, 'homeScorePlusTen': self.game.homeScorePlusTen,
+			'homeScorePlusOne': self.game.homeScorePlusOne,
+			'secondsMinusOne': self.game.secondsMinusOne, 'minutesMinusOne': self.game.minutesMinusOne,
+			'periodClockOnOff': self.game.periodClockOnOff, 'quartersPlusOne': self.game.quartersPlusOne,
+			'setClock': self.game.setClock,
+			'setClockTenthSec': self.game.setClockTenthSec, 'tenthSecOnOff': self.game.tenthSecOnOff,
+			'clockUpDown': self.game.clockUpDown,
+			'autoHorn': self.game.autoHorn, 'timeOfDay': self.game.timeOfDay, 'timeOutTimer': self.game.timeOutTimer,
+			'possession': self.game.possession, 'secondsPlusOne': self.game.secondsPlusOne, 'horn': self.game.Horn,
+			'setHomeScore': self.game.setHomeScore, 'setGuestScore': self.game.setGuestScore,
+			'setGuestFunctions': self.game.setGuestFunctions,
+			'setHomeFunctions': self.game.setHomeFunctions, 'guestShotsPlusOne': self.game.guestShotsPlusOne,
+			'homeShotsPlusOne': self.game.homeShotsPlusOne, 'periodClockReset': self.game.periodClockReset,
+			'handheldButton1': self.game.handheldButton1, 'handheldButton2': self.game.handheldButton2,
+			'handheldButton3': self.game.handheldButton3, 'playClocks': self.game.playClocks, 'shotClocks': self.game.shotClocks,
+			'mode': self.game.blank, 'blank': self.game.blank, 'None': self.game.blank, '': self.game.blank}
 
 		self.gameFuncDict.update({
-			'Number_7_ABC': game.Number_7_ABC, 'Number_8_DEF': game.Number_8_DEF, 'Number_9_GHI': game.Number_9_GHI,
-			'Number_5_MNO': game.Number_5_MNO, 'Number_6_PQR': game.Number_6_PQR, 'Number_1_STU': game.Number_1_STU,
-			'Number_2_VWX': game.Number_2_VWX, 'Number_3_YZ': game.Number_3_YZ, 'Number_4_JKL': game.Number_4_JKL,
-			'Number_0_&-.!': game.Number_0, 'clear': game.clear_, 'enter': game.enter_})
+			'Number_7_ABC': self.game.Number_7_ABC, 'Number_8_DEF': self.game.Number_8_DEF,
+			'Number_9_GHI': self.game.Number_9_GHI,
+			'Number_5_MNO': self.game.Number_5_MNO, 'Number_6_PQR': self.game.Number_6_PQR,
+			'Number_1_STU': self.game.Number_1_STU,
+			'Number_2_VWX': self.game.Number_2_VWX, 'Number_3_YZ': self.game.Number_3_YZ, 'Number_4_JKL': self.game.Number_4_JKL,
+			'Number_0_&-.!': self.game.Number_0, 'clear': self.game.clear_, 'enter': self.game.enter_})
 
 		# Multi-sport buttons that call different functions
-		if game.gameData['sportType'] == 'football':
-			self.gameFuncDict['qtrs_periodsPlusOne'] = game.quartersPlusOne
+		if self.game.gameData['sportType'] == 'football':
+			self.gameFuncDict['qtrs_periodsPlusOne'] = self.game.quartersPlusOne
 		else:
-			self.gameFuncDict['qtrs_periodsPlusOne'] = game.periodsPlusOne
+			self.gameFuncDict['qtrs_periodsPlusOne'] = self.game.periodsPlusOne
 
-		if game.gameData['sportType'] == 'soccer':
-			self.gameFuncDict['guestKicksPlusOne'] = game.guestKicksPlusOne
-			self.gameFuncDict['guestSavesPlusOne'] = game.guestSavesPlusOne
-			self.gameFuncDict['homeKicksPlusOne'] = game.homeKicksPlusOne
-			self.gameFuncDict['homeSavesPlusOne'] = game.homeSavesPlusOne
-			self.gameFuncDict['play_shotClocks'] = game.playClocks
-		elif game.gameData['sportType'] == 'hockey':
-			self.gameFuncDict['guestKicksPlusOne'] = game.blank
-			self.gameFuncDict['guestSavesPlusOne'] = game.blank
-			self.gameFuncDict['homeKicksPlusOne'] = game.blank
-			self.gameFuncDict['homeSavesPlusOne'] = game.blank
-			self.gameFuncDict['play_shotClocks'] = game.shotClocks
+		if self.game.gameData['sportType'] == 'soccer':
+			self.gameFuncDict['guestKicksPlusOne'] = self.game.guestKicksPlusOne
+			self.gameFuncDict['guestSavesPlusOne'] = self.game.guestSavesPlusOne
+			self.gameFuncDict['homeKicksPlusOne'] = self.game.homeKicksPlusOne
+			self.gameFuncDict['homeSavesPlusOne'] = self.game.homeSavesPlusOne
+			self.gameFuncDict['play_shotClocks'] = self.game.playClocks
+		elif self.game.gameData['sportType'] == 'hockey':
+			self.gameFuncDict['guestKicksPlusOne'] = self.game.blank
+			self.gameFuncDict['guestSavesPlusOne'] = self.game.blank
+			self.gameFuncDict['homeKicksPlusOne'] = self.game.blank
+			self.gameFuncDict['homeSavesPlusOne'] = self.game.blank
+			self.gameFuncDict['play_shotClocks'] = self.game.shotClocks
 
 		# Hockey
 		self.gameFuncDict.update({
-			'clear_GuestGoal': game.clear_GuestGoal, 'enter_HomeGoal': game.enter_HomeGoal,
-			'guestPenalty': game.guestPenalty, 'homePenalty': game.homePenalty})
+			'clear_GuestGoal': self.game.clear_GuestGoal, 'enter_HomeGoal': self.game.enter_HomeGoal,
+			'guestPenalty': self.game.guestPenalty, 'homePenalty': self.game.homePenalty})
 
 		# Soccer
 		self.gameFuncDict.update({
-			'guestPenaltyPlusOne': game.guestPenaltyPlusOne, 'homePenaltyPlusOne': game.homePenaltyPlusOne})
+			'guestPenaltyPlusOne': self.game.guestPenaltyPlusOne, 'homePenaltyPlusOne': self.game.homePenaltyPlusOne})
 
 		# Basketball
 		self.gameFuncDict.update({
-			'guestTeamFoulsPlusOne': game.guestTeamFoulsPlusOne, 'homeTeamFoulsPlusOne': game.homeTeamFoulsPlusOne,
-			'homeBonus': game.homeBonusPlusOne, 'playerMatchGame': game.playerMatchGame, 'playerFoul': game.playerFoul,
-			'guestBonus': game.guestBonusPlusOne, 'setHomeTimeOuts': game.setHomeTimeOuts,
-			'setGuestTimeOuts': game.setGuestTimeOuts})
+			'guestTeamFoulsPlusOne': self.game.guestTeamFoulsPlusOne, 'homeTeamFoulsPlusOne': self.game.homeTeamFoulsPlusOne,
+			'homeBonus': self.game.homeBonusPlusOne, 'playerMatchGame': self.game.playerMatchGame,
+			'playerFoul': self.game.playerFoul,
+			'guestBonus': self.game.guestBonusPlusOne, 'setHomeTimeOuts': self.game.setHomeTimeOuts,
+			'setGuestTimeOuts': self.game.setGuestTimeOuts})
 
 		# Football
 		self.gameFuncDict.update({
-			'setYardsToGo': game.setYardsToGo, 'setBallOn': game.setBallOn, 'yardsToGoReset': game.yardsToGoReset,
-			'yardsToGoMinusOne': game.yardsToGoMinusOne, 'yardsToGoMinusTen': game.yardsToGoMinusTen,
-			'downsPlusOne': game.downsPlusOne, 'guestTimeOutsMinusOne': game.guestTimeOutsMinusOne,
-			'homeTimeOutsMinusOne': game.homeTimeOutsMinusOne})
+			'setYardsToGo': self.game.setYardsToGo, 'setBallOn': self.game.setBallOn, 'yardsToGoReset': self.game.yardsToGoReset,
+			'yardsToGoMinusOne': self.game.yardsToGoMinusOne, 'yardsToGoMinusTen': self.game.yardsToGoMinusTen,
+			'downsPlusOne': self.game.downsPlusOne, 'guestTimeOutsMinusOne': self.game.guestTimeOutsMinusOne,
+			'homeTimeOutsMinusOne': self.game.homeTimeOutsMinusOne})
 
 		# Baseball or Linescore
 		self.gameFuncDict.update({
-			'flashHitIndicator': game.clear_FlashHit, 'flashErrorIndicator': game.enter_FlashError,
-			'ballsPlusOne': game.ballsPlusOne, 'strikesPlusOne': game.strikesPlusOne, 'outsPlusOne': game.outsPlusOne,
-			'inningsPlusOne': game.inningsPlusOne, 'teamAtBat': game.teamAtBat, 'setPitchCounts': game.setPitchCounts,
-			'setBatterNumber': game.setBatterNumber, 'guestPitchesPlusOne': game.guestPitchesPlusOne,
-			'homePitchesPlusOne': game.homePitchesPlusOne, 'clear_FlashHit': game.clear_FlashHit,
-			'enter_FlashError': game.enter_FlashError, 'assignError': game.assignError,
-			'singlePitchesPlusOne': game.singlePitchesPlusOne, 'setTotalRuns': game.setTotalRuns,
-			'setTotalHits': game.setTotalHits, 'setTotalErrors': game.setTotalErrors, 'setRuns_Innings': game.setRuns_Innings,
-			'incInningTop_Bot': game.incInningTop_Bot, 'runsPlusOne': game.runsPlusOne, 'hitsPlusOne': game.hitsPlusOne,
-			'errorsPlusOne': game.errorsPlusOne, 'setInningTop_Bot': game.setInningTop_Bot,
-			'guestScoreMinusOne': game.guestScoreMinusOne, 'homeScoreMinusOne': game.homeScoreMinusOne})
+			'flashHitIndicator': self.game.clear_FlashHit, 'flashErrorIndicator': self.game.enter_FlashError,
+			'ballsPlusOne': self.game.ballsPlusOne, 'strikesPlusOne': self.game.strikesPlusOne,
+			'outsPlusOne': self.game.outsPlusOne,
+			'inningsPlusOne': self.game.inningsPlusOne, 'teamAtBat': self.game.teamAtBat,
+			'setPitchCounts': self.game.setPitchCounts,
+			'setBatterNumber': self.game.setBatterNumber, 'guestPitchesPlusOne': self.game.guestPitchesPlusOne,
+			'homePitchesPlusOne': self.game.homePitchesPlusOne, 'clear_FlashHit': self.game.clear_FlashHit,
+			'enter_FlashError': self.game.enter_FlashError, 'assignError': self.game.assignError,
+			'singlePitchesPlusOne': self.game.singlePitchesPlusOne, 'setTotalRuns': self.game.setTotalRuns,
+			'setTotalHits': self.game.setTotalHits, 'setTotalErrors': self.game.setTotalErrors,
+			'setRuns_Innings': self.game.setRuns_Innings,
+			'incInningTop_Bot': self.game.incInningTop_Bot, 'runsPlusOne': self.game.runsPlusOne,
+			'hitsPlusOne': self.game.hitsPlusOne,
+			'errorsPlusOne': self.game.errorsPlusOne, 'setInningTop_Bot': self.game.setInningTop_Bot,
+			'guestScoreMinusOne': self.game.guestScoreMinusOne, 'homeScoreMinusOne': self.game.homeScoreMinusOne})
 
 		# Stat
 		self.gameFuncDict.update({
-			'addPlayer': game.addPlayer, 'deletePlayer': game.deletePlayer, 'displaySize': game.displaySize,
-			'editPlayer': game.editPlayer, 'fouls_digsMinusOne': game.fouls_digsMinusOne,
-			'fouls_digsPlusOne': game.fouls_digsPlusOne, 'nextPlayer': game.nextPlayer, 'subPlayer': game.subPlayer,
-			'points_killsMinusOne': game.points_killsMinusOne, 'points_killsPlusOne': game.points_killsPlusOne,
-			'previousPlayer': game.previousPlayer, 'guest_homeSwitch': game.guest_homeSwitch})
+			'addPlayer': self.game.addPlayer, 'deletePlayer': self.game.deletePlayer, 'displaySize': self.game.displaySize,
+			'editPlayer': self.game.editPlayer, 'fouls_digsMinusOne': self.game.fouls_digsMinusOne,
+			'fouls_digsPlusOne': self.game.fouls_digsPlusOne, 'nextPlayer': self.game.nextPlayer,
+			'subPlayer': self.game.subPlayer,
+			'points_killsMinusOne': self.game.points_killsMinusOne, 'points_killsPlusOne': self.game.points_killsPlusOne,
+			'previousPlayer': self.game.previousPlayer, 'guest_homeSwitch': self.game.guest_homeSwitch})
 
 		# Cricket
 		self.gameFuncDict.update({
-			'oversPlusOne': game.oversPlusOne, 'player1ScorePlusOne': game.player1ScorePlusOne,
-			'player2ScorePlusOne': game.player2ScorePlusOne, 'wicketsPlusOne': game.wicketsPlusOne})
+			'oversPlusOne': self.game.oversPlusOne, 'player1ScorePlusOne': self.game.player1ScorePlusOne,
+			'player2ScorePlusOne': self.game.player2ScorePlusOne, 'wicketsPlusOne': self.game.wicketsPlusOne})
 
 		all_keypad_keys = app.utils.reads.readMP_Keypad_Layouts()
 
-		# Update with MPCRICKET1, MPRACETRACK1, STAT keypads
-		self.Keypad_Keys = {}
+		# Select keypad map section ----------------------
+
 		sport_list = [
 			'MMBASEBALL3', 'MPBASEBALL1', 'MMBASEBALL4', 'MPLINESCORE4', 'MPLINESCORE5',
 			'MPMP-15X1', 'MPMP-14X1', 'MPMULTISPORT1-baseball', 'MPMULTISPORT1-football', 'MPFOOTBALL1',
@@ -156,8 +169,10 @@ class KeypadMapping(object):
 		# 30 in list, 2 per line
 		# pos=1 MPBASEBALL1, pos=21: MPGENERIC, pos=18: MPRACETRACK1 all MP_BASESOFT_CX4
 
-		position = sport_list.index(game.sport)
-		loop_list = [
+		sport_list_index = sport_list.index(game.gameData['sport'])
+
+		# This list corresponds to the sport list
+		standard_and_reverse_teams_list = [
 			(0, 1), (8, 9), (4, 5), (27, 27), (27, 27),
 			(27, 27), (27, 27), (10, 11), (12, 13), (14, 15),
 			(6, 7), (24, 25), (18, 19), (20, 21), (16, 17),
@@ -165,22 +180,69 @@ class KeypadMapping(object):
 			(12, 13), (8, 9), (28, 28), (2, 3), (22, 23),
 			(29, 29), (30, 30)]
 
-		# Need to make MM Combos work on simulator
-		if position == 10 and self.keypad3150:
-			position = 23
-		elif position == 11 and self.MMBasketball:
-			position = 24
-		elif game.gameData['sportType'] == 'baseball' and self.WHHBaseball:
-			position = 25
-		elif self.WHHBaseball:
-			position = 26
-		if not self.reverseHomeAndGuest:
-			self.keypadName = keypad_list[loop_list[position][0]]
-		else:
-			self.keypadName = keypad_list[loop_list[position][1]]
-		self.Keypad_Keys = all_keypad_keys[self.keypadName]
+		# Handle flags
+		if sport_list_index == 10 and self.keypad3150:
+			sport_list_index = 23
+		elif sport_list_index == 11 and self.MMBasketball:
+			sport_list_index = 24
+		elif self.WHHFlag:
+			if self.game.gameData['sportType'] == 'baseball':
+				sport_list_index = 25
+			elif self.game.gameData['sportType'] == 'football':
+				sport_list_index = 26
 
-	def map_(self, game, key_pressed):
+		# Handle reverse keypad
+		if self.reverseHomeAndGuest:
+			self.keypadName = keypad_list[standard_and_reverse_teams_list[sport_list_index][1]]
+		else:
+			self.keypadName = keypad_list[standard_and_reverse_teams_list[sport_list_index][0]]
+
+		# Create key map dictionary
+		print('Keypad Name', self.keypadName)
+		down_string = '_DOWN'
+		up_string = '_UP'
+		self.Keypad_Keys = {down_string: None, up_string: None}
+		# print(self.keypadName+down_string, all_keypad_keys.keys())
+
+		if self.keypadName+down_string in all_keypad_keys:
+			self.Keypad_Keys[down_string] = all_keypad_keys[self.keypadName+down_string]
+		else:
+			self.Keypad_Keys[down_string] = all_keypad_keys[self.keypadName]
+
+		if self.keypadName+up_string in all_keypad_keys:
+			self.Keypad_Keys[up_string] = all_keypad_keys[self.keypadName+up_string]
+		else:
+			self.Keypad_Keys[up_string] = None
+
+		# print(self.Keypad_Keys)
+
+	def get_func_string(self, key_pressed, direction='_DOWN'):
+		# PUBLIC method
+		if direction is not None:
+			if direction == '_BOTH':
+				both = [self.Keypad_Keys['_UP'][key_pressed], self.Keypad_Keys['_DOWN'][key_pressed]]
+				func_string = None
+				for x, each in enumerate(both):
+					if both[x] != 'None':
+						func_string = both[x]
+
+				return func_string
+			else:
+				if direction in self.Keypad_Keys and key_pressed in self.Keypad_Keys[direction]:
+					return self.Keypad_Keys[direction][key_pressed]
+				else:
+					return ''
+		else:
+			return ''
+
+	def check_for_byte_pair(self, byte_pair):
+		# PUBLIC method
+		if byte_pair in self.Keypad_Keys['_DOWN']:
+			return 1
+		else:
+			return 0
+
+	def map_(self, key_pressed, direction='_DOWN'):
 		"""
 		Matches grid location to function name
 		All combinations of B through F with 8 through 1
@@ -188,58 +250,9 @@ class KeypadMapping(object):
 		Sets the keyPressFlag used by the Menu_Class
 		"""
 		# PUBLIC method
-		self.funcString = self.Keypad_Keys[key_pressed]  # find function name
-		print 'funcString: ', self.funcString
-		print "Pressed Key:%s" % key_pressed
+		if key_pressed:
+			self.funcString = self.get_func_string(key_pressed, direction=direction)
+		print("Key mapped %s" % key_pressed, 'to funcString "%s"' % self.funcString)
+		print("Called", str(self.gameFuncDict[self.funcString]))
 		self.gameFuncDict[self.funcString]()  # call game function
-		self.keyPressFlag = True
-		return game, self.funcString
-
-	def _test_all_buttons(self, game):
-		# Method for testing this module only
-		letters = ['B', 'C', 'D', 'E', 'F']
-		numbers = ['8', '7', '6', '5', '4', '3', '2', '1']
-		for i in range(8):
-			for j in range(5):
-				function_ = letters[j]+numbers[i]
-				print function_
-				self.map_(game, function_)
-				print game.gameData
-				raw_input()
-
-
-"""
-def test():
-	print "ON"
-	c=Config()
-	sportList = [\
-	'MMBASEBALL3','MPBASEBALL1','MMBASEBALL4','MPLINESCORE4','MPLINESCORE5',\
-	'MPMP-15X1','MPMP-14X1','MPMULTISPORT1-baseball','MPMULTISPORT1-football', 'MPFOOTBALL1',\
-	'MMFOOTBALL4','MPBASKETBALL1', 'MPSOCCER_LX1-soccer','MPSOCCER_LX1-football','MPSOCCER1',\
-	'MPHOCKEY_LX1','MPHOCKEY1','MPCRICKET1','MPRACETRACK1','MPLX3450-baseball',\
-	'MPLX3450-football','MPGENERIC', 'MPSTAT']#22
-	# 23 in list, 5 per line
-	sport=sportList[1]
-	c.writeSport(sport)
-	game = selectSportInstance(sport)
-	print game.sport
-	# True False
-	reverseHomeAndGuest=False
-	keypad3150=False
-	MMBasketball=False
-	WHHBaseball=True
-	keyMap=KeypadMapping(game, reverseHomeAndGuest, keypad3150, MMBasketball, WHHBaseball)
-	print '\nreverseHomeAndGuest', reverseHomeAndGuest, 
-	'\nkeypad3150', keypad3150, '\nMMBasketball', MMBasketball, '\nWHHBaseball', WHHBaseball
-	print '\nkeypadName', keyMap.keypadName
-	printDictsExpanded(keyMap, 1)
-	raw_input()
-
-	keyMap._test_all_buttons(game)
-
-	while 1:
-		PRESSED=raw_input('                                     Type key (Ex. B8): ')
-		keyMap.map_(game, PRESSED)
-		gameDict=game.__dict__
-		printDict(gameDict)
-"""
+		return self.funcString
